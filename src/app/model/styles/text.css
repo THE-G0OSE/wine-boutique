@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@font-face {
+    font-family: Pacifico;
+    src: url("@/assets/fonts/Pacifico-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Shantell Sans";
+    font-style: normal;
+    src: url("@/assets/fonts/Shantell-Sans.ttf") format("truetype")
+}
+
+@font-face {
+    font-family: "Shantell Sans";
+    font-style: italic;
+    src: url("@/assets/fonts/Shantell-Sans-italic.ttf") format("truetype")
+}
+
+@theme {
+  --font-firm: Pacifico;
+  --font-regular: Shantell Sans;
+  --font-system: Noto Sans;
+
+  --text-4xl: 96px;
+  --text-3xl: 42px;
+  --text-2xl: 36px;
+  --text-xl: 30px;
+  --text-lg: 24px;
+  --text-md: 20px;
+  --text-sm: 16px;
+  --text-xs: 12px;
+}
