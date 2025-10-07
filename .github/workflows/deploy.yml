@@ -20,6 +20,7 @@ jobs:
       - run: pnpm build
 
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +37,7 @@ jobs:
         with:
           server: ${{secrets.FTP_HOST}}
           username: ${{secrets.FTP_USERNAME}}
-          password: ${{secrets.FTP_PASSWORD}}
+         P password: ${{secrets.FPT_PASSWORD}}
           local-dir: ./dist/
           server-dir: ${{secrets.FTP_PATH}}
           dangerous-clean-slate: true
