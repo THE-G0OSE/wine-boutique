@@ -1,30 +1,27 @@
-import { useEffect, type FC } from "react"
-import {motion, useMotionValue, useTransform} from 'motion/react'
-import { useAppSelector } from "@/shared/lib/hooks/useAppSelctore"
-import { appSelection } from "@/shared/model/appSlice"
+import { type FC } from "react";
+import { motion } from "motion/react";
+import { useAppSelector } from "@/shared/lib/hooks/useAppSelector";
+import { appSelection } from "@/shared/model/appSlice";
+import { useProgressValues } from "../model/lib/hooks/useProgressValues";
 
 interface IProps {
-    progress: number
+  progress: number;
 }
 
-const ProgressBar: FC<IProps> = ({progress}) => {
-
-    const progressValue = useMotionValue(0)
-
-    const {theme} = useAppSelector(appSelection)
-
-    useEffect(() => {
-        progressValue.setWithVelocity(progressValue.get(), progress, 1)
-    }, [progress])
-
-    const width = useTransform(progressValue, [0, 85, 100], ["0%", "100%", "0%"])
-    const x = useTransform(progressValue, [0, 85, 100], ["0%", "0%", "100%"])
+const ProgressBar: FC<IProps> = ({ progress }) => {
+  const { theme } = useAppSelector(appSelection);
+  const {x, width} = useProgressValues(progress)
 
   return (
     <div className="relative bg-white rounded-full w-full h-3 overflow-hidden">
-        <motion.div className={`${theme === "red" ? "bg-primary-200" : "bg-secondary-200" } rounded-full h-full`} style={{x, width}}/>
+      <motion.div
+        className={`${
+          theme === "red" ? "bg-primary-200" : "bg-secondary-200"
+        } rounded-full h-full`}
+        style={{ x, width }}
+      />
     </div>
-  )
-}
+  );
+};
 
-export default ProgressBar
+export default ProgressBar;

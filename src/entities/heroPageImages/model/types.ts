@@ -4,4 +4,5 @@ export type imageObj = {
   title: string;
   content: string;
   additional: string;
+  id: number;
 };

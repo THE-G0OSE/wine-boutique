@@ -8,6 +8,7 @@ export const imageMock: imageObj[]  = [
     content:
       "Мы открываем доступ к лучшим винам мира — от редких шато до молодых звёзд натурального виноделия.",
     additional: "Белое вино • White wine",
+    id: 1
   },
   {
     path: "images/2.png",
@@ -16,6 +17,7 @@ export const imageMock: imageObj[]  = [
     content:
       "Здесь каждая бутылка — история, а выбор — личный опыт.\n Мы убрали полки с масс-маркетом и оставили только то, что готовы пить сами.",
     additional: "Красное вино • red wine",
+    id: 2
   },
   {
     path: "images/3.png",
@@ -24,6 +26,7 @@ export const imageMock: imageObj[]  = [
     content:
       "Фокус на малые винодельни, биодинамику и лимитированные сборы.\n Каждое вино проверено команду сомелье и имеет подтверждённое происхождение.",
     additional: "Белое вино • White wine",
+    id: 3
   },
   {
     path: "images/4.png",
@@ -32,6 +35,7 @@ export const imageMock: imageObj[]  = [
     content:
       "В наличии: Château d’Yquem 1988, Sassicaia 2015, Cristal 2008.\n Предзаказ на en primeur и вина из подвалов производителей.",
     additional: "Красное вино • red wine",
+    id: 4
   },
   {
     path: "images/5.png",
@@ -40,6 +44,7 @@ export const imageMock: imageObj[]  = [
     content:
       "Поможем подобрать вино под вкус, бюджет или коллекцию.\n Дегустации по предзаписи — открываем бутылки до покупки.",
     additional: "Белое вино • White wine",
+    id: 5
   },
   {
     path: "images/6.png",
@@ -48,6 +53,7 @@ export const imageMock: imageObj[]  = [
     content:
       "Сопровождение: карта вин, tasting notes и доступ к закрытым вебинарам.\n Можно выбрать тему: «Натуральное вино», «Классика Старого Света» или «Инвестиции».",
     additional: "Красное вино • red wine",
+    id: 6
   },
   {
     path: "images/7.png",
@@ -56,6 +62,7 @@ export const imageMock: imageObj[]  = [
     content:
       "Индивидуальные гравировки на бутылках и деревянных кейсах.\n Доставка в день заказа по Москве и в течение 48 часов по России.",
     additional: "Белое вино • White wine",
+    id: 7
   },
   {
     path: "images/8.png",
@@ -64,6 +71,7 @@ export const imageMock: imageObj[]  = [
     content:
       "натуральное дерево, мрамор, мягкий свет.\n Круглый стол для дегустаций и закрытый зал для частных событий.\n Можно арендовать пространство для дня рождения или бизнес-ужина.",
     additional: "Красное вино • red wine",
+    id: 8
   },
   {
     path: "images/9.png",
@@ -72,5 +80,6 @@ export const imageMock: imageObj[]  = [
     content:
       "Только для клиентов: закрытый Telegram-канал с анонсами новинок.\n Приоритетный доступ на распродажи и аукционные позиции.\n Персональный менеджер для VIP-клиентов и коллекционеров.",
     additional: "Белое вино • White wine",
+    id: 9
   },
 ];

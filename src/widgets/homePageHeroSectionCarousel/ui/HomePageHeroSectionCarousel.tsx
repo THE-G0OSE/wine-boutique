@@ -26,7 +26,7 @@ const HomePageHeroSectionCarousel = () => {
           </AnimatePresence>
         </motion.div>
       </Flex>
-      <CarouselControls progress={progress} prevHandler={prevHandler} nextHandler={nextHandler} />
+      <CarouselControls progress={progress} prevHandler={prevHandler} index={carouselArr[0].id} nextHandler={nextHandler} />
     </>
   );
 };
