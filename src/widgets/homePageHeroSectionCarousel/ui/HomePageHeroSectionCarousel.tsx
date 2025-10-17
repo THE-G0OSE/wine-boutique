@@ -13,10 +13,10 @@ const HomePageHeroSectionCarousel = () => {
     showingNumber: 7,
     autoChangeTimer: 5,
     changeCooldown: 1.5,
-    onChange: (image) => {dispatch(setTheme(image.theme))}
+    onChange: (image) => {setTimeout(() => dispatch(setTheme(image.theme)),0 )}
   });
   return (
-    <>
+    <div className="relative w-screen h-screen overflow-hidden">
       <Flex column fullSize>
         <motion.div>
           <AnimatePresence>
@@ -27,7 +27,7 @@ const HomePageHeroSectionCarousel = () => {
         </motion.div>
       </Flex>
       <CarouselControls progress={progress} prevHandler={prevHandler} index={carouselArr[0].id} nextHandler={nextHandler} />
-    </>
+    </div>
   );
 };
 

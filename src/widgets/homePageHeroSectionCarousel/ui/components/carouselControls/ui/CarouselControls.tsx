@@ -69,7 +69,7 @@ const CarouselControls: FC<IProps> = ({
       >
         <motion.div className="top-0 absolute flex flex-col" style={{ y }}>
           {imageMock.map((_, index) => (
-            <Flex center className="size-24">
+            <Flex key={'flex-' + index} center className="size-24">
               <Text FONT="FIRM" COLOR="WHITE" SIZE="FIRM">
                 0{index + 1}
               </Text>

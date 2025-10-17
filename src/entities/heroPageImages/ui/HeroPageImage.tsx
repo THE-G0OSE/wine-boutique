@@ -31,6 +31,7 @@ const HeroPageImage: FC<IProps> = ({ image, index }) => {
         variants={innerVariants}
         transition={transition(index)}
         src={image.path}
+        key={image.path + "-image"}
         className="shadow-top size-full object-cover"
       />
       <motion.div
@@ -38,7 +39,7 @@ const HeroPageImage: FC<IProps> = ({ image, index }) => {
         transition={transition(index)}
         className="absolute inset-0 shadow-top size-full pointer-events-none"
       />
-      <AnimatePresence propagate mode="wait">
+      <AnimatePresence key={image.path + "-flex-image"} propagate mode="wait">
         {index === 0 ? (
           <Flex
             key={"flex-first"}
@@ -50,10 +51,11 @@ const HeroPageImage: FC<IProps> = ({ image, index }) => {
             exit={"hide"}
             className="bottom-170 left-10 absolute w-120 max-w-[calc(100%-1200px)]"
           >
-            <AnimatePresence propagate>
+            <AnimatePresence key={image.path + '-text'} propagate>
               <Text
                 COLOR="WHITE"
                 SIZE="H4"
+                key={image.path + '-text-first'}
                 variants={textVariants}
                 className="top-0 absolute"
               >
@@ -63,6 +65,7 @@ const HeroPageImage: FC<IProps> = ({ image, index }) => {
                 COLOR="WHITE"
                 SIZE="FIRM"
                 FONT="FIRM"
+                key={image.path + "-text-second"}
                 className="top-10 absolute w-200"
                 variants={textVariants}
               >
@@ -71,6 +74,7 @@ const HeroPageImage: FC<IProps> = ({ image, index }) => {
               <Text
                 COLOR="WHITE"
                 SIZE="P"
+                key={image.path + "-text-third"}
                 className="top-65 absolute mt-10 w-180"
                 variants={textVariants}
               >
@@ -89,7 +93,7 @@ const HeroPageImage: FC<IProps> = ({ image, index }) => {
             animate="show"
             exit="hide"
           >
-            <AnimatePresence propagate>
+            <AnimatePresence key={image.path + "-text2"} propagate>
               <Text
                 COLOR="WHITE"
                 SIZE="SMALL"
