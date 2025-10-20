@@ -6,6 +6,10 @@
     box-shadow: inset 0 80px 70px 0 rgba(0,0,0,.5)
 }
 
+.shadow-xl {
+    box-shadow: 10px 20px 9px rgba(0, 0, 0, .3)
+}
+
 .text-shadow-2xl {
     text-shadow: 18px 22px 5px rgba(0, 0, 0, 0.4)
 }

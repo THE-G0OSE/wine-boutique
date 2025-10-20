@@ -1,6 +1,6 @@
 import type { ScrollCard } from "@/entities/heroPageScrollCards/model/types";
-import { useEffect, useRef, useState, type FC, memo } from "react";
-import { motion, MotionValue } from "motion/react";
+import { useEffect, type FC } from "react";
+import { motion, MotionValue, useMotionValue } from "motion/react";
 import {
   scrollCardInnerVariants,
   scrollCardVariants,
@@ -8,37 +8,27 @@ import {
   textTitleVariants,
 } from "@/entities/heroPageScrollCards/model/animations";
 import { Text } from "uikit;/";
+import { useMotionChange } from "@/shared/lib/hooks/useMotionChange";
 
 interface IProps {
   card: ScrollCard;
   scroll: MotionValue;
+  y: MotionValue<number>
 }
 
-const ScrollCardElement: FC<IProps> = ({ card, scroll }) => {
-  console.log("CHILD RENDER");
-  const [animationState, setAnimationState] = useState<"hide" | "show">("hide");
-  const lastState = useRef<"hide" | "show">("hide");
-
+const ScrollCardElement: FC<IProps> = ({ card, scroll, y }) => {
+  const animationState = useMotionChange<number, "hide" | "show">(
+    scroll,
+    (value) =>
+      value > card.scrollFrom && value < card.scrollTo ? "show" : "hide",
+    scroll.get() > card.scrollFrom && card.scrollTo > scroll.get() ? "show" : "hide",
+    50
+  );
+  const cardY = useMotionValue<number>(0)
   useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-
-    const unsubscribe = scroll.on("change", (value) => {
-      if (timeout) return;
-      timeout = setTimeout(() => {
-        const newState =
-          value > card.scrollFrom && value < card.scrollTo ? "show" : "hide";
-        if (newState !== lastState.current) {
-          lastState.current = newState;
-          setAnimationState(newState);
-        }
-        timeout = null;
-      }, 50);
-    });
-    return () => {
-      unsubscribe();
-      if (timeout) clearTimeout(timeout);
-    };
-  }, []);
+    const unsubscribe = y.on("change", (value) => cardY.set(-value + card.vertOffset))
+    return unsubscribe
+  })
 
   return (
     <>
@@ -46,6 +36,7 @@ const ScrollCardElement: FC<IProps> = ({ card, scroll }) => {
         variants={scrollCardVariants(card)}
         initial="hide"
         animate={animationState}
+        style={{y: cardY}}
         className={`absolute bg-[url(/images/ripped-paper.png)] bg-cover ${
           card.side === "left" ? "-left-10" : "-right-40"
         } w-240 h-127`}
@@ -61,12 +52,35 @@ const ScrollCardElement: FC<IProps> = ({ card, scroll }) => {
         />
         {/*[x]: add animated text */}
       </motion.div>
-      <Text variants={textTitleVariants} initial="hide" animate={animationState} FONT="FIRM" SIZE="FIRM" COLOR="WHITE" className={`absolute text-shadow-2xl w-248 ${card.side === 'left' ? "right-10" : "left-10"} top-60`}>
+      <Text
+        variants={textTitleVariants}
+        initial="hide"
+        animate={animationState}
+        FONT="FIRM"
+        SIZE="FIRM"
+        COLOR="WHITE"
+        className={`absolute text-shadow-2xl w-248 ${
+          card.side === "left" ? "right-10" : "left-10"
+        } top-60`}
+      >
         {card.title}
       </Text>
-      <Text variants={textBodyVariants} initial="hide" animate={animationState} FONT="REGULAR" STYLE="SEMIBOLD" COLOR="WHITE" SIZE="H3" className={`absolute text-shadow-xl w-190 ${card.side === 'left' ? "right-40" : "left-40"} top-125`}>{card.body}</Text>
+      <Text
+        variants={textBodyVariants}
+        initial="hide"
+        animate={animationState}
+        FONT="REGULAR"
+        STYLE="SEMIBOLD"
+        COLOR="WHITE"
+        SIZE="H3"
+        className={`absolute text-shadow-xl w-190 ${
+          card.side === "left" ? "right-40" : "left-40"
+        } top-125`}
+      >
+        {card.body}
+      </Text>
     </>
   );
 };
 
-export default memo(ScrollCardElement);
+export default ScrollCardElement;
