@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router";
+import { HomePageCellarSection } from "@/widgets/homePageCellarSection";
 import { HomePageHeroSectionCarousel } from "@/widgets/homePageHeroSectionCarousel";
 import { HomePageScrollHeroSection } from "@/widgets/homePageScrollHeroSection";
+import { HomePageVineyardsSection } from "@/widgets/homePageVineyardsSection";
 
 const HomePage = () => {
   const { hash } = useLocation();
@@ -21,6 +23,8 @@ const HomePage = () => {
       />
       <HomePageHeroSectionCarousel />
       <HomePageScrollHeroSection />
+      <HomePageVineyardsSection />
+      <HomePageCellarSection />
     </>
   );
 };
