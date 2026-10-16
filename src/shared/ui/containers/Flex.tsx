@@ -1,5 +1,6 @@
 import { motion } from "motion/react"
 import type { FC, HTMLProps, ReactNode } from "react"
+import { cn } from "@/shared/lib/cn"
 
 interface IProps extends HTMLProps<HTMLDivElement> {
     children: ReactNode,
@@ -14,7 +15,18 @@ interface IProps extends HTMLProps<HTMLDivElement> {
 
 const Flex: FC<IProps> = ({end = false, fullHeight = false, fullWidth = false, fullSize = false, center = false, between = false, column = false, className, children, ...props}) => {
   return (
-    <div className={`flex ${end && "justify-end"} ${center && "justify-center items-center"} ${fullHeight && "h-full"} ${fullWidth && "w-full"} ${fullSize && "w-full h-full"} ${between && "justify-between items-center"} ${column && "flex-col"}  ${className}`} {...props}>
+    <div
+      className={cn("flex", {
+        "justify-end": end,
+        "justify-center items-center": center,
+        "h-full": fullHeight,
+        "w-full": fullWidth,
+        "w-full h-full": fullSize,
+        "justify-between items-center": between,
+        "flex-col": column,
+      }, className)}
+      {...props}
+    >
         {children}
     </div>
   )

@@ -1,25 +1,30 @@
-import { type FC } from "react";
-import { motion } from "motion/react";
-import { useAppSelector } from "@/shared/lib/hooks/useAppSelector";
-import { appSelection } from "@/shared/model/appSlice";
-import { useProgressValues } from "../model/lib/hooks/useProgressValues";
+import { motion, useTransform, type MotionValue } from "motion/react";
+import type { CSSProperties, FC } from "react";
+import { cn } from "@/shared/lib/cn";
 
 interface IProps {
-  progress: number;
+  activeIndex: number;
+  count: number;
+  /** Таймер текущего слайда, 0→1 */
+  progress: MotionValue<number>;
+  className?: string;
+  style?: CSSProperties;
 }
 
-const ProgressBar: FC<IProps> = ({ progress }) => {
-  const { theme } = useAppSelector(appSelection);
-  const {x, width} = useProgressValues(progress)
+/**
+ * Полоса прогресса: заливка до текущего слайда (как в дизайне — позиция в карусели)
+ * плюс сегмент, который дорастает по таймеру автопрокрутки. Цвет — акцент текущего вина.
+ */
+const ProgressBar: FC<IProps> = ({ activeIndex, count, progress, className, style }) => {
+  const segment = useTransform(progress, [0, 1], ["0%", `${100 / count}%`]);
 
   return (
-    <div className="relative bg-white rounded-full w-full h-3 overflow-hidden">
-      <motion.div
-        className={`${
-          theme === "red" ? "bg-primary-200" : "bg-secondary-200"
-        } rounded-full h-full`}
-        style={{ x, width }}
+    <div aria-hidden="true" className={cn("flex h-[3px] bg-white/35", className)} style={style}>
+      <div
+        className="h-full bg-wine-accent transition-[width,background-color] duration-500"
+        style={{ width: `${(activeIndex / count) * 100}%` }}
       />
+      <motion.div className="h-full bg-wine-accent transition-colors duration-500" style={{ width: segment }} />
     </div>
   );
 };

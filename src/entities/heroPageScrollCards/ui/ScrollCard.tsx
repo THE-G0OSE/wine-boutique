@@ -1,85 +1,85 @@
 import type { ScrollCard } from "@/entities/heroPageScrollCards/model/types";
-import { useEffect, type FC } from "react";
-import { motion, MotionValue, useMotionValue } from "motion/react";
+import type { FC } from "react";
+import { motion, type MotionValue } from "motion/react";
 import {
-  scrollCardInnerVariants,
-  scrollCardVariants,
+  bottleVariants,
+  paperVariants,
   textBodyVariants,
   textTitleVariants,
 } from "@/entities/heroPageScrollCards/model/animations";
+import { centerStoryLayout } from "@/entities/heroPageScrollCards/model/lib/layout";
 import { Text } from "uikit;/";
-import { useMotionChange } from "@/shared/lib/hooks/useMotionChange";
+import { cn } from "@/shared/lib/cn";
+import { stage, stageFont } from "@/shared/lib/stage";
 
 interface IProps {
   card: ScrollCard;
-  scroll: MotionValue;
-  y: MotionValue<number>
+  isActive: boolean;
+  /** Лёгкое «покачивание» бумаги и бутылки от скорости прокрутки */
+  floatY: MotionValue<number>;
 }
 
-const ScrollCardElement: FC<IProps> = ({ card, scroll, y }) => {
-  const animationState = useMotionChange<number, "hide" | "show">(
-    scroll,
-    (value) =>
-      value > card.scrollFrom && value < card.scrollTo ? "show" : "hide",
-    scroll.get() > card.scrollFrom && card.scrollTo > scroll.get() ? "show" : "hide",
-    50
-  );
-  const cardY = useMotionValue<number>(0)
-  useEffect(() => {
-    const unsubscribe = y.on("change", (value) => cardY.set(-value + card.vertOffset))
-    return unsubscribe
-  })
+const box = (x: number, dy: number, width: number, height?: number) => ({
+  left: stage(x),
+  top: `calc(50% + ${stage(dy)})`,
+  width: stage(width),
+  height: height === undefined ? undefined : stage(height),
+});
+
+/**
+ * История на липком экране (десктоп): координаты из макета, группа по центру экрана.
+ * Неактивные истории уезжают за край, но остаются в DOM — скринридер читает все пять.
+ */
+const ScrollCardElement: FC<IProps> = ({ card, isActive, floatY }) => {
+  const layout = centerStoryLayout(card);
+  const state = isActive ? "show" : "hide";
+  const textAlign = card.side === "right" ? "text-left" : "text-right";
 
   return (
-    <>
-      <motion.div
-        variants={scrollCardVariants(card)}
-        initial="hide"
-        animate={animationState}
-        style={{y: cardY}}
-        className={`absolute bg-[url(/images/ripped-paper.png)] bg-cover ${
-          card.side === "left" ? "-left-10" : "-right-40"
-        } w-240 h-127`}
-      >
+    <div className={cn("absolute inset-0", !isActive && "pointer-events-none")}>
+      <motion.div aria-hidden="true" className="absolute inset-0" style={{ y: floatY }}>
+        <motion.img
+          src="/images/textures/ripped-paper.webp"
+          alt=""
+          variants={paperVariants(card.side)}
+          initial="hide"
+          animate={state}
+          className="absolute max-w-none object-fill drop-shadow-[73px_35px_50px_rgba(0,0,0,0.3)]"
+          style={box(layout.paper.x, layout.paper.dy, layout.paper.width, layout.paper.height)}
+        />
         <motion.img
           src={card.image}
-          variants={scrollCardInnerVariants(card)}
+          alt=""
+          variants={bottleVariants(card.side)}
           initial="hide"
-          animate={animationState}
-          className={`absolute ${
-            card.side === "left" ? "-right-10" : "-left-30"
-          }`}
+          animate={state}
+          className="absolute max-w-none object-contain drop-shadow-[8px_32px_26px_rgba(0,0,0,0.3)]"
+          style={box(layout.bottle.x, layout.bottle.dy, layout.bottle.width, layout.bottle.height)}
         />
-        {/*[x]: add animated text */}
       </motion.div>
       <Text
+        as="h2"
+        FONT="FIRM"
+        COLOR="MUTED"
         variants={textTitleVariants}
         initial="hide"
-        animate={animationState}
-        FONT="FIRM"
-        SIZE="FIRM"
-        COLOR="WHITE"
-        className={`absolute text-shadow-2xl w-248 ${
-          card.side === "left" ? "right-10" : "left-10"
-        } top-60`}
+        animate={state}
+        className={cn("absolute text-shadow-2xl", textAlign)}
+        style={{ ...box(layout.title.x, layout.title.dy, layout.title.width), fontSize: stageFont(96, 56), lineHeight: 140 / 96 }}
       >
         {card.title}
       </Text>
       <Text
+        COLOR="MUTED"
         variants={textBodyVariants}
         initial="hide"
-        animate={animationState}
-        FONT="REGULAR"
-        STYLE="SEMIBOLD"
-        COLOR="WHITE"
-        SIZE="H3"
-        className={`absolute text-shadow-xl w-190 ${
-          card.side === "left" ? "right-40" : "left-40"
-        } top-125`}
+        animate={state}
+        className={cn("absolute text-shadow-xl", textAlign)}
+        style={{ ...box(layout.body.x, layout.body.dy, layout.body.width), fontSize: stageFont(24, 18), lineHeight: 1.35 }}
       >
         {card.body}
       </Text>
-    </>
+    </div>
   );
 };
 

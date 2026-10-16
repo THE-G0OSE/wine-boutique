@@ -1,19 +1,23 @@
-import type { ScrollCard } from "@/entities/heroPageScrollCards"
-import { useScroll, useSpring, useTransform } from "motion/react"
+import { motion, useSpring, useTransform, type MotionValue } from "motion/react"
 import type { FC } from "react"
-import {motion} from "motion/react"
+import { cn } from "@/shared/lib/cn"
 
 interface IProps {
-    card: ScrollCard
-    color: string
+    index: number
+    count: number
+    /** Прогресс всей секции, 0→1 */
+    progress: MotionValue<number>
+    className: string
 }
 
-const ProgressBarItem: FC<IProps> = ({card, color}) => {
-  const {scrollY} = useScroll()
-  const widthValue = useTransform(scrollY, [card.scrollFrom, card.scrollTo], ["0%", "100%"])
-  const width = useSpring(widthValue, {stiffness: 50})
+/** Сегмент полосы: заполняется, пока на экране его история */
+const ProgressBarItem: FC<IProps> = ({ index, count, progress, className }) => {
+  const widthValue = useTransform(progress, [index / count, (index + 1) / count], ["0%", "100%"])
+  const width = useSpring(widthValue, { stiffness: 50 })
   return (
-    <motion.div style={{width}} className={'h-full absolute ' + color}/>
+    <div className="relative h-full flex-1 overflow-hidden">
+      <motion.div style={{ width }} className={cn("absolute inset-y-0 left-0", className)} />
+    </div>
   )
 }
 

@@ -1,34 +1,39 @@
-import { cardsMock } from "@/entities/heroPageScrollCards";
-import { motion } from "motion/react";
-import {ScrollCardElement} from "@/entities/heroPageScrollCards";
-import {ScrollHeroSectionProgressBar} from "./components/progressBar";
+import { cardsMock, ScrollCardElement, StoryCard } from "@/entities/heroPageScrollCards";
+import { MEDIA, useMediaQuery } from "@/shared/lib/hooks/useMediaQuery";
+import { ScrollHeroSectionProgressBar } from "./components/progressBar";
 import { useScrollHeroSection } from "../model";
 
-const HomePageScrollHeroSection = () => {
-  const { positionClassName, isProgressBarShowen, yOffset, scrollY } =
-    useScrollHeroSection(40);
+/** Десктоп: экран прилипает, и пять историй сменяют друг друга по мере прокрутки */
+const PinnedStories = () => {
+  const { ref, activeIndex, isPinned, floatY, progress } = useScrollHeroSection(cardsMock.length, 40);
 
   return (
-    <div className="relative h-[600vh]">
-      <motion.div
-        className={` ${positionClassName} bg-[url(/images/wooden-back.jpg)] bg-repeat shadow-top-sm w-screen overflow-hidden h-screen bg-size-[20rem] `}
-      >
-        {/* [x]: add progress bar */}
-        <ScrollHeroSectionProgressBar
-          y={yOffset}
-          isOpen={isProgressBarShowen}
-        />
-        {cardsMock.map((card) => (
-          <ScrollCardElement
-            y={yOffset}
-            key={card.image + "-scroll-card"}
-            card={card}
-            scroll={scrollY}
-          />
+    <section ref={ref} aria-label="Истории" className="relative h-[600vh]">
+      <div className="@container sticky top-0 h-svh overflow-hidden bg-cellar-800 bg-[url(/images/textures/wood.webp)] bg-size-[25%_auto] bg-repeat">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 inset-shadow-top-sm" />
+        <ScrollHeroSectionProgressBar count={cardsMock.length} progress={progress} isOpen={isPinned} y={floatY} />
+        {cardsMock.map((card, index) => (
+          <ScrollCardElement key={card.image} card={card} isActive={index === activeIndex} floatY={floatY} />
         ))}
-      </motion.div>
-    </div>
+      </div>
+    </section>
   );
+};
+
+/** Мобильные: истории лентой, каждая всплывает при появлении на экране */
+const StoriesFeed = () => (
+  <section aria-label="Истории" className="relative overflow-hidden bg-cellar-800 pt-10 pb-5">
+    <img src="/images/textures/wood.webp" alt="" className="absolute inset-0 size-full object-cover" />
+    <div aria-hidden="true" className="absolute inset-0 bg-cellar-950/25" />
+    {cardsMock.map((card) => (
+      <StoryCard key={card.image} card={card} />
+    ))}
+  </section>
+);
+
+const HomePageScrollHeroSection = () => {
+  const isDesktop = useMediaQuery(MEDIA.desktop);
+  return isDesktop ? <PinnedStories /> : <StoriesFeed />;
 };
 
 export default HomePageScrollHeroSection;

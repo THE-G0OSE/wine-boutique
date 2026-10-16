@@ -1,14 +1,8 @@
-import {BrowserRouter, Route, Routes} from 'react-router'
-import { routes } from '../model/routerConfig'
+import { RouterProvider as ReactRouterProvider } from 'react-router/dom'
+import { router } from '../model/routerConfig'
 
 const RouterProvider = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {routes.map((route) => <Route path={route.path} element={route.element}/>)}
-      </Routes>
-    </BrowserRouter>
-  )
+  return <ReactRouterProvider router={router} />
 }
 
 export default RouterProvider

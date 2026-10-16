@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { globalIgnores } from 'eslint/config'
 
 export default tseslint.config([
-  globalIgnores(['dist']),
+  // Сгенерированные файлы: воркер MSW (msw init) и типы API (pnpm api:types)
+  globalIgnores(['dist', 'public/mockServiceWorker.js', 'src/shared/api/schema.ts']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

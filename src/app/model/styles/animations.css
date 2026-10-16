@@ -1,0 +1,36 @@
+@theme {
+    /* Декоративные бесконечные анимации из дизайна. Длительность и задержку элемента можно переопределить инлайн */
+    --animate-sway: sway 5s ease-in-out infinite alternate;
+    --animate-breathe: breathe 7s ease-in-out infinite alternate;
+    --animate-flicker: flicker 4.6s steps(1, end) infinite;
+    --animate-dust: dust 10s linear infinite;
+
+    @keyframes sway {
+        from { transform: rotate(-1.6deg); }
+        to { transform: rotate(1.6deg); }
+    }
+
+    @keyframes breathe {
+        from { opacity: .2; }
+        to { opacity: .85; }
+    }
+
+    @keyframes flicker {
+        0% { opacity: .8; }
+        7% { opacity: .55; }
+        9% { opacity: .9; }
+        33% { opacity: .72; }
+        36% { opacity: .95; }
+        58% { opacity: .8; }
+        60% { opacity: .5; }
+        62% { opacity: .85; }
+        100% { opacity: .8; }
+    }
+
+    @keyframes dust {
+        0% { transform: translate(0, 0); opacity: 0; }
+        15% { opacity: .9; }
+        80% { opacity: .6; }
+        100% { transform: translate(46px, -240px); opacity: 0; }
+    }
+}

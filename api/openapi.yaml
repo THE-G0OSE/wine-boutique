@@ -1,0 +1,261 @@
+openapi: 3.1.0
+info:
+  title: Wine Boutique API
+  version: 0.1.0
+  description: |
+    Контракт API бутика — источник правды для фронтенда и ТЗ для бэкенда.
+    Типы фронтенда генерируются из этого файла: `pnpm api:types` → src/shared/api/schema.ts.
+    Пока сервера нет, ответы отдаёт MSW (обработчики в entities/*/api/mocks.ts и features/*/api/mocks.ts).
+    Сессия — httpOnly-cookie, которую ставит сервер; клиент шлёт запросы с credentials: include.
+servers:
+  - url: /api
+tags:
+  - name: catalog
+    description: Каталог вин
+  - name: grapes
+    description: Сорта винограда с собственных плантаций
+  - name: auth
+    description: Сессия посетителя
+  - name: newsletter
+    description: Подписка на закрытый канал анонсов
+
+paths:
+  /wines:
+    get:
+      tags: [catalog]
+      operationId: getWines
+      summary: Список вин
+      parameters:
+        - name: category
+          in: query
+          description: Полка; без параметра — все вина
+          schema:
+            $ref: "#/components/schemas/WineCategory"
+        - name: sort
+          in: query
+          schema:
+            $ref: "#/components/schemas/WineSort"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 48
+            default: 12
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Страница списка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WinePage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /grapes:
+    get:
+      tags: [grapes]
+      operationId: getGrapes
+      summary: Сорта с плантаций и вина из них
+      responses:
+        "200":
+          description: Список сортов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GrapeVariety"
+
+  /auth/session:
+    get:
+      tags: [auth]
+      operationId: getSession
+      summary: Кто сейчас вошёл
+      responses:
+        "200":
+          description: Текущая сессия; user = null для гостя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /newsletter:
+    post:
+      tags: [newsletter]
+      operationId: subscribeNewsletter
+      summary: Подписаться на анонсы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsletterSubscription"
+      responses:
+        "204":
+          description: Подписка оформлена (повторная подписка тоже 204)
+        "422":
+          description: Некорректный email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  responses:
+    BadRequest:
+      description: Некорректные параметры запроса
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          examples: [invalid_email]
+        message:
+          type: string
+          description: Текст для пользователя, на русском
+
+    WineCategory:
+      type: string
+      enum: [red, white, sparkling, sweet]
+
+    WineSort:
+      type: string
+      description: popular — популярные, price_asc / price_desc — по цене, vintage_asc — сначала старше урожай, new — новинки
+      enum: [popular, price_asc, price_desc, vintage_asc, new]
+
+    WineSummary:
+      type: object
+      description: Вино в списках (полки, каталог погреба, корзина)
+      required: [id, slug, name, categories, region, country, grapes, volume, vintage, cellarYears, price, image]
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+          examples: [chateau-d-yquem-1988]
+        name:
+          type: string
+          examples: [Château d’Yquem 1988]
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/WineCategory"
+        region:
+          type: string
+          examples: [Сотерн]
+        country:
+          type: [string, "null"]
+          examples: [Франция]
+        grapes:
+          type: array
+          items:
+            type: string
+          examples: [[семильон, совиньон блан]]
+        volume:
+          type: string
+          examples: ["0,75 л"]
+        vintage:
+          type: [integer, "null"]
+          description: Год урожая; null — вино без года
+        cellarYears:
+          type: [integer, "null"]
+          description: Сколько лет бутылка в погребе бутика
+        price:
+          type: [integer, "null"]
+          description: Цена за бутылку в рублях; null — цена ещё не назначена
+        image:
+          type: string
+          description: URL изображения бутылки на прозрачном фоне
+
+    WinePage:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WineSummary"
+        total:
+          type: integer
+          description: Сколько всего вин подходит под фильтр
+
+    GrapeVariety:
+      type: object
+      required: [id, slug, name, type, origin, taste, harvest, description, plantation, image, wines]
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+          examples: [cabernet-sauvignon]
+        name:
+          type: string
+          examples: [Каберне Совиньон]
+        type:
+          type: string
+          enum: [red, white]
+        origin:
+          type: string
+          description: Родина сорта
+        taste:
+          type: string
+          description: Вкус и аромат
+        harvest:
+          type: string
+          description: Когда собирают
+        description:
+          type: string
+        plantation:
+          type: [string, "null"]
+          description: Участок, площадь, высота на собственной плантации
+        image:
+          type: string
+          description: URL изображения грозди на прозрачном фоне
+        wines:
+          type: array
+          description: Вина из этого сорта (до трёх)
+          items:
+            $ref: "#/components/schemas/WineSummary"
+
+    SessionUser:
+      type: object
+      required: [id, name, initials]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        initials:
+          type: string
+          examples: [АК]
+
+    Session:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/SessionUser"
+            - type: "null"
+
+    NewsletterSubscription:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email

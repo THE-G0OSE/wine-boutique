@@ -1,72 +1,86 @@
-import { useEffect, useState } from "react";
+import { animate, useMotionValue, type AnimationPlaybackControls } from "motion/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+/**
+ * Карусель с автопрокруткой.
+ *
+ * Активный элемент — первый в `ordered`. Прогресс таймера — MotionValue 0→1,
+ * поэтому полоса прогресса не перерисовывает компонент на каждом кадре.
+ *
+ * @param items элементы карусели
+ * @param interval сколько мс показывается слайд при автопрокрутке
+ * @param cooldown пауза в мс после ручного переключения, пока идёт анимация
+ * @param autoplay включена ли автопрокрутка (выключаем при «уменьшить движение»)
+ */
 export const useCarousel = <T>({
-  arr,
-  showingNumber,
-  autoChangeTimer,
-  changeCooldown,
-  onChange,
+  items,
+  interval,
+  cooldown,
+  autoplay = true,
 }: {
-  arr: T[];
-  showingNumber: number;
-  autoChangeTimer: number;
-  changeCooldown: number;
-  onChange: (image: T) => void;
+  items: T[];
+  interval: number;
+  cooldown: number;
+  autoplay?: boolean;
 }) => {
-  const [currentArr, setCurrentArr] = useState<T[]>(arr);
-  const [isDisable, setIsDisable] = useState<boolean>(false);
-  const [progress, setProgress] = useState<number>(0);
+  const count = items.length;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const progress = useMotionValue(0);
+  const lockedRef = useRef(false);
+  const timerRef = useRef<AnimationPlaybackControls | null>(null);
 
-  const incrementProgress = () => {
-    setProgress((p) => {
-      if (p + 1 > 100) {
-        nextHandler();
-      }
-      return p + 1;
+  const shift = useCallback(
+    (getIndex: (current: number) => number) => {
+      if (lockedRef.current) return;
+      lockedRef.current = true;
+      window.setTimeout(() => {
+        lockedRef.current = false;
+      }, cooldown);
+      setActiveIndex((current) => getIndex(current));
+    },
+    [cooldown]
+  );
+
+  const next = useCallback(() => shift((current) => (current + 1) % count), [shift, count]);
+  const prev = useCallback(() => shift((current) => (current - 1 + count) % count), [shift, count]);
+  const goTo = useCallback((index: number) => shift(() => index), [shift]);
+
+  // Таймер текущего слайда: заполнил полосу — переходим дальше
+  useEffect(() => {
+    progress.set(0);
+    if (!autoplay) return;
+
+    const controls = animate(progress, 1, {
+      duration: interval / 1000,
+      ease: "linear",
+      onComplete: () => setActiveIndex((current) => (current + 1) % count),
     });
-  };
-
-  const nextHandler = () => {
-    if (!isDisable) {
-      setProgress(0);
-      setCurrentArr((c) => {
-        onChange(c[1]);
-        return c.slice(1, c.length).concat(c[0]);
-      });
-      setIsDisable(true);
-      setTimeout(() => setIsDisable(false), changeCooldown * 1000);
-    }
-  };
-
-  const prevHandler = () => {
-    if (!isDisable) {
-      setProgress(0);
-      setCurrentArr((c) => {
-        onChange(c[c.length - 1])
-        return [
-          c[c.length - 1],
-          ...c.slice(0, c.length - 1),
-        ];
-      });
-      setIsDisable(true);
-      setTimeout(() => setIsDisable(false), changeCooldown * 1000);
-    }
-  };
+    timerRef.current = controls;
+    return () => controls.stop();
+  }, [activeIndex, autoplay, interval, count, progress]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      incrementProgress();
-    }, autoChangeTimer * 10);
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
+    if (isPaused) timerRef.current?.pause();
+    else timerRef.current?.play();
+  }, [isPaused, activeIndex]);
+
+  const ordered = useMemo(
+    () => items.slice(activeIndex).concat(items.slice(0, activeIndex)),
+    [items, activeIndex]
+  );
 
   return {
-    carouselArr: currentArr.slice(0, showingNumber),
-    isDisable,
+    /** Элементы начиная с активного */
+    ordered,
+    active: items[activeIndex],
+    activeIndex,
+    count,
     progress,
-    nextHandler,
-    prevHandler,
+    isPaused,
+    setIsPaused,
+    next,
+    prev,
+    goTo,
   };
 };

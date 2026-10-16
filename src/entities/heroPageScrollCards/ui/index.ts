@@ -1,2 +1,3 @@
 import ScrollCardElement from "./ScrollCard";
-export {ScrollCardElement}
+import StoryCard from "./StoryCard";
+export {ScrollCardElement, StoryCard}

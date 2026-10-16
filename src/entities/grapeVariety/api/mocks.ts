@@ -1,0 +1,95 @@
+import { delay } from "msw";
+import { mockHttp } from "@/shared/api/mockHttp";
+import { wineFixtures as w } from "@/entities/wine/@x/grapeVariety";
+import type { GrapeVariety } from "../model/types";
+
+/** Сорта из дизайна (секция «Виноградники» главной) */
+const grapeFixtures: GrapeVariety[] = [
+  {
+    id: "cabernet-sauvignon",
+    slug: "cabernet-sauvignon",
+    name: "Каберне Совиньон",
+    type: "red",
+    origin: "Бордо, Франция",
+    taste: "чёрная смородина, кедр, табак",
+    harvest: "конец сентября — октябрь",
+    description:
+      "Поздний толстокожий сорт с плотными танинами. Его вина годами раскрываются в бутылке — основа больших бордоских купажей.",
+    plantation: null,
+    image: "/images/grapes/cabernet-sauvignon.webp",
+    wines: [w.sassicaia, w.red1, w.red2],
+  },
+  {
+    id: "chardonnay",
+    slug: "chardonnay",
+    name: "Шардоне",
+    type: "white",
+    origin: "Бургундия, Франция",
+    taste: "зелёное яблоко, цитрус, сливочные ноты",
+    harvest: "начало сентября",
+    description: "Самый универсальный белый сорт: от звонкого шабли до плотных вин, выдержанных в дубе, и игристых.",
+    plantation: null,
+    image: "/images/grapes/chardonnay.webp",
+    wines: [w.cristal, w.white1, w.white2],
+  },
+  {
+    id: "merlot",
+    slug: "merlot",
+    name: "Мерло",
+    type: "red",
+    origin: "Бордо, Франция",
+    taste: "слива, вишня, тёмный шоколад",
+    harvest: "середина сентября",
+    description: "Мягкий и округлый сорт с бархатной текстурой. Смягчает каберне в купаже и прекрасен сам по себе.",
+    plantation: null,
+    image: "/images/grapes/merlot.webp",
+    wines: [w.red1, w.red2, w.red3],
+  },
+  {
+    id: "sauvignon-blanc",
+    slug: "sauvignon-blanc",
+    name: "Совиньон Блан",
+    type: "white",
+    origin: "Долина Луары, Франция",
+    taste: "крыжовник, лайм, свежая трава",
+    harvest: "конец августа — сентябрь",
+    description: "Яркая кислотность и травянистый аромат. Вместе с семильоном даёт легендарные сладкие вина Сотерна.",
+    plantation: null,
+    image: "/images/grapes/sauvignon-blanc.webp",
+    wines: [w.yquem, w.white1, w.white2],
+  },
+  {
+    id: "pinot-noir",
+    slug: "pinot-noir",
+    name: "Пино Нуар",
+    type: "red",
+    origin: "Бургундия, Франция",
+    taste: "вишня, малина, лесная подстилка",
+    harvest: "начало сентября",
+    description:
+      "Капризный тонкокожий сорт: любит прохладу и ручной сбор. В ответ — самые тонкие и сложные красные вина.",
+    plantation: null,
+    image: "/images/grapes/pinot-noir.webp",
+    wines: [w.cristal, w.red1, w.red2],
+  },
+  {
+    id: "riesling",
+    slug: "riesling",
+    name: "Рислинг",
+    type: "white",
+    origin: "Мозель, Германия",
+    taste: "лайм, персик, мёд, минеральность",
+    harvest: "октябрь",
+    description: "Звонкая кислотность позволяет рислингу стареть десятилетиями — от сухих вин до сладких поздних сборов.",
+    plantation: null,
+    image: "/images/grapes/riesling.webp",
+    wines: [w.white1, w.white2, w.sweet1],
+  },
+];
+
+export const grapeHandlers = [
+  mockHttp.get("/grapes", async ({ response }) => {
+    await delay();
+    return response(200).json(grapeFixtures);
+  }),
+];

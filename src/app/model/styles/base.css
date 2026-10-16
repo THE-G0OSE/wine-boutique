@@ -1,0 +1,28 @@
+@layer base {
+    :root {
+        color-scheme: dark;
+        /*
+         * «Сцена» для арт-секций, нарисованных на 1920: ширина ближайшего @container, но не больше 1920.
+         * Координаты из макета переводятся через stage() из shared/lib.
+         */
+        --stage: min(100cqw, 1920px);
+    }
+
+    body {
+        @apply bg-cellar-950 font-regular text-white antialiased;
+    }
+}
+
+:root[data-wine="red"] {
+    --color-wine-accent: var(--color-primary-200);
+    --color-wine-accent-strong: var(--color-primary-500);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}

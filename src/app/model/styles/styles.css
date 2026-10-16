@@ -1,5 +1,12 @@
 @import "tailwindcss";
+
+@import "@fontsource/pacifico/400.css";
+@import "@fontsource-variable/shantell-sans/wght.css";
+@import "@fontsource-variable/shantell-sans/wght-italic.css";
+@import "@fontsource-variable/noto-sans/wght.css";
+
 @import "./text.css";
 @import "./colors.css";
 @import "./shadows.css";
-
+@import "./animations.css";
+@import "./base.css";

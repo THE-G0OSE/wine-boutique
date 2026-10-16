@@ -1,33 +1,45 @@
-import { HeroPageImage, imageMock, type imageObj } from "@/entities/heroPageImages";
-import { useCarousel } from "../model/lib/hooks/useCarousel";
-import CarouselControls from "./components/carouselControls/ui/CarouselControls";
-import { AnimatePresence, motion } from "motion/react";
-import { Flex } from "uikit;/";
-import { setTheme } from "@/shared/model/appSlice";
+import { imageMock } from "@/entities/heroPageImages";
+import { setWineMode } from "@/entities/wineMode";
 import { useAppDispatch } from "@/shared/lib/hooks/useAppDispatch";
+import { MEDIA, useMediaQuery } from "@/shared/lib/hooks/useMediaQuery";
+import { useReducedMotion } from "motion/react";
+import { useEffect, type FocusEvent, type PointerEvent } from "react";
+import { useCarousel } from "../model/lib/hooks/useCarousel";
+import HeroDesktop from "./components/heroDesktop/HeroDesktop";
+import HeroMobile from "./components/heroMobile/HeroMobile";
 
 const HomePageHeroSectionCarousel = () => {
-  const dispatch = useAppDispatch()
-  const { carouselArr, prevHandler, nextHandler, progress } = useCarousel<imageObj>({
-    arr: imageMock,
-    showingNumber: 7,
-    autoChangeTimer: 5,
-    changeCooldown: 1.5,
-    onChange: (image) => {setTimeout(() => dispatch(setTheme(image.theme)),0 )}
-  });
+  const dispatch = useAppDispatch();
+  const isDesktop = useMediaQuery(MEDIA.desktop);
+  const reducedMotion = useReducedMotion();
+  const carousel = useCarousel({ items: imageMock, interval: 5000, cooldown: 900, autoplay: !reducedMotion });
+  const { active, setIsPaused } = carousel;
+
+  // Акцент страницы (полоса прогресса, черта над заголовком) — по виду вина на слайде
+  useEffect(() => {
+    dispatch(setWineMode(active.theme));
+  }, [active, dispatch]);
+
+  // Автопрокрутка замирает, пока посетитель смотрит на карусель мышью или клавиатурой
+  const pauseOnMouse = (paused: boolean) => (event: PointerEvent) => {
+    if (event.pointerType === "mouse") setIsPaused(paused);
+  };
+  const resumeOnBlur = (event: FocusEvent<HTMLElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) setIsPaused(false);
+  };
+
   return (
-    <div className="relative w-screen h-screen overflow-hidden">
-      <Flex column fullSize>
-        <motion.div>
-          <AnimatePresence>
-            {carouselArr.map((image, index) => (
-              <HeroPageImage key={image.path} image={image} index={index} />
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      </Flex>
-      <CarouselControls progress={progress} prevHandler={prevHandler} index={carouselArr[0].id} nextHandler={nextHandler} />
-    </div>
+    <section
+      aria-roledescription="карусель"
+      aria-label="Premium Wine Boutique"
+      onPointerEnter={pauseOnMouse(true)}
+      onPointerLeave={pauseOnMouse(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={resumeOnBlur}
+      className="relative h-200 w-full overflow-hidden bg-cellar-950 lg:h-svh lg:min-h-160"
+    >
+      {isDesktop ? <HeroDesktop carousel={carousel} /> : <HeroMobile carousel={carousel} items={imageMock} />}
+    </section>
   );
 };
 

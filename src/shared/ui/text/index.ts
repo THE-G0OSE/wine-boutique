@@ -1,2 +1,3 @@
 import Text from './Text'
-export {Text}
+import Eyebrow from './Eyebrow'
+export {Text, Eyebrow}
