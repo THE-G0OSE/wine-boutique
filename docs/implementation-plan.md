@@ -372,9 +372,9 @@ api/openapi.yaml    контракт API (источник правды для �
 
 Проект пока нигде не хостится. Аудитория сайта — в России, а популярные зарубежные платформы для фронтенда там работают нестабильно: Vercel частично недоступен (особенно с мобильного интернета), Netlify заблокирован, сайты за Cloudflare с июня 2025 года режутся российскими провайдерами до первых 16 КБ ([Хабр](https://habr.com/ru/companies/amvera/articles/1028136/), [Threads](https://www.threads.com/@mangust59/post/DUqL_bwk8sX/vercel-%D1%87%D0%B0%D1%81%D1%82%D0%B8%D1%87%D0%BD%D0%BE-%D0%B7%D0%B0%D0%B1%D0%BB%D0%BE%D0%BA%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD-%D0%B2-%D1%80%D1%84-netlify-%D0%BF%D0%BE%D0%BB%D0%BD%D0%BE%D1%81%D1%82%D1%8C%D1%8E-%D0%B7%D0%B0%D0%B4%D0%B5%D0%BF%D0%BB%D0%BE%D0%B8%D1%82%D1%8C-%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE-%D0%B0-%D0%B4%D0%B0%D0%BB%D1%8C%D1%88%D0%B5-%D1%87%D1%82), [Cloudflare](https://blog.cloudflare.com/russian-internet-users-are-unable-to-access-the-open-internet/), [BleepingComputer](https://www.bleepingcomputer.com/news/technology/russias-throttling-of-cloudflare-makes-sites-inaccessible/)). Поэтому деплой — переносимый контейнер, который запускается у любого провайдера:
 
-- **Docker-образ**, multi-stage: `node:24-alpine` + corepack/pnpm → `pnpm build` → `nginx:alpine` раздаёт `dist`. Свой `nginx.conf`: SPA-фолбэк `try_files $uri $uri/ /index.html`, вечный кэш для хешированных `/assets/*`, `no-cache` для `index.html`, gzip, базовые security-заголовки.
+- **Docker-образ**, multi-stage: `node:24-alpine` + corepack/pnpm (версия из `packageManager`) → `pnpm build` → `nginxinc/nginx-unprivileged:1.30-alpine` (без root, порт 8080) раздаёт `dist`. Конфиг в `deploy/nginx/`: SPA-фолбэк `try_files $uri $uri/ /index.html`, вечный кэш для хешированных `/assets/*`, неделя для `/images/*`, `no-cache` для `index.html` и воркера MSW, gzip; заголовки безопасности (CSP, nosniff, frame-ancestors, Referrer-Policy, Permissions-Policy, COOP, HSTS) — отдельным сниппетом, который подключается в каждый `location` (иначе `add_header` уровня server теряется).
 - **Хостинг** — российская облачная платформа с автодеплоем из GitHub по Dockerfile; по умолчанию Timeweb Cloud Apps, запасной вариант — Yandex Cloud Serverless Containers. Тот же образ потом встанет рядом с бэкендом (docker compose). Регистрация и оплата аккаунта — на тебе.
-- **GitHub Actions** — только проверки качества на push и PR: `pnpm install --frozen-lockfile`, `pnpm lint`, `tsc -b`, `pnpm build` (+ тесты, когда появятся), Node 24. FTP-деплой и его секреты удаляем.
+- **GitHub Actions** (`ci.yml`) — только проверки на каждый push: `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm build` (+ тесты, когда появятся), Node 24; затем сборка Docker-образа и смоук-тест контейнера (главная, вложенный путь, заголовки воркера). FTP-деплой удалён; секреты `FTP_*` в настройках репозитория больше не нужны.
 - Переменные окружения сборки: `VITE_API_URL`, `VITE_API_MOCKS`.
 
 ---
@@ -476,7 +476,8 @@ Vitest + Testing Library (MSW-обработчики переиспользую�
 **Сделано (ветка `feat/home-page`, 17.10.2026) — главная страница целиком:**
 
 - Фаза 0 в объёме главной: токены (amber, neutral, cellar, paper, режим вина, кегли, тени, кейфреймы), шрифты через fontsource (woff2 по алфавитам вместо 3 МБ TTF), картинки WebP (hero 21 МБ → 0,9 МБ), ui-кит (Text с `as`, Eyebrow, Button/ButtonLink/IconButton, Chip, QtyStepper, TextField, Overlay/Modal/Drawer), `cn`, `stage`, `plural`, хуки; API-слой (`api/openapi.yaml`, `pnpm api:types`, `baseApi`, MSW + openapi-msw); техдолг 1–14 из §1.4.
-- Фаза 1 частично: layout-маршрут, шапка (прозрачная → тёмная, мобильное меню), корзина-шторка (справа / снизу) с персистом, футер с подпиской, модалка 18+. Остальные маршруты пока показывают только шапку и футер; деплой (п. 8) не трогали.
+- Фаза 1 частично: layout-маршрут, шапка (прозрачная → тёмная, мобильное меню), корзина-шторка (справа / снизу) с персистом, футер с подпиской, модалка 18+. Остальные маршруты пока показывают только шапку и футер.
+- Фаза 1, п. 8: FTP-деплой заменён на CI (`ci.yml`) и Docker-образ с nginx (`Dockerfile`, `deploy/nginx`), инструкция по хостингу — в README. Хостинг ещё не подключён.
 - Фаза 2 полностью: hero, истории (sticky), виноградники с модалкой/шторкой сорта, погреб с каталогом.
 
 **Сознательные отступления от макета:**

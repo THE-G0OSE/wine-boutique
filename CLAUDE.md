@@ -15,7 +15,7 @@ pnpm api:types  # после правки api/openapi.yaml — перегене�
 node scripts/optimize-image.mjs <вход> public/images/<путь>.webp [ширина] [качество]  # новые картинки — только WebP
 ```
 
-Сейчас push в `main` запускает FTP-деплой из `.github/workflows/deploy.yml`, но сервера нет. В Фазе 1 он заменяется на CI-проверки + Docker-образ (nginx со SPA-фолбэком) для российской облачной платформы — см. план §4.8.
+На каждый push GitHub Actions (`.github/workflows/ci.yml`) гоняет линтер, типы, сборку и сборку Docker-образа со смоук-тестом. Деплоя в Actions нет: хостинг (российская облачная платформа) сам собирает `Dockerfile`; nginx-конфиг — `deploy/nginx/`, порт 8080. Новый сторонний домен (API, CDN) — добавить в CSP в `deploy/nginx/security-headers.conf`.
 
 ## Архитектура — Feature-Sliced Design
 
