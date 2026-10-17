@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/news/issues/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Свежий выпуск газеты целиком */
+        get: operations["getLatestNewsIssue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/newsletter": {
         parameters: {
             query?: never;
@@ -155,6 +172,102 @@ export interface components {
         Session: {
             user: components["schemas"]["SessionUser"] | null;
         };
+        /**
+         * @description supply — поставки, harvest — урожай, tasting — дегустации, events — события
+         * @enum {string}
+         */
+        NewsRubric: "supply" | "harvest" | "tasting" | "events";
+        NewsImage: {
+            src: string;
+            alt: string;
+            /** @description Подпись под иллюстрацией */
+            caption: string | null;
+        };
+        /** @description Когда и сколько мест — для материалов-анонсов (дегустация, встреча) */
+        NewsEvent: {
+            /**
+             * Format: date-time
+             * @description null — дата ещё не назначена
+             */
+            startsAt: string | null;
+            seats: number | null;
+        };
+        NewsStory: {
+            /** @description Адрес статьи — /news/{slug} */
+            slug: string;
+            rubric: components["schemas"]["NewsRubric"];
+            /**
+             * @description Надзаголовок, например «Поставки · Главное»
+             * @example Поставки · Главное
+             */
+            kicker: string;
+            title: string;
+            /** @description Лид — курсивный абзац под заголовком */
+            standfirst: string | null;
+            /**
+             * @example {
+             *       "Текст": "редакция «Вестника»"
+             *     }
+             */
+            byline: string | null;
+            readingMinutes: number | null;
+            image: components["schemas"]["NewsImage"] | null;
+            /** @description Абзацы текста на полосе */
+            body: string[];
+            event: components["schemas"]["NewsEvent"] | null;
+        };
+        /** @description Заметка в колонке «Коротко» */
+        NewsBrief: {
+            rubric: components["schemas"]["NewsRubric"];
+            title: string;
+            text: string;
+        };
+        /** @description Объявление на второй полосе */
+        NewsAd: {
+            /** @example Сдаётся */
+            kicker: string | null;
+            title: string;
+            text: string;
+            /** @description Гравюра над объявлением */
+            image: string | null;
+            /** @description Двойная рамка — объявление выделено */
+            emphasis: boolean;
+        };
+        NewsAfishaItem: {
+            /** Format: date-time */
+            startsAt: string | null;
+            title: string;
+            /** @example Дегустация в погребе */
+            format: string;
+            /** @description false — мест без ограничения (например, вебинар), в афише прочерк */
+            capacityLimited: boolean;
+            /** @description Сколько мест, если capacityLimited; null — ещё не известно */
+            seats: number | null;
+        };
+        NewsIssue: {
+            id: string;
+            /** @description Номер выпуска; null — ещё не присвоен */
+            number: number | null;
+            /** Format: date */
+            publishedAt: string;
+            city: string;
+            /** @description «Погода в погребе» в шапке газеты, строки через \n */
+            weather: string;
+            lead: components["schemas"]["NewsStory"];
+            /** @description Материалы второй полосы по порядку (первый — широкий, второй — колонка) */
+            stories: components["schemas"]["NewsStory"][];
+            briefs: components["schemas"]["NewsBrief"][];
+            quote: {
+                text: string;
+                author: string;
+            };
+            /** @description Тема следующего номера */
+            nextIssueTeaser: string;
+            ads: components["schemas"]["NewsAd"][];
+            afisha: components["schemas"]["NewsAfishaItem"][];
+            previousIssueId: string | null;
+            nextIssueId: string | null;
+        };
         NewsletterSubscription: {
             /** Format: email */
             email: string;
@@ -241,6 +354,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Session"];
+                };
+            };
+        };
+    };
+    getLatestNewsIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Выпуск со всеми материалами первой и второй полосы */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsIssue"];
                 };
             };
         };

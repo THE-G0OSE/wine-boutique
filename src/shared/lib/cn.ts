@@ -12,8 +12,8 @@ const twMerge = extendTailwindMerge({
       "inset-shadow": ["top", "top-sm", "card-bottom"],
       shadow: ["panel"],
       "text-shadow": ["glow"],
-      animate: ["sway", "breathe", "flicker", "dust"],
-      font: ["firm", "regular", "system"],
+      animate: ["sway", "breathe", "flicker", "dust", "develop"],
+      font: ["firm", "regular", "system", "paper", "paper-display"],
     },
   },
 });

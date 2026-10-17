@@ -2,6 +2,8 @@
 export const ROUTES = {
   home: "/",
   news: "/news",
+  newsArchive: "/news/archive",
+  article: (slug: string) => `/news/${slug}`,
   shop: "/shop",
   shelf: (shelf: string) => `/shop/${shelf}`,
   wine: (slug: string) => `/wine/${slug}`,

@@ -19,6 +19,8 @@ const propsToClass = {
     REGULAR: "font-regular",
     FIRM: "font-firm font-normal",
     SYSTEM: "font-system",
+    PAPER: "font-paper",
+    PAPER_DISPLAY: "font-paper-display font-normal",
   },
   SIZE: {
     FIRM: "text-4xl",
@@ -50,6 +52,7 @@ const propsToClass = {
     SUBTLE: "text-neutral-500",
     ACCENT: "text-amber-200",
     INK_MUTED: "text-neutral-650",
+    INK: "text-ink",
   },
 };
 

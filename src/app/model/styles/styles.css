@@ -4,6 +4,11 @@
 @import "@fontsource-variable/shantell-sans/wght.css";
 @import "@fontsource-variable/shantell-sans/wght-italic.css";
 @import "@fontsource-variable/noto-sans/wght.css";
+/* Газета «Винный Вѣстникъ» и документы: браузер скачивает шрифт, только когда он встречается на странице */
+@import "@fontsource/old-standard-tt/400.css";
+@import "@fontsource/old-standard-tt/400-italic.css";
+@import "@fontsource/old-standard-tt/700.css";
+@import "@fontsource/oranienbaum/400.css";
 
 @import "./text.css";
 @import "./colors.css";

@@ -2,6 +2,9 @@
   --font-firm: "Pacifico", cursive;
   --font-regular: "Shantell Sans Variable", "Shantell Sans", sans-serif;
   --font-system: "Noto Sans Variable", "Noto Sans", sans-serif;
+  /* Газетные страницы: наборный текст и заголовки «под старину» */
+  --font-paper: "Old Standard TT", Georgia, serif;
+  --font-paper-display: "Oranienbaum", "Old Standard TT", serif;
 
   --text-4xl: 96px;
   --text-4xl--line-height: 1.333;

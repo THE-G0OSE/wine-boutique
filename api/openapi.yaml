@@ -18,6 +18,8 @@ tags:
     description: Сессия посетителя
   - name: newsletter
     description: Подписка на закрытый канал анонсов
+  - name: news
+    description: Газета бутика «Винный Вѣстникъ»
 
 paths:
   /wines:
@@ -85,6 +87,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Session"
+
+  /news/issues/latest:
+    get:
+      tags: [news]
+      operationId: getLatestNewsIssue
+      summary: Свежий выпуск газеты целиком
+      responses:
+        "200":
+          description: Выпуск со всеми материалами первой и второй полосы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsIssue"
 
   /newsletter:
     post:
@@ -251,6 +266,175 @@ components:
           oneOf:
             - $ref: "#/components/schemas/SessionUser"
             - type: "null"
+
+    NewsRubric:
+      type: string
+      description: supply — поставки, harvest — урожай, tasting — дегустации, events — события
+      enum: [supply, harvest, tasting, events]
+
+    NewsImage:
+      type: object
+      required: [src, alt, caption]
+      properties:
+        src:
+          type: string
+        alt:
+          type: string
+        caption:
+          type: [string, "null"]
+          description: Подпись под иллюстрацией
+
+    NewsEvent:
+      type: object
+      description: Когда и сколько мест — для материалов-анонсов (дегустация, встреча)
+      required: [startsAt, seats]
+      properties:
+        startsAt:
+          type: [string, "null"]
+          format: date-time
+          description: null — дата ещё не назначена
+        seats:
+          type: [integer, "null"]
+
+    NewsStory:
+      type: object
+      required: [slug, rubric, kicker, title, standfirst, byline, readingMinutes, image, body, event]
+      properties:
+        slug:
+          type: string
+          description: Адрес статьи — /news/{slug}
+        rubric:
+          $ref: "#/components/schemas/NewsRubric"
+        kicker:
+          type: string
+          description: Надзаголовок, например «Поставки · Главное»
+          examples: [Поставки · Главное]
+        title:
+          type: string
+        standfirst:
+          type: [string, "null"]
+          description: Лид — курсивный абзац под заголовком
+        byline:
+          type: [string, "null"]
+          examples: [Текст: редакция «Вестника»]
+        readingMinutes:
+          type: [integer, "null"]
+        image:
+          oneOf:
+            - $ref: "#/components/schemas/NewsImage"
+            - type: "null"
+        body:
+          type: array
+          description: Абзацы текста на полосе
+          items:
+            type: string
+        event:
+          oneOf:
+            - $ref: "#/components/schemas/NewsEvent"
+            - type: "null"
+
+    NewsBrief:
+      type: object
+      description: Заметка в колонке «Коротко»
+      required: [rubric, title, text]
+      properties:
+        rubric:
+          $ref: "#/components/schemas/NewsRubric"
+        title:
+          type: string
+        text:
+          type: string
+
+    NewsAd:
+      type: object
+      description: Объявление на второй полосе
+      required: [kicker, title, text, image, emphasis]
+      properties:
+        kicker:
+          type: [string, "null"]
+          examples: [Сдаётся]
+        title:
+          type: string
+        text:
+          type: string
+        image:
+          type: [string, "null"]
+          description: Гравюра над объявлением
+        emphasis:
+          type: boolean
+          description: Двойная рамка — объявление выделено
+
+    NewsAfishaItem:
+      type: object
+      required: [startsAt, title, format, capacityLimited, seats]
+      properties:
+        startsAt:
+          type: [string, "null"]
+          format: date-time
+        title:
+          type: string
+        format:
+          type: string
+          examples: [Дегустация в погребе]
+        capacityLimited:
+          type: boolean
+          description: false — мест без ограничения (например, вебинар), в афише прочерк
+        seats:
+          type: [integer, "null"]
+          description: Сколько мест, если capacityLimited; null — ещё не известно
+
+    NewsIssue:
+      type: object
+      required:
+        [id, number, publishedAt, city, weather, lead, stories, briefs, quote, nextIssueTeaser, ads, afisha, previousIssueId, nextIssueId]
+      properties:
+        id:
+          type: string
+        number:
+          type: [integer, "null"]
+          description: Номер выпуска; null — ещё не присвоен
+        publishedAt:
+          type: string
+          format: date
+        city:
+          type: string
+        weather:
+          type: string
+          description: «Погода в погребе» в шапке газеты, строки через \n
+        lead:
+          $ref: "#/components/schemas/NewsStory"
+        stories:
+          type: array
+          description: Материалы второй полосы по порядку (первый — широкий, второй — колонка)
+          items:
+            $ref: "#/components/schemas/NewsStory"
+        briefs:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsBrief"
+        quote:
+          type: object
+          required: [text, author]
+          properties:
+            text:
+              type: string
+            author:
+              type: string
+        nextIssueTeaser:
+          type: string
+          description: Тема следующего номера
+        ads:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsAd"
+        afisha:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsAfishaItem"
+        previousIssueId:
+          type: [string, "null"]
+        nextIssueId:
+          type: [string, "null"]
 
     NewsletterSubscription:
       type: object
