@@ -9,12 +9,15 @@ const PinnedStories = () => {
 
   return (
     <section ref={ref} aria-label="Истории" className="relative h-[600vh]">
-      <div className="@container sticky top-0 h-svh overflow-hidden bg-cellar-800 bg-[url(/images/textures/wood.webp)] bg-size-[25%_auto] bg-repeat">
+      {/* Дерево — на всю ширину экрана, истории — по центру, не шире макета 1920 */}
+      <div className="sticky top-0 h-svh overflow-hidden bg-cellar-800 bg-[url(/images/textures/wood.webp)] bg-size-[min(25%,480px)_auto] bg-repeat">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 inset-shadow-top-sm" />
-        <ScrollHeroSectionProgressBar count={cardsMock.length} progress={progress} isOpen={isPinned} y={floatY} />
-        {cardsMock.map((card, index) => (
-          <ScrollCardElement key={card.image} card={card} isActive={index === activeIndex} floatY={floatY} />
-        ))}
+        <div className="@container relative mx-auto h-full max-w-[1920px]">
+          <ScrollHeroSectionProgressBar count={cardsMock.length} progress={progress} isOpen={isPinned} y={floatY} />
+          {cardsMock.map((card, index) => (
+            <ScrollCardElement key={card.image} card={card} isActive={index === activeIndex} floatY={floatY} />
+          ))}
+        </div>
       </div>
     </section>
   );
