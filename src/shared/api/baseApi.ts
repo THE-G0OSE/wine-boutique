@@ -8,6 +8,6 @@ import { env } from "@/shared/config/env";
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: env.apiUrl, credentials: "include" }),
-  tagTypes: ["Wine", "Grape", "Session", "NewsIssue"],
+  tagTypes: ["Wine", "Grape", "Session", "NewsIssue", "NewsArticle"],
   endpoints: () => ({}),
 });

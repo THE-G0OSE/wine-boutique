@@ -13,7 +13,7 @@ const twMerge = extendTailwindMerge({
       shadow: ["panel"],
       "text-shadow": ["glow"],
       animate: ["sway", "breathe", "flicker", "dust", "develop"],
-      font: ["firm", "regular", "system", "paper", "paper-display"],
+      font: ["firm", "regular", "system", "paper", "paper-display", "hand"],
     },
   },
 });

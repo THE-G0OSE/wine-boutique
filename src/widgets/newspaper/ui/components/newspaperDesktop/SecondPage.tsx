@@ -71,7 +71,7 @@ const Ad: FC<{ ad: NewsAd }> = ({ ad }) => (
 /** Вторая полоса: широкий материал, колонка-анонс и объявления */
 const SecondPage: FC<IProps> = ({ stories, ads, matches }) => {
   const [feature, column] = stories;
-  const dim = (story: NewsStory | undefined) => story && !matches(story.rubric) && "opacity-30";
+  const dim = (story: NewsStory | undefined) => ({ "opacity-30": story !== undefined && !matches(story.rubric) });
 
   return (
     <div className="mt-7.5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] border-t-4 border-double border-ink">

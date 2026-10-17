@@ -49,6 +49,7 @@ node scripts/optimize-image.mjs <вход> public/images/<путь>.webp [шир
 - Стили — только утилиты Tailwind и токены из `src/app/model/styles` (`@theme`). Новый цвет/кегль/тень — сначала токен, потом использование. Хексы в компонентах не пишем.
 - `@import "tailwindcss"` — один раз, в `styles.css`.
 - Классы склеиваем через `cn()`; условные — объектом, не `cond && "class"`.
+- В `cn()` `leading-*` ставим после `text-*`: tailwind-merge считает, что размер шрифта задаёт и интерлиньяж, и выкидывает стоящий перед ним `leading-*`.
 - Текст — через `Text` из `shared/ui` (пропсы `FONT/SIZE/STYLE/COLOR`, `as` для семантики тега).
 - Анимации — `motion/react`, варианты в `model/animations.ts`. Скролл-эффекты считаются от прогресса секции (`useScroll({ target })`), не от абсолютного `scrollY`. Бесконечный декор — CSS-кейфреймы из токенов. Уважать `prefers-reduced-motion`.
 - Не вешать `overflow: hidden/scroll` на предков элементов со `position: sticky` (используй `overflow-x-clip`).

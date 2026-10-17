@@ -72,6 +72,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/news/articles/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Статья целиком */
+        get: operations["getNewsArticle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/news/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Подшивка — выпуски за месяц */
+        get: operations["getNewsArchive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/newsletter": {
         parameters: {
             query?: never;
@@ -268,6 +302,72 @@ export interface components {
             previousIssueId: string | null;
             nextIssueId: string | null;
         };
+        /** @description Короткая ссылка на статью — «Ещё вырезки» */
+        NewsClipping: {
+            slug: string;
+            rubric: components["schemas"]["NewsRubric"];
+            title: string;
+        };
+        NewsArticle: {
+            slug: string;
+            rubric: components["schemas"]["NewsRubric"];
+            kicker: string;
+            title: string;
+            standfirst: string | null;
+            byline: string | null;
+            readingMinutes: number | null;
+            /** @description В каком выпуске вышла статья */
+            issue: {
+                id: string;
+                number: number | null;
+                /** Format: date */
+                publishedAt: string;
+            };
+            image: components["schemas"]["NewsImage"] | null;
+            /** @description Абзацы статьи */
+            body: string[];
+            /** @description Вынесенная цитата — встаёт в текст после абзаца с номером afterParagraph (с 1) */
+            pullQuote: {
+                text: string;
+                afterParagraph: number;
+            } | null;
+            /** @description Вино из статьи — для стикера «Забронировать» */
+            relatedWine: {
+                slug: string;
+                name: string;
+            } | null;
+            /** @description Ещё вырезки — другие статьи */
+            more: components["schemas"]["NewsClipping"][];
+        };
+        NewsArchiveMonth: {
+            /**
+             * @description YYYY-MM
+             * @example 2026-10
+             */
+            id: string;
+            /** @description Сколько выпусков вышло за месяц (без учёта фильтра по рубрике) */
+            issuesCount: number;
+        };
+        /** @description Первая полоса выпуска в подшивке */
+        NewsArchiveIssue: {
+            id: string;
+            number: number | null;
+            /** Format: date */
+            publishedAt: string;
+            rubric: components["schemas"]["NewsRubric"];
+            /** @description Заголовок главного материала выпуска */
+            title: string;
+            image: string;
+            /** @description Статья, на которую ведёт карточка выпуска */
+            articleSlug: string;
+        };
+        NewsArchive: {
+            /** @description Месяцы подшивки, от свежего к старому */
+            months: components["schemas"]["NewsArchiveMonth"][];
+            /** @description Какой месяц показан (YYYY-MM) */
+            month: string;
+            issues: components["schemas"]["NewsArchiveIssue"][];
+        };
         NewsletterSubscription: {
             /** Format: email */
             email: string;
@@ -374,6 +474,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NewsIssue"];
+                };
+            };
+        };
+    };
+    getNewsArticle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Статья с выходными данными выпуска и связанными вырезками */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsArticle"];
+                };
+            };
+            /** @description Статьи нет */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getNewsArchive: {
+        parameters: {
+            query?: {
+                /** @description Месяц в формате YYYY-MM; без параметра — последний месяц с выпусками */
+                month?: string;
+                /** @description Только выпуски, где главный материал этой рубрики */
+                rubric?: components["schemas"]["NewsRubric"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Список месяцев подшивки и выпуски выбранного месяца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsArchive"];
                 };
             };
         };

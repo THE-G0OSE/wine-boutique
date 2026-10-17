@@ -19,6 +19,15 @@ export const router = createBrowserRouter([
         path: ROUTES.news,
         lazy: async () => ({ Component: (await import("@/pages/news")).NewsPage }),
       },
+      {
+        // Статичный сегмент сильнее :slug — «/news/archive» не примут за статью
+        path: ROUTES.newsArchive,
+        lazy: async () => ({ Component: (await import("@/pages/newsArchive")).NewsArchivePage }),
+      },
+      {
+        path: ROUTES.article(":slug"),
+        lazy: async () => ({ Component: (await import("@/pages/article")).ArticlePage }),
+      },
       { path: "*", element: null },
     ],
   },

@@ -21,7 +21,7 @@ const BriefsColumn: FC<IProps> = ({ issue, matches }) => (
             ❧
           </div>
         )}
-        <div className={cn("flex flex-col gap-1.5 transition-opacity duration-300", !matches(brief.rubric) && "opacity-30")}>
+        <div className={cn("flex flex-col gap-1.5 transition-opacity duration-300", { "opacity-30": !matches(brief.rubric) })}>
           <h4 className="m-0 text-md leading-[1.25]">{brief.title}</h4>
           <p className="m-0 text-justify text-[17px] leading-[1.55] hyphens-auto">{brief.text}</p>
         </div>

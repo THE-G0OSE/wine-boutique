@@ -5,6 +5,8 @@
   /* Газетные страницы: наборный текст и заголовки «под старину» */
   --font-paper: "Old Standard TT", Georgia, serif;
   --font-paper-display: "Oranienbaum", "Old Standard TT", serif;
+  /* Записки от руки на стикерах */
+  --font-hand: "Caveat", cursive;
 
   --text-4xl: 96px;
   --text-4xl--line-height: 1.333;

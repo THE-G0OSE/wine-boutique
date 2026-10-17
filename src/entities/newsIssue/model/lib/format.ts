@@ -53,5 +53,26 @@ export const formatAfishaSeats = ({ capacityLimited, seats }: Pick<NewsAfishaIte
   return seats === null ? "[N]" : String(seats);
 };
 
+const monthName = new Intl.DateTimeFormat("ru-RU", { month: "long" });
+
+/** Месяц подшивки «2026-10» → { name: «Октябрь», year: 2026 } */
+export const formatArchiveMonth = (monthId: string) => {
+  const [year, month] = monthId.split("-").map(Number);
+  const name = monthName.format(new Date(year, month - 1, 1));
+  return { name: `${name[0].toUpperCase()}${name.slice(1)}`, year };
+};
+
+/** Дата на первой полосе в подшивке: «16 окт 2026», «25 сен 2026» — месяц тремя буквами, как в макете */
+export const formatArchiveDate = (isoDate: string, withYear = true) => {
+  const date = parseDate(isoDate);
+  // Месяц берём из «16 сент.» — с числом он в родительном падеже («мая»), обрезаем до трёх букв
+  const month = dayMonthShort.formatToParts(date).find(({ type }) => type === "month")!.value.slice(0, 3);
+  const short = `${date.getDate()} ${month}`;
+  return withYear ? `${short} ${date.getFullYear()}` : short;
+};
+
+/** «16.10.2026» */
+export const formatIssueDateNumeric = (isoDate: string) => parseDate(isoDate).toLocaleDateString("ru-RU");
+
 /** Число мест в анонсе события */
 export const formatSeats = (seats: number | null) => (seats === null ? "[N]" : String(seats));

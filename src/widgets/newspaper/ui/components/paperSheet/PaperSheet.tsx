@@ -1,5 +1,6 @@
 import { cn } from "@/shared/lib/cn";
 import type { FC, ReactNode } from "react";
+import { Newsprint } from "uikit;/";
 
 interface IProps {
   children: ReactNode;
@@ -12,11 +13,7 @@ interface IProps {
 const PaperSheet: FC<IProps> = ({ children, folded = false, className }) => {
   return (
     <article className={cn("relative overflow-hidden font-paper text-ink", className)}>
-      <img src="/images/textures/newspaper.webp" alt="" className="absolute inset-0 size-full object-cover" />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[rgba(250,245,234,0.4)] shadow-[inset_0_0_60px_rgba(120,85,35,0.2)] lg:bg-[rgba(250,245,234,0.38)] lg:shadow-[inset_0_0_140px_rgba(120,85,35,0.2)]"
-      />
+      <Newsprint overlayClassName="shadow-[inset_0_0_60px_rgba(120,85,35,0.2)] lg:bg-[rgba(250,245,234,0.38)] lg:shadow-[inset_0_0_140px_rgba(120,85,35,0.2)]" />
       {folded && (
         <div
           aria-hidden="true"

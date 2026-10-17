@@ -1,5 +1,5 @@
-import { baseApi } from "@/shared/api";
-import type { NewsIssue } from "../model/types";
+import { baseApi, type ApiQuery } from "@/shared/api";
+import type { NewsArchive, NewsIssue } from "../model/types";
 
 export const newsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -7,7 +7,11 @@ export const newsApi = baseApi.injectEndpoints({
       query: () => "/news/issues/latest",
       providesTags: [{ type: "NewsIssue", id: "LATEST" }],
     }),
+    getNewsArchive: build.query<NewsArchive, ApiQuery<"getNewsArchive"> | void>({
+      query: (params) => ({ url: "/news/archive", params: params ?? undefined }),
+      providesTags: [{ type: "NewsIssue", id: "ARCHIVE" }],
+    }),
   }),
 });
 
-export const { useGetLatestNewsIssueQuery } = newsApi;
+export const { useGetLatestNewsIssueQuery, useGetNewsArchiveQuery } = newsApi;

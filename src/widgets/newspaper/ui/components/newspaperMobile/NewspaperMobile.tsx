@@ -40,7 +40,7 @@ const NewspaperMobile: FC<{ issue: NewsIssue }> = ({ issue }) => {
       {stories.map((story, index) => (
         <article key={story.slug} className="border-b border-ink py-4">
           <span className="text-[11px] tracking-[0.22em] uppercase">{story.kicker}</span>
-          <h2 className={cn("m-0 mt-1.5 font-paper-display leading-[1.04] font-normal", TITLE_SIZES[Math.min(index, 2)])}>
+          <h2 className={cn("m-0 mt-1.5 font-paper-display font-normal", TITLE_SIZES[Math.min(index, 2)], "leading-[1.04]")}>
             <Link to={ROUTES.article(story.slug)} className="text-ink no-underline">
               {story.title}
             </Link>

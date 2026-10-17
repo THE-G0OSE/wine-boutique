@@ -6,3 +6,6 @@ export type NewsRubric = ApiSchemas["NewsRubric"];
 export type NewsBrief = ApiSchemas["NewsBrief"];
 export type NewsAd = ApiSchemas["NewsAd"];
 export type NewsAfishaItem = ApiSchemas["NewsAfishaItem"];
+export type NewsArchive = ApiSchemas["NewsArchive"];
+export type NewsArchiveIssue = ApiSchemas["NewsArchiveIssue"];
+export type NewsArchiveMonth = ApiSchemas["NewsArchiveMonth"];

@@ -19,7 +19,7 @@ const AfishaTable: FC<{ items: NewsAfishaItem[] }> = ({ items }) => (
       </thead>
       <tbody>
         {items.map((item, index) => {
-          const cell = cn("p-2.5 border-b border-ink", index < items.length - 1 && "border-dotted");
+          const cell = cn("p-2.5 border-b border-ink", { "border-dotted": index < items.length - 1 });
           return (
             <tr key={item.title}>
               <td className={cell}>{formatAfishaDate(item.startsAt)}</td>

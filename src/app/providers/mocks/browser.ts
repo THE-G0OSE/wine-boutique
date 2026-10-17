@@ -1,5 +1,6 @@
 import { setupWorker } from "msw/browser";
 import { grapeHandlers } from "@/entities/grapeVariety/mocks";
+import { articleHandlers } from "@/entities/newsArticle/mocks";
 import { newsHandlers } from "@/entities/newsIssue/mocks";
 import { sessionHandlers } from "@/entities/session/mocks";
 import { wineHandlers } from "@/entities/wine/mocks";
@@ -11,5 +12,6 @@ export const worker = setupWorker(
   ...grapeHandlers,
   ...sessionHandlers,
   ...newsHandlers,
+  ...articleHandlers,
   ...newsletterHandlers
 );

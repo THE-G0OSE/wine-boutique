@@ -14,6 +14,9 @@ importers:
       '@fontsource-variable/shantell-sans':
         specifier: ^5.3.0
         version: 5.3.0
+      '@fontsource/caveat':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/old-standard-tt':
         specifier: ^5.3.0
         version: 5.3.0
@@ -321,6 +324,9 @@ packages:
 
   '@fontsource-variable/shantell-sans@5.3.0':
     resolution: {integrity: sha512-FPdHvSi6cngE/DMVCm7Xlls70U0b4/NMJLlcAPvVoq6eot1X8tNOZMRc22Rh9KoAfmmBz7yjsSXvpsYmkhXXVQ==}
+
+  '@fontsource/caveat@5.3.0':
+    resolution: {integrity: sha512-eHTfzQxFSW9ABERRLNruHoNJmKed2J7pqTUc5lp4a4POMgXGKpxmWj3d9Hz10kmAg6iuTTLe6UagbA4bnsmfQw==}
 
   '@fontsource/old-standard-tt@5.3.0':
     resolution: {integrity: sha512-9cXU8XWqw4Pz9/9Lf6Otf1GPc0y17d96/nP9tzs4PLlq1IFMIxXszL3OLldaoyAn5YGr1r+tIXr0rlbgIeCYrg==}
@@ -2078,6 +2084,8 @@ snapshots:
   '@fontsource-variable/noto-sans@5.3.0': {}
 
   '@fontsource-variable/shantell-sans@5.3.0': {}
+
+  '@fontsource/caveat@5.3.0': {}
 
   '@fontsource/old-standard-tt@5.3.0': {}
 

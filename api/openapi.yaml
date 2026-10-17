@@ -101,6 +101,57 @@ paths:
               schema:
                 $ref: "#/components/schemas/NewsIssue"
 
+  /news/articles/{slug}:
+    get:
+      tags: [news]
+      operationId: getNewsArticle
+      summary: Статья целиком
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Статья с выходными данными выпуска и связанными вырезками
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticle"
+        "404":
+          description: Статьи нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /news/archive:
+    get:
+      tags: [news]
+      operationId: getNewsArchive
+      summary: Подшивка — выпуски за месяц
+      parameters:
+        - name: month
+          in: query
+          description: Месяц в формате YYYY-MM; без параметра — последний месяц с выпусками
+          schema:
+            type: string
+            pattern: "^\\d{4}-\\d{2}$"
+            examples: ["2026-09"]
+        - name: rubric
+          in: query
+          description: Только выпуски, где главный материал этой рубрики
+          schema:
+            $ref: "#/components/schemas/NewsRubric"
+      responses:
+        "200":
+          description: Список месяцев подшивки и выпуски выбранного месяца
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArchive"
+
   /newsletter:
     post:
       tags: [newsletter]
@@ -435,6 +486,139 @@ components:
           type: [string, "null"]
         nextIssueId:
           type: [string, "null"]
+
+    NewsClipping:
+      type: object
+      description: Короткая ссылка на статью — «Ещё вырезки»
+      required: [slug, rubric, title]
+      properties:
+        slug:
+          type: string
+        rubric:
+          $ref: "#/components/schemas/NewsRubric"
+        title:
+          type: string
+
+    NewsArticle:
+      type: object
+      required:
+        [slug, rubric, kicker, title, standfirst, byline, readingMinutes, issue, image, body, pullQuote, relatedWine, more]
+      properties:
+        slug:
+          type: string
+        rubric:
+          $ref: "#/components/schemas/NewsRubric"
+        kicker:
+          type: string
+        title:
+          type: string
+        standfirst:
+          type: [string, "null"]
+        byline:
+          type: [string, "null"]
+        readingMinutes:
+          type: [integer, "null"]
+        issue:
+          type: object
+          description: В каком выпуске вышла статья
+          required: [id, number, publishedAt]
+          properties:
+            id:
+              type: string
+            number:
+              type: [integer, "null"]
+            publishedAt:
+              type: string
+              format: date
+        image:
+          oneOf:
+            - $ref: "#/components/schemas/NewsImage"
+            - type: "null"
+        body:
+          type: array
+          description: Абзацы статьи
+          items:
+            type: string
+        pullQuote:
+          description: Вынесенная цитата — встаёт в текст после абзаца с номером afterParagraph (с 1)
+          oneOf:
+            - type: object
+              required: [text, afterParagraph]
+              properties:
+                text:
+                  type: string
+                afterParagraph:
+                  type: integer
+                  minimum: 1
+            - type: "null"
+        relatedWine:
+          description: Вино из статьи — для стикера «Забронировать»
+          oneOf:
+            - type: object
+              required: [slug, name]
+              properties:
+                slug:
+                  type: string
+                name:
+                  type: string
+            - type: "null"
+        more:
+          type: array
+          description: Ещё вырезки — другие статьи
+          items:
+            $ref: "#/components/schemas/NewsClipping"
+
+    NewsArchiveMonth:
+      type: object
+      required: [id, issuesCount]
+      properties:
+        id:
+          type: string
+          description: YYYY-MM
+          examples: ["2026-10"]
+        issuesCount:
+          type: integer
+          description: Сколько выпусков вышло за месяц (без учёта фильтра по рубрике)
+
+    NewsArchiveIssue:
+      type: object
+      description: Первая полоса выпуска в подшивке
+      required: [id, number, publishedAt, rubric, title, image, articleSlug]
+      properties:
+        id:
+          type: string
+        number:
+          type: [integer, "null"]
+        publishedAt:
+          type: string
+          format: date
+        rubric:
+          $ref: "#/components/schemas/NewsRubric"
+        title:
+          type: string
+          description: Заголовок главного материала выпуска
+        image:
+          type: string
+        articleSlug:
+          type: string
+          description: Статья, на которую ведёт карточка выпуска
+
+    NewsArchive:
+      type: object
+      required: [months, month, issues]
+      properties:
+        months:
+          type: array
+          description: Месяцы подшивки, от свежего к старому
+          items:
+            $ref: "#/components/schemas/NewsArchiveMonth"
+        month:
+          type: string
+          description: Какой месяц показан (YYYY-MM)
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsArchiveIssue"
 
     NewsletterSubscription:
       type: object

@@ -1,9 +1,9 @@
 import type { NewsIssue } from "../model/types";
 
-/** Свежий выпуск — тексты из артборда News. Плейсхолдеры ([N], [дата]) — как в макете */
+/** Свежий выпуск — тексты из артборда News. Плейсхолдеры ([дата], [N] мест) — как в макете; номер выпуска — из подшивки (Archive) */
 export const latestIssueFixture: NewsIssue = {
   id: "issue-2026-10-16",
-  number: null,
+  number: 23,
   publishedAt: "2026-10-16",
   city: "Москва",
   weather: "Погода в погребе:\nпрохладно, темно, тихо.\nВино зреет",

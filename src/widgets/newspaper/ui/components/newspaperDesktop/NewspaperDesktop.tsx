@@ -28,7 +28,7 @@ const NewspaperDesktop: FC<{ issue: NewsIssue }> = ({ issue }) => {
       <RubricNav rubric={rubric} onChange={setRubric} variant="desktop" />
 
       <div className="mt-6.5 grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
-        <div className={cn("transition-opacity duration-300", !matches(issue.lead.rubric) && "opacity-30")}>
+        <div className={cn("transition-opacity duration-300", { "opacity-30": !matches(issue.lead.rubric) })}>
           <LeadStory story={issue.lead} />
         </div>
         <BriefsColumn issue={issue} matches={matches} />

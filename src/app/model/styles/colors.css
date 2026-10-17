@@ -48,6 +48,12 @@
     --color-paper-ink: #5A4A40;
     /* Типографская краска газеты */
     --color-ink: #14100C;
+
+    /* Стикеры-записки на столе и их «чернила»; скрепка */
+    --color-note-yellow: #F2E27A;
+    --color-note-pink: #F4C9B5;
+    --color-note-ink: #2A1A0C;
+    --color-metal: #B7BCC2;
     --color-success: #13E101;
     --color-error: #FD2F20;
 

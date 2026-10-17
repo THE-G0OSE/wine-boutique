@@ -1,2 +1,2 @@
 export * from './model'
-export { useGetLatestNewsIssueQuery } from './api/newsApi'
+export { useGetLatestNewsIssueQuery, useGetNewsArchiveQuery } from './api/newsApi'

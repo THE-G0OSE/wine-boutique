@@ -16,8 +16,9 @@ const BlankSheet = ({ isDesktop, message, busy }: { isDesktop: boolean; message:
     <div aria-busy={busy} className="flex flex-col items-center gap-4 text-center">
       <span
         className={cn(
-          "font-paper-display leading-none",
-          isDesktop ? "text-[clamp(56px,5.2vw,100px)]" : "text-[min(46px,calc((100vw-60px)/7.6))]"
+          "font-paper-display",
+          isDesktop ? "text-[clamp(56px,5.2vw,100px)]" : "text-[min(46px,calc((100vw-60px)/7.6))]",
+          "leading-none"
         )}
       >
         Винный Вѣстникъ
