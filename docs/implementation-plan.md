@@ -453,6 +453,8 @@ api/openapi.yaml    контракт API (источник правды для �
 ### Фаза 10 · (опционально) Тесты и подключение бэкенда
 Vitest + Testing Library (MSW-обработчики переиспользуются в тестах). Когда бэкенд реализует `api/openapi.yaml`: `VITE_API_MOCKS=false`, `VITE_API_URL` на сервер, сверка контракта.
 
+Бэкенд (NestJS, модульный монолит, PostgreSQL + Prisma) — отдельный план: [backend-plan.md](backend-plan.md), правила — [backend-architecture.md](backend-architecture.md). Его этап B0 переносит фронт в `apps/web`, а контракт и фикстуры MSW — в общие пакеты `packages/api-contract` и `packages/demo-data`.
+
 ---
 
 ## 6. Принятые решения (17.10.2026)
@@ -466,6 +468,7 @@ Vitest + Testing Library (MSW-обработчики переиспользую�
 | 5 | Хостинг | Пока нет. Docker-образ с nginx и SPA-фолбэком, российская облачная платформа, GitHub Actions — только проверки (§4.8) |
 | 6 | Алиас `uikit;/` | Оставляем как есть: `shared/ui` импортируется через `uikit;/` |
 | 7 | Вход, кабинет и данные | Бэкенд будет позже и подстроится под фронт: контракт в `api/openapi.yaml`, RTK Query, MSW вместо сервера до его появления (§4.2.1) |
+| 8 | Бэкенд (18.10.2026) | NestJS 12 на Fastify, модульный монолит «как микросервисы», PostgreSQL 18 + Prisma 7 — [backend-plan.md](backend-plan.md), [backend-architecture.md](backend-architecture.md) |
 
 Принцип для инфраструктуры и инструментов: выбирать актуальные современные решения, которые при этом работают для аудитории в России.
 
