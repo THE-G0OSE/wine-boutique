@@ -272,7 +272,7 @@ src/
     api/      baseApi (createApi + fetchBaseQuery, credentials: 'include', tagTypes), schema.ts (типы, сгенерированные из openapi.yaml),
               lib (ошибки, пагинация)
 
-api/openapi.yaml    контракт API (источник правды для фронта и будущего бэкенда), в корне репозитория
+packages/contracts  контракт API (openapi/openapi.yaml — источник правды для фронта и бэкенда); с 18.10.2026 фронт — в apps/web
 ```
 
 **Правила импортов:** `app → pages → widgets → features → entities → shared`, только вниз; слайсы одного слоя друг друга не импортируют; снаружи — только через `index.ts` слайса. Исключение: `import type { RootState, AppDispatch }` из `app/providers/store` в `shared/lib/hooks` (типы стираются при сборке). Если сущности нужна другая сущность (вино в корзине) — через ID и селекторы, а не через импорт UI.
@@ -297,10 +297,10 @@ api/openapi.yaml    контракт API (источник правды для �
 
 Бэкенда пока нет, но он будет и подстроится под фронт. Поэтому фронт сразу работает через настоящий HTTP-слой, а ответы пока отдаёт мок-сервер в браузере:
 
-1. **Контракт** — `api/openapi.yaml` (OpenAPI 3.1). Каждая фаза дописывает в него свои эндпоинты. Это и есть ТЗ для бэкенда.
-2. **Типы** — `openapi-typescript` генерирует `src/shared/api/schema.ts` (`pnpm api:types`); доменные типы сущностей — алиасы на схемы (`type Wine = components['schemas']['Wine']`), руками не дублируем.
+1. **Контракт** — `packages/contracts/openapi/openapi.yaml` (OpenAPI 3.1). Каждая фаза дописывает в него свои эндпоинты. Это и есть ТЗ для бэкенда.
+2. **Типы** — `openapi-typescript` генерирует `packages/contracts/openapi/generated/schema.ts` (`pnpm contracts:gen`), фронт импортирует их из `@wine/contracts/openapi`; доменные типы сущностей — алиасы на схемы (`type Wine = components['schemas']['Wine']`), руками не дублируем.
 3. **Клиент** — RTK Query: один `baseApi` в `shared/api` (`fetchBaseQuery({ baseUrl: VITE_API_URL, credentials: 'include' })`), эндпоинты — в `entities/<x>/api/*Api.ts` и `features/<x>/api/` через `baseApi.injectEndpoints`, теги для инвалидации. Компоненты используют только сгенерированные хуки (`useGetWinesQuery`) через публичный API слайса.
-4. **Моки** — MSW (Mock Service Worker) перехватывает запросы на уровне сети: обработчики и фикстуры лежат рядом с эндпоинтами (`entities/<x>/api/mocks.ts`, `api/fixtures.ts`), типизированы той же схемой (`openapi-msw`), наружу отдаются отдельным публичным входом слайса `<x>/mocks.ts` (не через `index.ts`, чтобы MSW не попал в основной бандл) и собираются в `app/providers/mocks`. Если мокам одной сущности нужны фикстуры другой — кросс-импорт через FSD `@x` (`entities/wine/@x/grapeVariety.ts`). Включаются флагом `VITE_API_MOCKS=true` — в разработке и в портфолио-деплое, пока нет бэкенда. Когда бэкенд появится, флаг выключается, а компоненты, хуки и типы не меняются.
+4. **Моки** — MSW (Mock Service Worker) перехватывает запросы на уровне сети: обработчики лежат рядом с эндпоинтами (`entities/<x>/api/mocks.ts`), данные берут из пакета `@wine/demo-data` (его же используют сиды бэкенда), типизированы той же схемой (`openapi-msw`), наружу отдаются отдельным публичным входом слайса `<x>/mocks.ts` (не через `index.ts`, чтобы MSW не попал в основной бандл) и собираются в `app/providers/mocks`. Если мокам одной сущности нужно что-то из другой (подписи рубрик) — кросс-импорт через FSD `@x` (`entities/newsIssue/@x/newsArticle.ts`). Включаются флагом `VITE_API_MOCKS=true` — в разработке и в портфолио-деплое, пока нет бэкенда. Когда бэкенд появится, флаг выключается, а компоненты, хуки и типы не меняются.
 5. **Статичный контент** главной (слайды hero, истории) остаётся константами в `model/mock.ts`, как сейчас, — это вёрстка, а не данные.
 
 Плейсхолдеры дизайна (`[цена] ₽`, `[N]`, `[адрес]`, `[имя сомелье]`) — значения в фикстурах MSW, не выдумываем; контакты бутика — в `shared/config/contacts.ts`.
@@ -453,7 +453,7 @@ api/openapi.yaml    контракт API (источник правды для �
 ### Фаза 10 · (опционально) Тесты и подключение бэкенда
 Vitest + Testing Library (MSW-обработчики переиспользуются в тестах). Когда бэкенд реализует `api/openapi.yaml`: `VITE_API_MOCKS=false`, `VITE_API_URL` на сервер, сверка контракта.
 
-Бэкенд (NestJS, модульный монолит, PostgreSQL + Prisma) — отдельный план: [backend-plan.md](backend-plan.md), правила — [backend-architecture.md](backend-architecture.md). Его этап B0 переносит фронт в `apps/web`, а контракт и фикстуры MSW — в общие пакеты `packages/api-contract` и `packages/demo-data`.
+Бэкенд (микросервисы на NestJS, PostgreSQL + Prisma) — отдельный план: [backend-plan.md](backend-plan.md), правила — [backend-architecture.md](backend-architecture.md). Его этап B0 переносит фронт в `apps/web`, а контракт и фикстуры MSW — в общие пакеты `packages/contracts` и `packages/demo-data`.
 
 ---
 
@@ -468,7 +468,7 @@ Vitest + Testing Library (MSW-обработчики переиспользую�
 | 5 | Хостинг | Пока нет. Docker-образ с nginx и SPA-фолбэком, российская облачная платформа, GitHub Actions — только проверки (§4.8) |
 | 6 | Алиас `uikit;/` | Оставляем как есть: `shared/ui` импортируется через `uikit;/` |
 | 7 | Вход, кабинет и данные | Бэкенд будет позже и подстроится под фронт: контракт в `api/openapi.yaml`, RTK Query, MSW вместо сервера до его появления (§4.2.1) |
-| 8 | Бэкенд (18.10.2026) | NestJS 12 на Fastify, модульный монолит «как микросервисы», PostgreSQL 18 + Prisma 7 — [backend-plan.md](backend-plan.md), [backend-architecture.md](backend-architecture.md) |
+| 8 | Бэкенд (18.10.2026) | Микросервисы на NestJS 12 (Fastify), gRPC + NATS JetStream, Traefik, PostgreSQL 18 (база на сервис) + Prisma 7; контракты — пакет `@wine/contracts` — [backend-plan.md](backend-plan.md), [backend-architecture.md](backend-architecture.md) |
 
 Принцип для инфраструктуры и инструментов: выбирать актуальные современные решения, которые при этом работают для аудитории в России.
 

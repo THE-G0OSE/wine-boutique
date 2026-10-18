@@ -30,6 +30,13 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      # Сгенерированное из контракта закоммичено и актуально
+      - name: Контракты сгенерированы из openapi.yaml
+        run: |
+          pnpm contracts:gen
+          git diff --exit-code -- packages/contracts
+
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm build
@@ -44,6 +51,7 @@ jobs:
       - uses: docker/build-push-action@v7
         with:
           context: .
+          file: apps/web/Dockerfile
           push: false
           load: true
           tags: wine-boutique:ci

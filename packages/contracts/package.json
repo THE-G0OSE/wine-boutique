@@ -1,0 +1,27 @@
+{
+  "name": "@wine/contracts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Контракты между фронтом и сервисами: OpenAPI публичного API (позже — proto внутренних gRPC и схемы событий)",
+  "exports": {
+    "./openapi": "./openapi/generated/schema.ts",
+    "./openapi/zod": "./openapi/generated/zod/zod.gen.ts",
+    "./openapi.yaml": "./openapi/openapi.yaml"
+  },
+  "scripts": {
+    "contracts:gen": "pnpm run gen:types && pnpm run gen:zod",
+    "gen:types": "openapi-typescript openapi/openapi.yaml -o openapi/generated/schema.ts",
+    "gen:zod": "openapi-ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "6.0.3",
+    "zod": "4.6.7"
+  }
+}

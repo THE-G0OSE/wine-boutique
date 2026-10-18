@@ -1,2 +1,15 @@
+packages:
+  - apps/*
+  - packages/*
+  # - services/*   — появятся с этапа B1
+
+# Точные версии при pnpm add: обновления — осознанно (Renovate), а не по ^
+saveExact: true
+
+# Типы — в корневой node_modules: иначе d.ts зависимостей внутри .pnpm (react-icons, react-router)
+# не находят @types/react, который стоит только в apps/web
+publicHoistPattern:
+  - '@types/*'
+
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'

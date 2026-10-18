@@ -5,21 +5,26 @@
 - План работ, карта маршрутов, токены дизайна, решения: [docs/implementation-plan.md](docs/implementation-plan.md). Перед задачей сверяйся с ним и обновляй его, если решение меняется.
 - Дизайн (источник правды по виду и текстам): https://claude.ai/artifact/G57VXkJRvN2HVSHm65Q2Ua — канвас, читать через `Artifact` → `read` с `paths: ["project/<Имя>.dc.html"]`. `LinkMap` — карта сайта, `Foundations` — токены, `M*` — мобильные версии (390 px), остальное — десктоп 1920.
 
+## Репозиторий
+
+Монорепозиторий pnpm: `apps/web` — фронтенд (всё про FSD ниже — относительно `apps/web/src`), `packages/contracts` (`@wine/contracts`) — контракты API, `packages/demo-data` (`@wine/demo-data`) — данные из макетов для моков MSW и будущих сидов, позже `services/*` — бэкенд.
+
 ## Команды
 
 ```bash
-pnpm dev
-pnpm build      # tsc -b && vite build — должен проходить перед каждым коммитом
+pnpm dev             # фронт
+pnpm build           # все пакеты; должен проходить перед каждым коммитом
 pnpm lint
-pnpm api:types  # после правки api/openapi.yaml — перегенерировать src/shared/api/schema.ts
-node scripts/optimize-image.mjs <вход> public/images/<путь>.webp [ширина] [качество]  # новые картинки — только WebP
+pnpm typecheck
+pnpm contracts:gen   # после правки packages/contracts/openapi/openapi.yaml — типы и zod-схемы; результат коммитится
+node apps/web/scripts/optimize-image.mjs <вход> apps/web/public/images/<путь>.webp [ширина] [качество]  # новые картинки — только WebP
 ```
 
-На каждый push GitHub Actions (`.github/workflows/ci.yml`) гоняет линтер, типы, сборку и сборку Docker-образа со смоук-тестом. Деплоя в Actions нет: хостинг (российская облачная платформа) сам собирает `Dockerfile`; nginx-конфиг — `deploy/nginx/`, порт 8080. Новый сторонний домен (API, CDN) — добавить в CSP в `deploy/nginx/security-headers.conf`.
+На каждый push GitHub Actions (`.github/workflows/ci.yml`) проверяет, что сгенерированное из контракта актуально, гоняет линтер, типы, сборку и сборку Docker-образа со смоук-тестом. Деплоя в Actions нет: хостинг сам собирает `apps/web/Dockerfile` (контекст — корень репозитория); nginx-конфиг — `deploy/nginx/`, порт 8080. Новый сторонний домен (API, CDN) — добавить в CSP в `deploy/nginx/security-headers.conf`.
 
 ## Архитектура — Feature-Sliced Design
 
-Слои `src/`: `app → pages → widgets → features → entities → shared`. Импорт только вниз; слайсы одного слоя друг друга не импортируют; снаружи слайса — только через его `index.ts`. Исключения: `import type` стора из `app/providers/store` в `shared/lib/hooks`; вход для мок-сервера `<slice>/mocks.ts` (импортирует только `app/providers/mocks`); кросс-импорт сущностей — только через FSD `@x` (`entities/wine/@x/grapeVariety.ts`).
+Слои `src/`: `app → pages → widgets → features → entities → shared`. Импорт только вниз; слайсы одного слоя друг друга не импортируют; снаружи слайса — только через его `index.ts`. Исключения: `import type` стора из `app/providers/store` в `shared/lib/hooks`; вход для мок-сервера `<slice>/mocks.ts` (импортирует только `app/providers/mocks`); кросс-импорт сущностей — только через FSD `@x` (`entities/newsIssue/@x/newsArticle.ts`).
 
 - `app` — провайдеры (router, store, mocks), стили-токены и `layouts/MainLayout` (каркас страниц собирает виджеты, поэтому живёт здесь, а не в widgets).
 - `pages` — компонуют виджеты под маршрут, задают `<title>`; без логики.
@@ -33,8 +38,8 @@ node scripts/optimize-image.mjs <вход> public/images/<путь>.webp [шир
 ```
 <slice>/index.ts            export * from './model'; export * from './ui'
 <slice>/api/*Api.ts         эндпоинты RTK Query (baseApi.injectEndpoints)
-<slice>/api/mocks.ts        MSW-обработчики (фикстуры — api/fixtures.ts); наружу — через <slice>/mocks.ts
-<slice>/model/types.ts      типы (доменные — алиасы на схемы из shared/api/schema.ts)
+<slice>/api/mocks.ts        MSW-обработчики (данные — из @wine/demo-data); наружу — через <slice>/mocks.ts
+<slice>/model/types.ts      типы (доменные — алиасы на схемы контракта через ApiSchemas из shared/api)
 <slice>/model/mock.ts       моковые данные
 <slice>/model/animations.ts motion Variants / Transition
 <slice>/model/lib/hooks/    хуки слайса
@@ -53,7 +58,7 @@ node scripts/optimize-image.mjs <вход> public/images/<путь>.webp [шир
 - Текст — через `Text` из `shared/ui` (пропсы `FONT/SIZE/STYLE/COLOR`, `as` для семантики тега).
 - Анимации — `motion/react`, варианты в `model/animations.ts`. Скролл-эффекты считаются от прогресса секции (`useScroll({ target })`), не от абсолютного `scrollY`. Бесконечный декор — CSS-кейфреймы из токенов. Уважать `prefers-reduced-motion`.
 - Не вешать `overflow: hidden/scroll` на предков элементов со `position: sticky` (используй `overflow-x-clip`).
-- Данные — только через API, контракт сначала: эндпоинт описывается в `api/openapi.yaml` → `pnpm api:types` генерирует `src/shared/api/schema.ts` → RTK Query в слайсе (`baseApi.injectEndpoints`) → MSW-обработчик с фикстурами из дизайна. Бэкенда пока нет; он реализует этот контракт, поэтому компоненты не знают про моки (`VITE_API_MOCKS`).
+- Данные — только через API, контракт сначала: эндпоинт описывается в `packages/contracts/openapi/openapi.yaml` → `pnpm contracts:gen` (типы `paths` для фронта, zod-схемы для сервисов) → RTK Query в слайсе (`baseApi.injectEndpoints`) → MSW-обработчик с данными из `@wine/demo-data`. Бэкенда пока нет; он реализует этот контракт, поэтому компоненты не знают про моки (`VITE_API_MOCKS`).
 - Статичный контент вёрстки (слайды hero, истории главной) — константы в `model/mock.ts`, не API.
 - Клиентское состояние: корзина, режим вина, 18+ — Redux-слайсы, персист в `localStorage`. Сессия — httpOnly-cookie бэкенда + `GET /auth/session`, токены в `localStorage` не храним. Фильтры, сортировка, поиск, вкладки — в URL. Остальное — локальный state.
 - Пути — константы из `shared/config/routes.ts`, не строки.
@@ -66,9 +71,10 @@ node scripts/optimize-image.mjs <вход> public/images/<путь>.webp [шир
 
 ## Бэкенд (планируется)
 
-NestJS 12 (Fastify, ESM) + PostgreSQL 18 + Prisma 7, модульный монолит. Правила — [docs/backend-architecture.md](docs/backend-architecture.md), этапы и модель данных — [docs/backend-plan.md](docs/backend-plan.md). Перед любой работой с бэкендом читать оба файла. Главное:
+Микросервисы на NestJS 12 (Fastify, ESM) + PostgreSQL 18 + Prisma 7, gRPC внутри, NATS JetStream для событий, Traefik на входе. Правила — [docs/backend-architecture.md](docs/backend-architecture.md), этапы и модель данных — [docs/backend-plan.md](docs/backend-plan.md). Перед любой работой с бэкендом читать оба файла. Главное:
 
-- Модуль = ограниченный контекст со своей схемой Postgres и своим Prisma-клиентом. Другие модули видят только его `index.ts`: фасад (абстрактный класс-токен), DTO фасада, схемы событий. Глубокие импорты, общие таблицы, внешние ключи между схемами и кросс-модульные транзакции запрещены.
-- Синхронно — пакетные методы фасадов с сериализуемыми DTO; асинхронно — интеграционные события через outbox. Граф модулей без циклов.
-- Контракт сначала: `openapi.yaml` → сгенерированные zod-схемы; каждый обработчик объявляет схему входа (`@Body({ schema })`) и выхода (`@SerializeOptions({ schema })`).
+- Сервис = ограниченный контекст со своей базой. Сервисы не импортируют друг друга и не ходят в чужие базы.
+- Все контракты — в `packages/contracts` (`@wine/contracts`): OpenAPI публичного API, proto внутренних gRPC, схемы событий (CloudEvents). Изменения — только обратно совместимые, проверяются в CI.
+- Синхронно — один шаг пакетного gRPC-вызова с дедлайном и деградацией; всё остальное — события через outbox/inbox.
+- Каждый HTTP-обработчик объявляет схему входа (`@Body({ schema })`) и выхода (`@SerializeOptions({ schema })`) из контракта.
 - Версии Prisma фиксировать точно: npm-тег `latest` у `prisma` указывает на 8.0 RC.

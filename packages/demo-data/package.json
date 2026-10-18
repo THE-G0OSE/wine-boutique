@@ -1,0 +1,19 @@
+{
+  "name": "@wine/demo-data",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Данные из макетов: фикстуры MSW во фронте и сиды сервисов. Плейсхолдеры дизайна остаются плейсхолдерами",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@wine/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

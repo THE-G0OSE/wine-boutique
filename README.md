@@ -6,7 +6,16 @@ React 19 · Vite 7 · TypeScript · Tailwind CSS v4 · motion · Redux Toolkit +
 
 - Дизайн: [канвас Wine Boutique](https://claude.ai/artifact/G57VXkJRvN2HVSHm65Q2Ua) (десктоп 1920 и мобильные 390).
 - План работ, карта маршрутов, токены и принятые решения: [docs/implementation-plan.md](docs/implementation-plan.md).
-- Правила кода: [CLAUDE.md](CLAUDE.md).
+- Правила кода: [CLAUDE.md](CLAUDE.md). Бэкенд (в планах): [docs/backend-plan.md](docs/backend-plan.md).
+
+Монорепозиторий pnpm:
+
+| Папка | Что |
+|---|---|
+| `apps/web` | Фронтенд |
+| `packages/contracts` | `@wine/contracts` — контракт API (`openapi/openapi.yaml`) и сгенерированные из него типы и zod-схемы |
+| `packages/demo-data` | `@wine/demo-data` — данные из макетов: моки MSW, позже сиды бэкенда |
+| `deploy/nginx` | nginx фронта |
 
 ## Запуск
 
@@ -14,28 +23,30 @@ React 19 · Vite 7 · TypeScript · Tailwind CSS v4 · motion · Redux Toolkit +
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:5173
-pnpm build        # проверка типов + сборка в dist/
+pnpm dev          # фронт: http://localhost:5173
+pnpm build        # проверка типов + сборка (фронт — в apps/web/dist/)
 pnpm lint
-pnpm preview      # посмотреть собранный dist/
+pnpm typecheck
+pnpm --filter @wine/web preview   # посмотреть собранный фронт
 ```
 
 ## Данные и API
 
-Бэкенда пока нет. Контракт API описан в [api/openapi.yaml](api/openapi.yaml) — это же ТЗ для будущего бэкенда. Фронтенд ходит в API через RTK Query, а ответы пока отдаёт MSW (Mock Service Worker) прямо в браузере.
+Бэкенда пока нет. Контракт API описан в [packages/contracts/openapi/openapi.yaml](packages/contracts/openapi/openapi.yaml) — это же ТЗ для будущего бэкенда. Фронтенд ходит в API через RTK Query, а ответы пока отдаёт MSW (Mock Service Worker) прямо в браузере.
 
-- `VITE_API_MOCKS=true` (по умолчанию, см. `.env`) — запросы к `VITE_API_URL` обслуживает MSW.
-- После правки контракта: `pnpm api:types` перегенерирует типы в `src/shared/api/schema.ts`.
+- `VITE_API_MOCKS=true` (по умолчанию, см. `apps/web/.env`) — запросы к `VITE_API_URL` обслуживает MSW.
+- После правки контракта: `pnpm contracts:gen` перегенерирует типы и zod-схемы в `packages/contracts/openapi/generated` (их коммитим, CI проверяет актуальность).
+- Данные для моков — в `@wine/demo-data`, их же возьмут сиды бэкенда.
 - Когда бэкенд будет готов: `VITE_API_MOCKS=false` и `VITE_API_URL=<адрес API>`. Сессия — httpOnly-cookie сервера, запросы идут с `credentials: include`.
 
-Локальные переопределения — в `.env.local` (не коммитится).
+Локальные переопределения — в `apps/web/.env.local` (не коммитится).
 
 ## Картинки
 
-Только WebP в `public/images`. Новую картинку конвертировать скриптом:
+Только WebP в `apps/web/public/images`. Новую картинку конвертировать скриптом:
 
 ```bash
-node scripts/optimize-image.mjs <исходник> public/images/<папка>/<имя>.webp [макс. ширина] [качество]
+node apps/web/scripts/optimize-image.mjs <исходник> apps/web/public/images/<папка>/<имя>.webp [макс. ширина] [качество]
 ```
 
 ## Docker
@@ -43,21 +54,21 @@ node scripts/optimize-image.mjs <исходник> public/images/<папка>/<�
 Образ: сборка на `node:24-alpine`, раздача статики — `nginx-unprivileged` (без root, порт **8080**). Конфиг nginx — [deploy/nginx](deploy/nginx): SPA-фолбэк на `index.html`, вечный кэш для `/assets/*`, gzip, заголовки безопасности (CSP и др.).
 
 ```bash
-docker build -t wine-boutique .
+docker build -f apps/web/Dockerfile -t wine-boutique .
 docker run --rm -p 8080:8080 wine-boutique   # http://localhost:8080
 ```
 
 С настоящим API:
 
 ```bash
-docker build --build-arg VITE_API_MOCKS=false --build-arg VITE_API_URL=https://api.example.ru -t wine-boutique .
+docker build -f apps/web/Dockerfile --build-arg VITE_API_MOCKS=false --build-arg VITE_API_URL=https://api.example.ru -t wine-boutique .
 ```
 
 Если API будет на другом домене, добавьте его в `connect-src` в [deploy/nginx/security-headers.conf](deploy/nginx/security-headers.conf).
 
 ## CI
 
-[GitHub Actions](.github/workflows/ci.yml) на каждый push: `pnpm lint`, `pnpm typecheck`, `pnpm build`, затем сборка Docker-образа и смоук-тест контейнера (главная и прямой заход на вложенный путь отдают приложение). Деплоя в Actions нет — его делает хостинг.
+[GitHub Actions](.github/workflows/ci.yml) на каждый push: актуальность сгенерированного из контракта, `pnpm lint`, `pnpm typecheck`, `pnpm build`, затем сборка Docker-образа и смоук-тест контейнера (главная и прямой заход на вложенный путь отдают приложение). Деплоя в Actions нет — его делает хостинг.
 
 ## Деплой
 
@@ -65,7 +76,7 @@ docker build --build-arg VITE_API_MOCKS=false --build-arg VITE_API_URL=https://a
 
 **По умолчанию — Timeweb Cloud Apps** (автодеплой из GitHub):
 
-1. Создать приложение из репозитория `THE-G0OSE/wine-boutique`, ветка `main`, способ сборки — Dockerfile.
+1. Создать приложение из репозитория `THE-G0OSE/wine-boutique`, ветка `main`, способ сборки — Dockerfile `apps/web/Dockerfile`, контекст — корень репозитория.
 2. Порт приложения — `8080`.
 3. При необходимости задать аргументы сборки `VITE_API_URL` / `VITE_API_MOCKS`.
 4. Подключить домен и HTTPS в панели провайдера.
