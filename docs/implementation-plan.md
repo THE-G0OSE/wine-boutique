@@ -311,7 +311,7 @@ api/openapi.yaml    контракт API (источник правды для �
 |---|---|
 | Каталог | `GET /shelves` (полки магазина с превью), `GET /wines` (`shelf, q, country[], grape[], priceMin, priceMax, age[], volume[], sort, page`), `GET /wines/facets` (счётчики для фильтров), `GET /wines/{slug}`, `GET /search/suggest?q=` (вина, сорта, регионы), `GET /grapes` |
 | Бронь | `GET /boutiques`, `GET /boutiques/{id}/slots`, `POST /reservations`, `GET /reservations/{id}` |
-| Газета и письма | `GET /news/issues/latest`, `GET /news/issues?month=&rubric=`, `GET /articles/{slug}`, `GET /reviews?page=`, `POST /reviews` |
+| Газета и письма | `GET /news/issues/latest`, `GET /news/issues?month=&rubric=`, `GET /articles/{slug}`, `GET /reviews?limit=&offset=`, `POST /reviews` (202 — на модерацию) |
 | Услуги | `GET /tastings?month=`, `POST /tastings/{id}/bookings`, `POST /tastings/{id}/waitlist`, `GET /cellar/cells`, `POST /requests/cell`, `POST /requests/hall`, `POST /requests/gift`, `GET /monthly` (текущий + архив), `POST /monthly/subscriptions`, `POST /certificates`, `POST /newsletter` |
 | Вход | `POST /auth/otp` (телефон → SMS), `POST /auth/otp/verify` (код → `registered` / `new`), `POST /auth/register`, `GET /auth/session`, `POST /auth/logout` |
 | Кабинет | `GET/PATCH /me`, `GET /me/reservations` (+ `POST …/{id}/extend`, `DELETE …/{id}`), `GET /me/orders`, `GET /me/cell` (+ `POST /me/cell/prepare`), `GET/PUT/DELETE /me/favorites/{wineId}`, `GET /me/tastings`, `GET /me/bonus`, `GET/POST /me/certificates`, `PATCH /me/notifications`, `DELETE /me` |
@@ -482,6 +482,7 @@ Vitest + Testing Library (MSW-обработчики переиспользую�
 
 - Фаза 5, п. 1: страница новостей `/news` — газета «Винный Вѣстникъ» (десктоп и мобильная), данные из `GET /news/issues/latest`, рубрика в URL (`?rubric=`), страница грузится отдельным чанком.
 - Фаза 5, п. 2–3: статья `/news/:slug` (вырезка, фото, стикеры «Забронировать» / «Попробовать на дегустации», «Ещё вырезки»; `GET /news/articles/{slug}`, 404 — пустая вырезка) и подшивка `/news/archive` (стопки по месяцам — вкладки со стрелками, фильтр рубрик на десктопе, первые полосы выпусков; `GET /news/archive?month=&rubric=`, месяц и рубрика в URL). Тексты статей, кроме Château d’Yquem 1988, — заглушки до прихода от редакции.
+- Фаза 5, п. 4: отзывы `/reviews` — письма гостей рядом с конвертами (расходятся при наведении), на мобильных конверты-аккордеон; «Показать ещё письма» — RTK Query `infiniteQuery` по `GET /reviews`; форма «Напишите нам письмо» (`features/reviews/writeLetter`, `POST /reviews`). Тексты писем, имена, города и даты — плейсхолдеры дизайна. Фаза 5 закрыта.
 
 **Сознательные отступления от макета:**
 
@@ -493,6 +494,8 @@ Vitest + Testing Library (MSW-обработчики переиспользую�
 - Рубрики газеты на десктопе не скрывают, а приглушают материалы других рубрик — иначе ломается вёрстка полосы; на мобильных фильтруют ленту, как в MNews.
 - Первые полосы в подшивке на 1024–1600 ужимают кегли вместе с карточкой (`cqw`), а не по `stage()`: сетка в 4 колонки, ширина карточки зависит от экрана.
 - На мобильной подшивке фильтра рубрик нет (как в MArchive), поэтому ссылка с `?rubric=` там показывает весь месяц.
+- Штемпель темы на мобильном конверте поднят над строкой адреса: в макете длинная тема («бронь и самовывоз») наезжает на «Premium Wine Boutique». Шрифт штемпеля — системный моноширинный: в Courier Prime из макета нет кириллицы.
+- После отправки письма форма показывает подтверждение «Спасибо! Сомелье прочтёт письмо…» — в макете меняется только текст кнопки.
 
 **Открытые вопросы по контенту:**
 

@@ -54,6 +54,15 @@
     --color-note-pink: #F4C9B5;
     --color-note-ink: #2A1A0C;
     --color-metal: #B7BCC2;
+    /* Письма гостей: бумага письма и конверта, чернила, подписи полей, марка, полоски авиапочты */
+    --color-letter: #F7F1E6;
+    --color-letter-ink: #1F2A44;
+    --color-letter-label: #3A2E22;
+    --color-envelope: #ECDFC6;
+    --color-envelope-light: #EFE6D3;
+    --color-stamp: #FBF7EE;
+    --color-stamp-inner: #F4E9D8;
+    --color-airmail: #2B4C8C;
     --color-success: #13E101;
     --color-error: #FD2F20;
 

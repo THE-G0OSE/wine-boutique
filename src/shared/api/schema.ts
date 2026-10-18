@@ -123,6 +123,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Опубликованные письма гостей, от свежих к старым */
+        get: operations["getReviews"];
+        put?: never;
+        /** Отправить письмо — уходит сомелье на модерацию, публикуется с разрешения автора */
+        post: operations["sendReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -368,6 +386,40 @@ export interface components {
             month: string;
             issues: components["schemas"]["NewsArchiveIssue"][];
         };
+        /**
+         * @description О чём письмо — штемпель «Тема» на конверте
+         * @enum {string}
+         */
+        ReviewTopic: "tasting" | "gift" | "reserve" | "hall" | "collection";
+        Review: {
+            id: string;
+            topic: components["schemas"]["ReviewTopic"];
+            /** @example Дорогая команда бутика! */
+            greeting: string;
+            text: string;
+            /** @description Приписка «P.S.» целиком, с префиксом */
+            postscript: string | null;
+            /** @description Имя на конверте («От кого») */
+            author: string;
+            city: string | null;
+            /** @description Подпись под письмом */
+            signature: string;
+            /**
+             * Format: date
+             * @description Дата получения — на почтовом штемпеле
+             */
+            receivedAt: string | null;
+        };
+        ReviewPage: {
+            items: components["schemas"]["Review"][];
+            /** @description Сколько всего опубликовано писем */
+            total: number;
+        };
+        NewReview: {
+            name: string;
+            city?: string;
+            text: string;
+        };
         NewsletterSubscription: {
             /** Format: email */
             email: string;
@@ -555,6 +607,61 @@ export interface operations {
                 content?: never;
             };
             /** @description Некорректный email */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getReviews: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Страница писем */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewPage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    sendReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewReview"];
+            };
+        };
+        responses: {
+            /** @description Письмо принято */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Не заполнено имя или текст письма */
             422: {
                 headers: {
                     [name: string]: unknown;

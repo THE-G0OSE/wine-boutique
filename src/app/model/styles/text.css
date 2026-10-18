@@ -7,6 +7,10 @@
   --font-paper-display: "Oranienbaum", "Old Standard TT", serif;
   /* Записки от руки на стикерах */
   --font-hand: "Caveat", cursive;
+  /* Письма гостей: приветствие, подпись, адрес на конверте */
+  --font-script: "Marck Script", "Caveat", cursive;
+  /* Штемпель «темы» на мобильном конверте; Courier Prime без кириллицы, поэтому сразу системный моноширинный */
+  --font-typewriter: "Courier New", Courier, monospace;
 
   --text-4xl: 96px;
   --text-4xl--line-height: 1.333;

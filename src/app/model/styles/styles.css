@@ -11,6 +11,8 @@
 @import "@fontsource/oranienbaum/400.css";
 /* Рукописные стикеры-записки (статья, FAQ) */
 @import "@fontsource/caveat/400.css";
+/* Письма гостей (отзывы) */
+@import "@fontsource/marck-script/400.css";
 
 @import "./text.css";
 @import "./colors.css";

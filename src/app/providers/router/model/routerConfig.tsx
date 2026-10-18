@@ -28,6 +28,10 @@ export const router = createBrowserRouter([
         path: ROUTES.article(":slug"),
         lazy: async () => ({ Component: (await import("@/pages/article")).ArticlePage }),
       },
+      {
+        path: ROUTES.reviews,
+        lazy: async () => ({ Component: (await import("@/pages/reviews")).ReviewsPage }),
+      },
       { path: "*", element: null },
     ],
   },

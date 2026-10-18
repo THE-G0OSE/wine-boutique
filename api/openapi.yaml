@@ -20,6 +20,8 @@ tags:
     description: Подписка на закрытый канал анонсов
   - name: news
     description: Газета бутика «Винный Вѣстникъ»
+  - name: reviews
+    description: Письма гостей
 
 paths:
   /wines:
@@ -168,6 +170,54 @@ paths:
           description: Подписка оформлена (повторная подписка тоже 204)
         "422":
           description: Некорректный email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /reviews:
+    get:
+      tags: [reviews]
+      operationId: getReviews
+      summary: Опубликованные письма гостей, от свежих к старым
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Страница писем
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    post:
+      tags: [reviews]
+      operationId: sendReview
+      summary: Отправить письмо — уходит сомелье на модерацию, публикуется с разрешения автора
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewReview"
+      responses:
+        "202":
+          description: Письмо принято
+        "422":
+          description: Не заполнено имя или текст письма
           content:
             application/json:
               schema:
@@ -619,6 +669,68 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NewsArchiveIssue"
+
+    ReviewTopic:
+      type: string
+      description: О чём письмо — штемпель «Тема» на конверте
+      enum: [tasting, gift, reserve, hall, collection]
+
+    Review:
+      type: object
+      required: [id, topic, greeting, text, postscript, author, city, signature, receivedAt]
+      properties:
+        id:
+          type: string
+        topic:
+          $ref: "#/components/schemas/ReviewTopic"
+        greeting:
+          type: string
+          examples: ["Дорогая команда бутика!"]
+        text:
+          type: string
+        postscript:
+          type: [string, "null"]
+          description: Приписка «P.S.» целиком, с префиксом
+        author:
+          type: string
+          description: Имя на конверте («От кого»)
+        city:
+          type: [string, "null"]
+        signature:
+          type: string
+          description: Подпись под письмом
+        receivedAt:
+          type: [string, "null"]
+          format: date
+          description: Дата получения — на почтовом штемпеле
+
+    ReviewPage:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+        total:
+          type: integer
+          description: Сколько всего опубликовано писем
+
+    NewReview:
+      type: object
+      required: [name, text]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        city:
+          type: string
+          maxLength: 80
+        text:
+          type: string
+          minLength: 10
+          maxLength: 3000
 
     NewsletterSubscription:
       type: object

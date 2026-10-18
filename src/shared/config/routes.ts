@@ -29,3 +29,8 @@ export const HOME_ANCHORS = {
   vineyards: "vineyards",
   cellar: "cellar",
 } as const;
+
+/** Якоря страницы отзывов */
+export const REVIEWS_ANCHORS = {
+  write: "write",
+} as const;
