@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Кэш Turborepo
+.turbo
+
+# Пробная выкладка сервиса (pnpm deploy)
+.deploy

@@ -9,12 +9,25 @@
   },
   "scripts": {
     "dev": "pnpm --filter @wine/web dev",
-    "build": "pnpm -r --if-present run build",
-    "lint": "pnpm -r --if-present run lint",
-    "typecheck": "pnpm -r --if-present run typecheck",
-    "contracts:gen": "pnpm --filter @wine/contracts contracts:gen"
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "contracts:gen": "pnpm --filter @wine/contracts contracts:gen",
+    "backend:up": "docker compose -f deploy/compose/compose.yaml up -d --build",
+    "backend:up:observability": "cross-env OTEL_SDK_DISABLED=false docker compose -f deploy/compose/compose.yaml --profile observability up -d --build",
+    "backend:down": "docker compose -f deploy/compose/compose.yaml --profile observability down",
+    "backend:logs": "docker compose -f deploy/compose/compose.yaml logs -f"
   },
   "devDependencies": {
-    "typescript": "6.0.3"
+    "@eslint/js": "9.39.1",
+    "cross-env": "10.1.0",
+    "eslint": "9.39.1",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-boundaries": "7.2.0",
+    "globals": "16.5.0",
+    "turbo": "2.11.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2"
   }
 }

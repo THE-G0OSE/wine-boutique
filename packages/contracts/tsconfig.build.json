@@ -1,0 +1,11 @@
+{
+  // Сборка того, что сервисы импортируют в рантайме: zod-схемы и раскладка операций по сервисам
+  "extends": "../../tsconfig.service.json",
+  "compilerOptions": {
+    "rootDir": "openapi",
+    "outDir": "dist/openapi",
+    "experimentalDecorators": false,
+    "emitDecoratorMetadata": false
+  },
+  "include": ["openapi/generated", "openapi/ownership.ts"]
+}

@@ -4,24 +4,38 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Контракты между фронтом и сервисами: OpenAPI публичного API (позже — proto внутренних gRPC и схемы событий)",
+  "files": [
+    "dist",
+    "openapi/openapi.yaml",
+    "openapi/generated/schema.ts"
+  ],
   "exports": {
-    "./openapi": "./openapi/generated/schema.ts",
-    "./openapi/zod": "./openapi/generated/zod/zod.gen.ts",
+    "./openapi": {
+      "types": "./openapi/generated/schema.ts"
+    },
+    "./openapi/zod": {
+      "types": "./dist/openapi/generated/zod/zod.gen.d.ts",
+      "default": "./dist/openapi/generated/zod/zod.gen.js"
+    },
+    "./openapi/ownership": {
+      "types": "./dist/openapi/ownership.d.ts",
+      "default": "./dist/openapi/ownership.js"
+    },
     "./openapi.yaml": "./openapi/openapi.yaml"
   },
   "scripts": {
     "contracts:gen": "pnpm run gen:types && pnpm run gen:zod",
     "gen:types": "openapi-typescript openapi/openapi.yaml -o openapi/generated/schema.ts",
     "gen:zod": "openapi-ts",
-    "typecheck": "tsc --noEmit"
-  },
-  "peerDependencies": {
-    "zod": "4.6.7"
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.99.0",
     "openapi-typescript": "7.13.0",
-    "typescript": "6.0.3",
+    "typescript": "6.0.3"
+  },
+  "dependencies": {
     "zod": "4.6.7"
   }
 }

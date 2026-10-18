@@ -1,5 +1,5 @@
 # Проверки на каждый push; из main фронт выкладывается на GitHub Pages.
-# Бэкенд в CI пока не участвует — он будет разворачиваться на VPS.
+# Бэкенд (services/*, service-kit) в CI пока не участвует — проверяется локально (pnpm test), разворачивается на VPS.
 name: CI
 
 on:
@@ -29,7 +29,8 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      # Только фронт и пакеты, от которых он зависит (contracts, demo-data)
+      - run: pnpm install --frozen-lockfile --filter wine-boutique --filter "@wine/web..."
 
       # Сгенерированное из контракта закоммичено и актуально
       - name: Контракты сгенерированы из openapi.yaml
@@ -37,12 +38,11 @@ jobs:
           pnpm contracts:gen
           git diff --exit-code -- packages/contracts
 
-      - run: pnpm lint
-      - run: pnpm typecheck
+      - run: pnpm turbo run lint typecheck --filter "@wine/web..."
 
       # Сборка сразу под GitHub Pages: сайт живёт в подпапке /<имя репозитория>/, API — моки MSW
       - name: Сборка
-        run: pnpm build
+        run: pnpm turbo run build --filter "@wine/web..."
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
 

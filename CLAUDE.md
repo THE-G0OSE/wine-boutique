@@ -79,5 +79,6 @@ node apps/web/scripts/optimize-image.mjs <вход> apps/web/public/images/<пу
 - Сервис = ограниченный контекст со своей базой. Сервисы не импортируют друг друга и не ходят в чужие базы.
 - Все контракты — в `packages/contracts` (`@wine/contracts`): OpenAPI публичного API, proto внутренних gRPC, схемы событий (CloudEvents). Изменения — только обратно совместимые, проверяются в CI.
 - Синхронно — один шаг пакетного gRPC-вызова с дедлайном и деградацией; всё остальное — события через outbox/inbox.
-- Каждый HTTP-обработчик объявляет схему входа (`@Body({ schema })`) и выхода (`@SerializeOptions({ schema })`) из контракта.
+- Каждый HTTP-обработчик объявляет схему входа (`@Body({ schema })`, `@Query({ schema })`) и выхода (`@ContractResponse(schema)` из `@wine/service-kit`, не голый `@SerializeOptions` — он ломается на массивах) из `@wine/contracts/openapi/zod`. Владелец каждой операции — в `OPERATION_OWNERS` (`@wine/contracts/openapi/ownership`); тест сервиса проверяет, что все его операции реализованы.
+- Шаблон сервиса — `services/identity`. Команды: `pnpm test` (все тесты), `pnpm backend:up` / `backend:down` (Compose: Traefik на :8080, Postgres, NATS), `pnpm backend:up:observability` (+ Grafana на :3001).
 - Версии Prisma фиксировать точно: npm-тег `latest` у `prisma` указывает на 8.0 RC.

@@ -32,7 +32,7 @@
 | Валидация HTTP | Zod 4, `StandardSchemaValidationPipe` / `StandardSchemaSerializerInterceptor` | Встроено в Nest 12. Схемы генерируются из OpenAPI |
 | Генерация из OpenAPI | `openapi-typescript` (типы `paths` для фронта и MSW) + `@hey-api/openapi-ts`, плагин zod | Один `openapi.yaml` → типы фронта и zod-схемы сервисов |
 | Наблюдаемость | OpenTelemetry (трейсы и метрики) + pino (логи с trace id); OTel Collector → Grafana (Tempo, Loki, Prometheus) | Без сквозной трассировки микросервисы не отладить |
-| Тесты | Vitest 5, Testcontainers (Postgres, NATS) | Настоящие зависимости, без моков БД и брокера |
+| Тесты | Vitest 5 + `unplugin-swc` (метаданные декораторов для DI Nest — рецепт Nest 12), Testcontainers (Postgres, NATS) | Настоящие зависимости, без моков БД и брокера |
 | Линтер и границы | ESLint (flat) + typescript-eslint + `eslint-plugin-boundaries`; `dependency-cruiser` | Сервис не может импортировать другой сервис |
 | Совместимость контрактов | `oasdiff` (OpenAPI), `buf breaking` (proto), тест совместимости схем событий | Ломающее изменение видно в CI до мержа |
 | Монорепозиторий | pnpm workspaces + Turborepo | Кэш задач и сборка только затронутых сервисов |
@@ -66,7 +66,7 @@ deploy/
 ### 3.1 Публичный HTTP API
 
 - Источник правды — `packages/contracts/openapi/openapi.yaml` (OpenAPI 3.1). Его реализуют сервисы вместе: каждый путь принадлежит ровно одному сервису (таблица в плане), Traefik маршрутизирует по префиксу.
-- Каждый обработчик объявляет схемы из контракта на вход (`@Body({ schema })`, `@Query({ schema })`, `@Param({ schema })`) и выход (`@SerializeOptions({ schema })`). Схема ответа — allowlist: лишнее отрезается, несоответствие → 500 и баг в логах.
+- Каждый обработчик объявляет схемы из контракта на вход (`@Body({ schema })`, `@Query({ schema })`, `@Param({ schema })`) и выход (`@ContractResponse(schema)` из `@wine/service-kit`). Схема ответа — allowlist: лишнее отрезается, несоответствие → 500 и баг в логах. Голый `@SerializeOptions({ schema })` не используем: сериализатор Nest проверяет массив поэлементно, и схему-массив из контракта (`zGetGrapesResponse`) надо разворачивать до элемента — `@ContractResponse` делает это сам.
 - Тест покрытия: каждый `operationId` реализован ровно одним сервисом с тем же методом и путём.
 - Префикс `/api`, без версии в пути. Ломающее изменение — `/api/v2` для затронутых путей.
 - JSON — camelCase. Даты — ISO 8601.
@@ -173,8 +173,11 @@ services/catalog/
 ## 10. Сборка и деплой
 
 - Turborepo: `turbo run build lint test` локально — кэш задач, сборка только затронутого. **CI для бэкенда пока нет** (решение 18.10.2026): проверки сервисов запускаются локально перед пушем; GitHub Actions для `services/*` добавим позже — по плану из §9.
-- Образ на сервис: многостадийная сборка `node:24-alpine`, `pnpm deploy --prod --filter <service>`, запуск не от root, `HEALTHCHECK`.
-- Разработка: `deploy/compose` поднимает Postgres, NATS, Traefik и сервисы; фронт — Vite proxy `/api` → Traefik.
+- Сборка: общие пакеты (`@wine/service-kit`, zod-схемы и раскладка операций в `@wine/contracts`) компилируются `tsc` в `dist` — Node не исполняет `.ts` из `node_modules`, а в образе пакеты лежат именно там. Сервисы собираются Nest CLI (сборщик tsc, ESM). Общая база — `tsconfig.service.json` в корне. В `package.json` пакетов есть `files`, иначе `pnpm deploy` не возьмёт `dist`.
+- Образ — один `services/Dockerfile` на все сервисы (`--build-arg SERVICE=<имя>`): `pnpm fetch` по lockfile, сборка через Turborepo, `pnpm deploy --prod --legacy`, запуск не от root, `HEALTHCHECK` на `/health/ready`.
+- OpenTelemetry — без кода: `node --import @opentelemetry/auto-instrumentations-node/register dist/main.js`, настройка стандартными переменными `OTEL_*` (`OTEL_SDK_DISABLED=true` — выключено).
+- Разработка: `pnpm backend:up` — `deploy/compose/compose.yaml` (Postgres с базой и ролью на сервис, NATS JetStream, Traefik с маршрутами из `deploy/traefik/dynamic.yml`, сервисы); API — на `http://localhost:8080/api`. Наблюдаемость — профиль `observability` (`grafana/otel-lgtm`, Grafana на :3001). Фронт с `VITE_API_MOCKS=false` ходит туда через Vite proxy.
+- Маршруты Traefik — файловым провайдером, а не метками Docker: шлюзу не нужен доступ к сокету Docker. Новый сервис — новый роутер в `dynamic.yml` по раскладке `OPERATION_OWNERS` из контрактов.
 - Прод: Docker Compose на арендованном VPS у российского провайдера — Traefik (TLS от Let's Encrypt через ACME), сервисы, NATS, PostgreSQL 18 с бэкапами (WAL-G в S3-совместимое хранилище) и наблюдаемость. Выкатка — `docker compose pull && up -d` с тегом образа, миграции — одноразовый контейнер перед запуском сервиса. Потом, если понадобится, — управляемый PostgreSQL и Managed Kubernetes с Helm; код сервисов при переходе не меняется.
 - Docker Hub из России доступен нестабильно: на VPS — зеркало реестра провайдера; свои образы собираются на VPS или пушатся в реестр провайдера.
 

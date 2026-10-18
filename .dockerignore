@@ -1,0 +1,14 @@
+# Контекст сборки образов сервисов: фронт и артефакты не нужны
+**/node_modules
+**/dist
+**/.turbo
+.deploy
+.git
+.github
+.claude
+.vscode
+.idea
+docs
+apps
+**/*.log
+**/.env.local

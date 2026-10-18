@@ -1,0 +1,95 @@
+# Бэкенд целиком для разработки: pnpm backend:up → API на http://localhost:8080/api
+# Наблюдаемость (Grafana на http://localhost:3001): pnpm backend:up:observability
+name: wine-boutique
+
+x-service: &service
+  restart: unless-stopped
+  environment: &service-env
+    NODE_ENV: production
+    LOG_LEVEL: info
+    OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-true}
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_LOGS_EXPORTER: none
+  depends_on:
+    postgres: { condition: service_healthy }
+    nats: { condition: service_healthy }
+
+services:
+  traefik:
+    image: traefik:v3.7.15
+    restart: unless-stopped
+    command:
+      - --entrypoints.web.address=:80
+      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --providers.file.watch=true
+      - --ping=true
+      - --api.dashboard=true
+      - --api.insecure=true # дашборд только локально, на :8081
+      - --accesslog=true
+      - --accesslog.format=json
+    ports:
+      - "8080:80"
+      - "8081:8080"
+    volumes:
+      - ../traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+
+  postgres:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      SERVICE_DATABASES: catalog news reviews newsletter identity
+      DEV_DB_PASSWORD: ${DEV_DB_PASSWORD:-dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+
+  nats:
+    image: nats:2.15.1-alpine
+    restart: unless-stopped
+    command: ["--jetstream", "--store_dir", "/data", "--http_port", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:8222/healthz?js-enabled-only=true"]
+      interval: 5s
+      retries: 10
+
+  identity:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args: { SERVICE: identity }
+    image: wine-boutique/identity:dev
+    environment:
+      <<: *service-env
+      SERVICE_NAME: identity
+      OTEL_SERVICE_NAME: identity
+
+  # Трейсы, метрики и логи в одном контейнере: OTel Collector + Tempo + Prometheus + Loki + Grafana
+  otel-lgtm:
+    image: grafana/otel-lgtm:0.37.0
+    profiles: [observability]
+    ports:
+      - "3001:3000"
+      - "4318:4318"
+
+volumes:
+  postgres-data:
+  nats-data:

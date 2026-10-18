@@ -94,8 +94,10 @@
 
 ### B1 · Платформа и «ходячий скелет»
 
+**Сделано 18.10.2026**, кроме проверки в Docker: Compose и образ сервиса написаны и проверены статически (`docker compose config`, `pnpm deploy` с запуском собранного бандла), но не запускались — на машине разработки не был запущен Docker. `dependency-cruiser` отложен до второго сервиса: пока его работу делает `eslint-plugin-boundaries`, а сервисы не могут импортировать друг друга и без него — они не зависят друг от друга в `package.json`.
+
 1. Turborepo: задачи `build`, `lint`, `typecheck`, `test`, `contracts:gen` с кэшем; в CI — только затронутое.
-2. `packages/service-kit`: конфиг (zod), логи (pino, маскирование ПДн), OpenTelemetry, фильтр ошибок в формате контракта, глобальные Standard Schema пайп (тело — 422, query и path — 400) и сериализатор, health-пробы, корректное завершение, база для Prisma-клиента.
+2. `packages/service-kit`: конфиг (zod), логи (pino, request id от шлюза, без cookie и тел запросов), OpenTelemetry, фильтр ошибок в формате контракта, глобальные Standard Schema пайп (тело — 422, query и path — 400) и сериализатор, health-пробы, корректное завершение, база для Prisma-клиента.
 3. Первый сервис — `identity` с `GET /api/auth/session` → гость: проходит весь путь Traefik → сервис и задаёт шаблон для остальных.
 4. `deploy/compose`: Postgres 18 (база и роль на сервис), NATS с JetStream, Traefik (маршруты `/api/*`), OTel Collector + Grafana-стек (профиль `observability`, чтобы не поднимать всегда).
 5. Проверки архитектуры: `eslint-plugin-boundaries` (сервисы не импортируют друг друга, слои внутри), `dependency-cruiser`, тест покрытия `operationId` (нереализованные помечены как ожидаемые).

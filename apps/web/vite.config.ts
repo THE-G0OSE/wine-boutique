@@ -41,6 +41,10 @@ export default defineConfig(({ mode }) => {
     // Путь, с которого раздаётся сайт: «/» локально и на своём домене, «/wine-boutique/» на GitHub Pages (задаёт CI)
     base: process.env.BASE_PATH || "/",
     plugins: [react(), tailwindcss(), securityMeta(env.VITE_API_URL || "/api")],
+    // С VITE_API_MOCKS=false запросы /api идут в бэкенд из deploy/compose (Traefik на :8080)
+    server: {
+      proxy: { "/api": { target: process.env.API_PROXY_TARGET || "http://localhost:8080", changeOrigin: true } },
+    },
     resolve: {
       alias: {
         "uikit;/": path.resolve(__dirname, "./src/shared/ui"),

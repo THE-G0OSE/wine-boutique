@@ -15,6 +15,9 @@ React 19 · Vite 7 · TypeScript · Tailwind CSS v4 · motion · Redux Toolkit +
 | `apps/web` | Фронтенд |
 | `packages/contracts` | `@wine/contracts` — контракт API (`openapi/openapi.yaml`) и сгенерированные из него типы и zod-схемы |
 | `packages/demo-data` | `@wine/demo-data` — данные из макетов: моки MSW, позже сиды бэкенда |
+| `packages/service-kit` | `@wine/service-kit` — общая техника сервисов: конфиг, логи, ошибки и валидация по контракту, health, запуск |
+| `services/*` | Микросервисы бэкенда (пока `identity`) |
+| `deploy` | Compose для бэкенда, маршруты Traefik |
 
 ## Запуск
 
@@ -58,6 +61,19 @@ node apps/web/scripts/optimize-image.mjs <исходник> apps/web/public/imag
 - Заголовки Pages настроить нельзя, поэтому CSP и Referrer-Policy — мета-тегами, которые вставляет сборка ([vite.config.ts](apps/web/vite.config.ts)). Если `VITE_API_URL` — адрес на другом домене, он сам попадает в `connect-src`.
 
 Бэкенд в CI пока не участвует: он будет разворачиваться на VPS (см. [docs/backend-plan.md](docs/backend-plan.md)).
+
+## Бэкенд (в разработке)
+
+Микросервисы на NestJS 12 в `services/*`, общая техника — `packages/service-kit`. Нужен запущенный Docker.
+
+```bash
+pnpm test                       # тесты всех пакетов и сервисов
+pnpm backend:up                 # Postgres, NATS, Traefik и сервисы; API — http://localhost:8080/api
+pnpm backend:up:observability   # то же + Grafana с трейсами и метриками на http://localhost:3001
+pnpm backend:down
+```
+
+Фронт на настоящем API: `VITE_API_MOCKS=false` в `apps/web/.env.local`, затем `pnpm dev` — запросы `/api` проксируются в Traefik.
 
 ## CI
 

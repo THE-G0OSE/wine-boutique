@@ -1,0 +1,15 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "env": ["BASE_PATH", "VITE_*"]
+    },
+    "typecheck": { "dependsOn": ["^build"] },
+    "lint": { "dependsOn": ["^build"] },
+    "test": { "dependsOn": ["^build"] },
+    "dev": { "dependsOn": ["^build"], "cache": false, "persistent": true },
+    "contracts:gen": { "cache": false }
+  }
+}

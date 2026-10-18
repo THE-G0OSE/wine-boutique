@@ -1,7 +1,7 @@
 packages:
   - apps/*
   - packages/*
-  # - services/*   — появятся с этапа B1
+  - services/*
 
 # Точные версии при pnpm add: обновления — осознанно (Renovate), а не по ^
 saveExact: true
@@ -12,4 +12,9 @@ publicHoistPattern:
   - '@types/*'
 
 onlyBuiltDependencies:
+  - '@swc/core'
   - '@tailwindcss/oxide'
+
+# Скрипт установки protobufjs (из OpenTelemetry) только печатает предупреждения — не нужен
+ignoredBuiltDependencies:
+  - protobufjs
