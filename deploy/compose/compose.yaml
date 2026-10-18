@@ -29,6 +29,10 @@ services:
       - --api.insecure=true # дашборд только локально, на :8081
       - --accesslog=true
       - --accesslog.format=json
+      # Трейс начинается на шлюзе; включается вместе с профилем observability
+      - --tracing.otlp=${TRAEFIK_TRACING:-false}
+      - --tracing.otlp.http.endpoint=http://otel-lgtm:4318/v1/traces
+      - --tracing.serviceName=traefik
     ports:
       - "8080:80"
       - "8081:8080"

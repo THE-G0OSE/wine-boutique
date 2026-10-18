@@ -15,7 +15,7 @@
     "test": "turbo run test",
     "contracts:gen": "pnpm --filter @wine/contracts contracts:gen",
     "backend:up": "docker compose -f deploy/compose/compose.yaml up -d --build",
-    "backend:up:observability": "cross-env OTEL_SDK_DISABLED=false docker compose -f deploy/compose/compose.yaml --profile observability up -d --build",
+    "backend:up:observability": "cross-env OTEL_SDK_DISABLED=false TRAEFIK_TRACING=true docker compose -f deploy/compose/compose.yaml --profile observability up -d --build",
     "backend:down": "docker compose -f deploy/compose/compose.yaml --profile observability down",
     "backend:logs": "docker compose -f deploy/compose/compose.yaml logs -f"
   },

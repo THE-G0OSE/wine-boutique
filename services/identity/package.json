@@ -10,7 +10,7 @@
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
-    "start": "node --enable-source-maps --import @opentelemetry/auto-instrumentations-node/register dist/main.js",
+    "start": "node --enable-source-maps --import @wine/service-kit/telemetry dist/main.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run"
@@ -19,8 +19,6 @@
     "@nestjs/common": "12.1.3",
     "@nestjs/core": "12.1.3",
     "@nestjs/platform-fastify": "12.1.3",
-    "@opentelemetry/api": "1.9.1",
-    "@opentelemetry/auto-instrumentations-node": "0.81.2",
     "@wine/contracts": "workspace:*",
     "@wine/service-kit": "workspace:*",
     "reflect-metadata": "0.2.2",
