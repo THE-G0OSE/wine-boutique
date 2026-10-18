@@ -1,5 +1,5 @@
 import { delay } from "msw";
-import { mockHttp } from "@/shared/api/mockHttp";
+import { mockHttp, withAssetBase } from "@/shared/api/mockHttp";
 import type { WineSort, WineSummary } from "../model/types";
 import { wineFixtureList } from "@wine/demo-data";
 
@@ -29,6 +29,6 @@ export const wineHandlers = [
       .filter((wine) => !category || wine.categories.includes(category))
       .sort(sorters[sort]);
 
-    return response(200).json({ items: filtered.slice(offset, offset + limit), total: filtered.length });
+    return response(200).json(withAssetBase({ items: filtered.slice(offset, offset + limit), total: filtered.length }));
   }),
 ];

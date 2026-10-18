@@ -1,5 +1,5 @@
 import { delay } from "msw";
-import { mockHttp } from "@/shared/api/mockHttp";
+import { mockHttp, withAssetBase } from "@/shared/api/mockHttp";
 import { NEWS_RUBRIC_LABELS } from "@/entities/newsIssue/@x/newsArticle";
 import type { NewsArticle } from "../model/types";
 import { archiveIssuesFixture, articleFixtures, moreClippings, rubricImage } from "@wine/demo-data";
@@ -33,6 +33,6 @@ export const articleHandlers = [
     await delay();
     const article = articleFixtures.find((item) => item.slug === params.slug) ?? archivePlaceholder(params.slug);
     if (!article) return response(404).json({ code: "not_found", message: "Такой вырезки в подшивке нет" });
-    return response(200).json(article);
+    return response(200).json(withAssetBase(article));
   }),
 ];

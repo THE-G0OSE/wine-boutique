@@ -1,8 +1,9 @@
 import type { imageObj } from "@/entities/heroPageImages/model/types";
+import { asset } from "@/shared/lib/asset";
 
 export const imageMock: imageObj[]  = [
   {
-    path: "/images/hero/1.webp",
+    path: asset("/images/hero/1.webp"),
     theme: "white",
     title: "Premium \nWine Boutique",
     content:
@@ -11,7 +12,7 @@ export const imageMock: imageObj[]  = [
     id: 1
   },
   {
-    path: "/images/hero/2.webp",
+    path: asset("/images/hero/2.webp"),
     theme: "red",
     title: "Не просто забегаловка",
     content:
@@ -20,7 +21,7 @@ export const imageMock: imageObj[]  = [
     id: 2
   },
   {
-    path: "/images/hero/3.webp",
+    path: asset("/images/hero/3.webp"),
     theme: "white",
     title: "Сотни вин из 15 стран",
     content:
@@ -29,7 +30,7 @@ export const imageMock: imageObj[]  = [
     id: 3
   },
   {
-    path: "/images/hero/4.webp",
+    path: asset("/images/hero/4.webp"),
     theme: "red",
     title: "Каждый месяц — новые поставки",
     content:
@@ -38,7 +39,7 @@ export const imageMock: imageObj[]  = [
     id: 4
   },
   {
-    path: "/images/hero/5.webp",
+    path: asset("/images/hero/5.webp"),
     theme: "white",
     title: "Персональные консультации",
     content:
@@ -47,7 +48,7 @@ export const imageMock: imageObj[]  = [
     id: 5
   },
   {
-    path: "/images/hero/6.webp",
+    path: asset("/images/hero/6.webp"),
     theme: "red",
     title: "Каждый месяц — новый набор",
     content:
@@ -56,7 +57,7 @@ export const imageMock: imageObj[]  = [
     id: 6
   },
   {
-    path: "/images/hero/7.webp",
+    path: asset("/images/hero/7.webp"),
     theme: "white",
     title: "Корпоративные подборки",
     content:
@@ -65,7 +66,7 @@ export const imageMock: imageObj[]  = [
     id: 7
   },
   {
-    path: "/images/hero/8.webp",
+    path: asset("/images/hero/8.webp"),
     theme: "red",
     title: "Интерьер в стиле «винный погреб»",
     content:
@@ -74,7 +75,7 @@ export const imageMock: imageObj[]  = [
     id: 8
   },
   {
-    path: "/images/hero/9.webp",
+    path: asset("/images/hero/9.webp"),
     theme: "white",
     title: "Доступ и эксклюзив",
     content:

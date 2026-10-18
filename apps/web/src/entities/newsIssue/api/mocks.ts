@@ -1,5 +1,5 @@
 import { delay } from "msw";
-import { mockHttp } from "@/shared/api/mockHttp";
+import { mockHttp, withAssetBase } from "@/shared/api/mockHttp";
 import type { NewsArchiveMonth } from "../model/types";
 import { archiveIssuesFixture, latestIssueFixture } from "@wine/demo-data";
 
@@ -17,7 +17,7 @@ const archiveMonths = archiveIssuesFixture.reduce<NewsArchiveMonth[]>((months, i
 export const newsHandlers = [
   mockHttp.get("/news/issues/latest", async ({ response }) => {
     await delay();
-    return response(200).json(latestIssueFixture);
+    return response(200).json(withAssetBase(latestIssueFixture));
   }),
 
   mockHttp.get("/news/archive", async ({ query, response }) => {
@@ -28,6 +28,6 @@ export const newsHandlers = [
     const issues = archiveIssuesFixture.filter(
       (issue) => monthOf(issue.publishedAt) === month && (!rubric || issue.rubric === rubric)
     );
-    return response(200).json({ months: archiveMonths, month, issues });
+    return response(200).json(withAssetBase({ months: archiveMonths, month, issues }));
   }),
 ];

@@ -11,6 +11,7 @@ import { centerStoryLayout } from "@/entities/heroPageScrollCards/model/lib/layo
 import { Text } from "uikit;/";
 import { cn } from "@/shared/lib/cn";
 import { stage, stageFont } from "@/shared/lib/stage";
+import { asset } from "@/shared/lib/asset";
 
 interface IProps {
   card: ScrollCard;
@@ -39,7 +40,7 @@ const ScrollCardElement: FC<IProps> = ({ card, isActive, floatY }) => {
     <div className={cn("absolute inset-0", !isActive && "pointer-events-none")}>
       <motion.div aria-hidden="true" className="absolute inset-0" style={{ y: floatY }}>
         <motion.img
-          src="/images/textures/ripped-paper.webp"
+          src={asset("/images/textures/ripped-paper.webp")}
           alt=""
           variants={paperVariants(card.side)}
           initial="hide"

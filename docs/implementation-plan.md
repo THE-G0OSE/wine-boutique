@@ -372,10 +372,9 @@ packages/contracts  контракт API (openapi/openapi.yaml — источн�
 
 Проект пока нигде не хостится. Аудитория сайта — в России, а популярные зарубежные платформы для фронтенда там работают нестабильно: Vercel частично недоступен (особенно с мобильного интернета), Netlify заблокирован, сайты за Cloudflare с июня 2025 года режутся российскими провайдерами до первых 16 КБ ([Хабр](https://habr.com/ru/companies/amvera/articles/1028136/), [Threads](https://www.threads.com/@mangust59/post/DUqL_bwk8sX/vercel-%D1%87%D0%B0%D1%81%D1%82%D0%B8%D1%87%D0%BD%D0%BE-%D0%B7%D0%B0%D0%B1%D0%BB%D0%BE%D0%BA%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD-%D0%B2-%D1%80%D1%84-netlify-%D0%BF%D0%BE%D0%BB%D0%BD%D0%BE%D1%81%D1%82%D1%8C%D1%8E-%D0%B7%D0%B0%D0%B4%D0%B5%D0%BF%D0%BB%D0%BE%D0%B8%D1%82%D1%8C-%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE-%D0%B0-%D0%B4%D0%B0%D0%BB%D1%8C%D1%88%D0%B5-%D1%87%D1%82), [Cloudflare](https://blog.cloudflare.com/russian-internet-users-are-unable-to-access-the-open-internet/), [BleepingComputer](https://www.bleepingcomputer.com/news/technology/russias-throttling-of-cloudflare-makes-sites-inaccessible/)). Поэтому деплой — переносимый контейнер, который запускается у любого провайдера:
 
-- **Docker-образ**, multi-stage: `node:24-alpine` + corepack/pnpm (версия из `packageManager`) → `pnpm build` → `nginxinc/nginx-unprivileged:1.30-alpine` (без root, порт 8080) раздаёт `dist`. Конфиг в `deploy/nginx/`: SPA-фолбэк `try_files $uri $uri/ /index.html`, вечный кэш для хешированных `/assets/*`, неделя для `/images/*`, `no-cache` для `index.html` и воркера MSW, gzip; заголовки безопасности (CSP, nosniff, frame-ancestors, Referrer-Policy, Permissions-Policy, COOP, HSTS) — отдельным сниппетом, который подключается в каждый `location` (иначе `add_header` уровня server теряется).
-- **Хостинг** — российская облачная платформа с автодеплоем из GitHub по Dockerfile; по умолчанию Timeweb Cloud Apps, запасной вариант — Yandex Cloud Serverless Containers. Тот же образ потом встанет рядом с бэкендом (docker compose). Регистрация и оплата аккаунта — на тебе.
-- **GitHub Actions** (`ci.yml`) — только проверки на каждый push: `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm build` (+ тесты, когда появятся), Node 24; затем сборка Docker-образа и смоук-тест контейнера (главная, вложенный путь, заголовки воркера). FTP-деплой удалён; секреты `FTP_*` в настройках репозитория больше не нужны.
-- Переменные окружения сборки: `VITE_API_URL`, `VITE_API_MOCKS`.
+- **GitHub Pages** (решение от 18.10.2026, заменило Docker-образ с nginx и российскую облачную платформу): фронт — статикой на `the-g0ose.github.io/wine-boutique/`, выкладка из `main` job'ом в `ci.yml`. Сборка с `BASE_PATH=/wine-boutique/`, SPA-фолбэк — копия `index.html` в `404.html`, CSP и Referrer-Policy — мета-тегами из `vite.config.ts`. Данные — MSW.
+- **GitHub Actions** (`ci.yml`) на каждый push: актуальность контрактов, `pnpm lint`, `pnpm typecheck`, сборка под Pages; на `main` — деплой. Бэкенд в CI не участвует, он будет на VPS.
+- Переменные окружения сборки: `VITE_API_URL`, `VITE_API_MOCKS`, `BASE_PATH` (base Vite; на Pages — `/wine-boutique/`).
 
 ---
 
@@ -465,7 +464,7 @@ Vitest + Testing Library (MSW-обработчики переиспользую�
 | 2 | Секция историй | Скролл-анимация, починенная (sticky, прогресс секции) и с типографикой из дизайна |
 | 3 | Арт-секции на 1024–1919 | Пропорциональная «сцена» `stage()` + `clamp()` для кеглей; ниже 1024 — мобильная раскладка (§4.5) |
 | 4 | Маршрут магазина | `/shop` вместо `/store` |
-| 5 | Хостинг | Пока нет. Docker-образ с nginx и SPA-фолбэком, российская облачная платформа, GitHub Actions — только проверки (§4.8) |
+| 5 | Хостинг | Пока нет. Docker-образ с nginx и SPA-фолбэком, российская облачная платформа, GitHub Actions — только проверки (§4.8) | **18.10.2026:** фронт — на GitHub Pages из CI, бэкенд — на арендованном VPS.
 | 6 | Алиас `uikit;/` | Оставляем как есть: `shared/ui` импортируется через `uikit;/` |
 | 7 | Вход, кабинет и данные | Бэкенд будет позже и подстроится под фронт: контракт в `api/openapi.yaml`, RTK Query, MSW вместо сервера до его появления (§4.2.1) |
 | 8 | Бэкенд (18.10.2026) | Микросервисы на NestJS 12 (Fastify), gRPC + NATS JetStream, Traefik, PostgreSQL 18 (база на сервис) + Prisma 7; контракты — пакет `@wine/contracts` — [backend-plan.md](backend-plan.md), [backend-architecture.md](backend-architecture.md) |

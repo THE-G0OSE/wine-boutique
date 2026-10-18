@@ -2,6 +2,7 @@ import { cardsMock, ScrollCardElement, StoryCard } from "@/entities/heroPageScro
 import { MEDIA, useMediaQuery } from "@/shared/lib/hooks/useMediaQuery";
 import { ScrollHeroSectionProgressBar } from "./components/progressBar";
 import { useScrollHeroSection } from "../model";
+import { asset } from "@/shared/lib/asset";
 
 /** Десктоп: экран прилипает, и пять историй сменяют друг друга по мере прокрутки */
 const PinnedStories = () => {
@@ -10,7 +11,10 @@ const PinnedStories = () => {
   return (
     <section ref={ref} aria-label="Истории" className="relative h-[600vh]">
       {/* Дерево — на всю ширину экрана, истории — по центру, не шире макета 1920 */}
-      <div className="sticky top-0 h-svh overflow-hidden bg-cellar-800 bg-[url(/images/textures/wood.webp)] bg-size-[min(25%,480px)_auto] bg-repeat">
+      <div
+        className="sticky top-0 h-svh overflow-hidden bg-cellar-800 bg-size-[min(25%,480px)_auto] bg-repeat"
+        style={{ backgroundImage: `url(${asset("/images/textures/wood.webp")})` }}
+      >
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 inset-shadow-top-sm" />
         <div className="@container relative mx-auto h-full max-w-[1920px]">
           <ScrollHeroSectionProgressBar count={cardsMock.length} progress={progress} isOpen={isPinned} y={floatY} />
@@ -26,7 +30,7 @@ const PinnedStories = () => {
 /** Мобильные: истории лентой, каждая всплывает при появлении на экране */
 const StoriesFeed = () => (
   <section aria-label="Истории" className="relative overflow-hidden bg-cellar-800 pt-10 pb-5">
-    <img src="/images/textures/wood.webp" alt="" className="absolute inset-0 size-full object-cover" />
+    <img src={asset("/images/textures/wood.webp")} alt="" className="absolute inset-0 size-full object-cover" />
     <div aria-hidden="true" className="absolute inset-0 bg-cellar-950/25" />
     {cardsMock.map((card) => (
       <StoryCard key={card.image} card={card} />

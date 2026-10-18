@@ -3,6 +3,7 @@ import { cn } from "@/shared/lib/cn";
 import { AnimatePresence, motion } from "motion/react";
 import { useId, type FC } from "react";
 import { letterSlide, letterSlideTransition } from "../../../model/animations";
+import { asset } from "@/shared/lib/asset";
 
 interface IProps {
   review: Review;
@@ -38,7 +39,7 @@ const MobileLetter: FC<IProps> = ({ review, index, open, onToggle }) => {
           className="absolute inset-0 border-8 border-transparent [border-image:repeating-linear-gradient(45deg,var(--color-primary-500)_0_12px,var(--color-envelope-light)_12px_20px,var(--color-airmail)_20px_32px,var(--color-envelope-light)_32px_40px)_8]"
         />
         <img
-          src="/images/reviews/stamp.webp"
+          src={asset("/images/reviews/stamp.webp")}
           alt=""
           className="absolute top-4.5 right-4.5 size-16 object-contain mix-blend-multiply"
         />

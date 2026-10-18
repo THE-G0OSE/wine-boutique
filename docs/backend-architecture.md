@@ -36,7 +36,7 @@
 | Линтер и границы | ESLint (flat) + typescript-eslint + `eslint-plugin-boundaries`; `dependency-cruiser` | Сервис не может импортировать другой сервис |
 | Совместимость контрактов | `oasdiff` (OpenAPI), `buf breaking` (proto), тест совместимости схем событий | Ломающее изменение видно в CI до мержа |
 | Монорепозиторий | pnpm workspaces + Turborepo | Кэш задач и сборка только затронутых сервисов |
-| Окружение | Docker Compose (разработка и первый прод) → Managed Kubernetes (Timeweb или Yandex), Helm | Сервисы с первого дня 12-factor: конфиг из env, health-пробы, корректное завершение |
+| Окружение | Docker Compose на арендованном VPS (разработка и прод) → Managed Kubernetes, когда понадобится масштаб | Сервисы с первого дня 12-factor: конфиг из env, health-пробы, корректное завершение |
 
 ## 2. Репозиторий
 
@@ -55,7 +55,6 @@ packages/
 deploy/
   compose/                   docker-compose: Postgres, NATS, Traefik, сервисы, наблюдаемость
   traefik/                   маршруты /api/* → сервисы
-  nginx/                     nginx фронта
 ```
 
 - Пакеты подключаются как `workspace:*`. `apps/web` берёт из `@wine/contracts` только `openapi`.
@@ -145,7 +144,8 @@ services/catalog/
 - Ошибки — в формате контракта `Error { code, message }` (`message` — по-русски, для пользователя) + необязательный `details`. Тело — 422, путь и query — 400, нет сущности — 404 `not_found`, принято в обработку — 202, идемпотентно без тела — 204.
 - GET публичного контента — короткий `Cache-Control` и `ETag`; персональное — `no-store`. Лимит тела — 64 КБ.
 - **Аутентификация на краю.** Сессия — httpOnly-cookie `__Host-` (`Secure`, `SameSite=Lax`). Traefik для защищённых путей вызывает `identity` (forward-auth) и передаёт в сервис заголовок с id пользователя; входящие снаружи такие заголовки шлюз вырезает. Сервисы внешним заголовкам без шлюза не доверяют: сеть сервисов закрыта.
-- CSRF: проверка `Origin` у мутирующих запросов на шлюзе. CORS не нужен: фронт и API на одном домене (nginx фронта → Traefik).
+- **CORS.** Фронт — на GitHub Pages, API — на VPS, это разные origin. Traefik разрешает только origin фронта (allowlist, `credentials: true`), preflight кэшируется. Чтобы httpOnly-cookie сессии работали (браузеры режут сторонние cookie), фронт и API должны быть на одном сайте: свой домен для Pages (`example.ru`) и `api.example.ru` для API, cookie с `SameSite=Lax`. На `*.github.io` вход работать не будет — это нужно решить до фазы 8.
+- CSRF: проверка `Origin` у мутирующих запросов на шлюзе (тот же allowlist).
 - Лимиты частоты для публичных форм — на шлюзе; при спаме — Yandex SmartCaptcha.
 - **152-ФЗ:** ПДн только в российском облаке, согласия фиксируются с версией текста и временем, IP и user-agent без цели не храним, в логах и событиях ПДн маскируются или не передаются.
 - Секреты — из окружения (панель провайдера, Kubernetes Secrets, GitHub Secrets); конфиг валидируется zod при старте.
@@ -172,11 +172,11 @@ services/catalog/
 
 ## 10. Сборка и деплой
 
-- Turborepo: `turbo run build lint test --filter=...[origin/main]` — в CI только затронутые сервисы и их зависимые.
+- Turborepo: `turbo run build lint test` локально — кэш задач, сборка только затронутого. **CI для бэкенда пока нет** (решение 18.10.2026): проверки сервисов запускаются локально перед пушем; GitHub Actions для `services/*` добавим позже — по плану из §9.
 - Образ на сервис: многостадийная сборка `node:24-alpine`, `pnpm deploy --prod --filter <service>`, запуск не от root, `HEALTHCHECK`.
 - Разработка: `deploy/compose` поднимает Postgres, NATS, Traefik и сервисы; фронт — Vite proxy `/api` → Traefik.
-- Прод, этап 1: Docker Compose на виртуальной машине у российского провайдера + управляемый PostgreSQL (бэкапы, PITR). Этап 2: Managed Kubernetes, Helm-чарт на сервис, Traefik как Gateway API. Код сервисов при переходе не меняется.
-- Docker Hub из России доступен нестабильно: используем зеркало реестра провайдера; образы — в его Container Registry.
+- Прод: Docker Compose на арендованном VPS у российского провайдера — Traefik (TLS от Let's Encrypt через ACME), сервисы, NATS, PostgreSQL 18 с бэкапами (WAL-G в S3-совместимое хранилище) и наблюдаемость. Выкатка — `docker compose pull && up -d` с тегом образа, миграции — одноразовый контейнер перед запуском сервиса. Потом, если понадобится, — управляемый PostgreSQL и Managed Kubernetes с Helm; код сервисов при переходе не меняется.
+- Docker Hub из России доступен нестабильно: на VPS — зеркало реестра провайдера; свои образы собираются на VPS или пушатся в реестр провайдера.
 
 ## 11. Чек-листы
 

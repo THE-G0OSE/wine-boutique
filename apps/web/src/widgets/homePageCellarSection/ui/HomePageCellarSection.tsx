@@ -9,6 +9,7 @@ import { CELLAR_SHADE_MOBILE, CELLAR_SHADES, createDust, LAMP_GLOW } from "../mo
 import CellarCatalog from "./components/cellarCatalog/CellarCatalog";
 import CellarTimeline from "./components/cellarTimeline/CellarTimeline";
 import DepthGauge from "./components/depthGauge/DepthGauge";
+import { asset } from "@/shared/lib/asset";
 
 const backgroundMask = "linear-gradient(180deg, transparent 0%, #000 12%, #000 100%)";
 
@@ -22,7 +23,7 @@ const CellarDescent: FC<{ titleId: string }> = ({ titleId }) => {
     // Фон (фото, затемнения, свет лампы) — на всю ширину экрана; контент — по центру, не шире макета 1920
     <div ref={ref} className="relative">
       <img
-        src="/images/backgrounds/cellar.webp"
+        src={asset("/images/backgrounds/cellar.webp")}
         alt=""
         loading="lazy"
         className="absolute inset-0 size-full object-cover object-top"
@@ -115,7 +116,7 @@ const CellarDescent: FC<{ titleId: string }> = ({ titleId }) => {
 const CellarStack: FC<{ titleId: string }> = ({ titleId }) => (
   <div className="relative">
     <img
-      src="/images/backgrounds/cellar.webp"
+      src={asset("/images/backgrounds/cellar.webp")}
       alt=""
       loading="lazy"
       className="absolute inset-0 size-full object-cover object-[50%_70%] opacity-85"

@@ -35,4 +35,7 @@ export const router = createBrowserRouter([
       { path: "*", element: null },
     ],
   },
-]);
+],
+  // На GitHub Pages сайт живёт в подпапке (/wine-boutique/) — маршруты из ROUTES остаются от корня
+  { basename: import.meta.env.BASE_URL }
+);

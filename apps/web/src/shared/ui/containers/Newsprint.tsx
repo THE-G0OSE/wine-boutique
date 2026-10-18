@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { cn } from "@/shared/lib/cn";
+import { asset } from "@/shared/lib/asset";
 
 interface IProps {
   /** newspaper — фактура с белёсой подсветкой (газета, вырезки); letter — фактура проступает сквозь цвет листа (письма, конверты) */
@@ -16,7 +17,7 @@ interface IProps {
 const Newsprint: FC<IProps> = ({ variant = "newspaper", overlayClassName }) => (
   <>
     <img
-      src="/images/textures/newspaper.webp"
+      src={asset("/images/textures/newspaper.webp")}
       alt=""
       aria-hidden="true"
       className={cn(

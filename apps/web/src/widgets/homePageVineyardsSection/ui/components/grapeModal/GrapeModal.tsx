@@ -8,6 +8,7 @@ import { LuX } from "react-icons/lu";
 import { Link } from "react-router";
 import { IconButton, Modal, Text } from "uikit;/";
 import { GRAPE_TONE } from "../../../model/layout";
+import { asset } from "@/shared/lib/asset";
 
 interface IProps {
   grape: GrapeVariety | null;
@@ -37,10 +38,10 @@ const GrapeModal: FC<IProps> = ({ grape: openedGrape, onClose }) => {
       {grape && (
         <>
           <div aria-hidden="true" className="relative overflow-hidden bg-cellar-800">
-            <img src="/images/textures/wood.webp" alt="" className="absolute inset-0 size-full object-cover" />
+            <img src={asset("/images/textures/wood.webp")} alt="" className="absolute inset-0 size-full object-cover" />
             <div className="absolute inset-0 shadow-[inset_0_80px_70px_0_rgba(0,0,0,0.5),inset_-40px_0_60px_-20px_rgba(0,0,0,0.45)]" />
             <img
-              src="/images/textures/ripped-paper.webp"
+              src={asset("/images/textures/ripped-paper.webp")}
               alt=""
               className="absolute top-[27.4%] left-[-10.7%] h-[45.2%] w-[121.4%] max-w-none object-fill drop-shadow-[30px_20px_30px_rgba(0,0,0,0.35)]"
             />

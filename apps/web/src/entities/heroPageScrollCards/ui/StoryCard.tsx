@@ -3,6 +3,7 @@ import { storyInViewVariants } from "@/entities/heroPageScrollCards/model/animat
 import { motion } from "motion/react";
 import type { FC } from "react";
 import { cn } from "@/shared/lib/cn";
+import { asset } from "@/shared/lib/asset";
 
 interface IProps {
   card: ScrollCard;
@@ -21,7 +22,7 @@ const StoryCard: FC<IProps> = ({ card }) => {
       className="relative h-[470px]"
     >
       <img
-        src="/images/textures/ripped-paper.webp"
+        src={asset("/images/textures/ripped-paper.webp")}
         alt=""
         loading="lazy"
         className={cn(

@@ -20,7 +20,10 @@ pnpm contracts:gen   # после правки packages/contracts/openapi/openap
 node apps/web/scripts/optimize-image.mjs <вход> apps/web/public/images/<путь>.webp [ширина] [качество]  # новые картинки — только WebP
 ```
 
-На каждый push GitHub Actions (`.github/workflows/ci.yml`) проверяет, что сгенерированное из контракта актуально, гоняет линтер, типы, сборку и сборку Docker-образа со смоук-тестом. Деплоя в Actions нет: хостинг сам собирает `apps/web/Dockerfile` (контекст — корень репозитория); nginx-конфиг — `deploy/nginx/`, порт 8080. Новый сторонний домен (API, CDN) — добавить в CSP в `deploy/nginx/security-headers.conf`.
+На каждый push GitHub Actions (`.github/workflows/ci.yml`) проверяет, что сгенерированное из контракта актуально, гоняет линтер, типы и сборку; из `main` фронт выкладывается на GitHub Pages (`/wine-boutique/`). Бэкенд в CI пока не участвует — будет на VPS.
+
+- Сайт на Pages живёт в подпапке: файлы из `public/` — только через `asset("/images/…")` из `shared/lib/asset` (и в `src`, и в `style`; не `bg-[url(/…)]` в классах), ссылки — через `Link` и `ROUTES` (basename роутера подставится сам).
+- CSP — мета-тег из `vite.config.ts` (у Pages нет заголовков). Новый сторонний домен (CDN, API) — добавить туда.
 
 ## Архитектура — Feature-Sliced Design
 

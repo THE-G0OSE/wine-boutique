@@ -15,7 +15,6 @@ React 19 · Vite 7 · TypeScript · Tailwind CSS v4 · motion · Redux Toolkit +
 | `apps/web` | Фронтенд |
 | `packages/contracts` | `@wine/contracts` — контракт API (`openapi/openapi.yaml`) и сгенерированные из него типы и zod-схемы |
 | `packages/demo-data` | `@wine/demo-data` — данные из макетов: моки MSW, позже сиды бэкенда |
-| `deploy/nginx` | nginx фронта |
 
 ## Запуск
 
@@ -49,41 +48,20 @@ pnpm --filter @wine/web preview   # посмотреть собранный фр
 node apps/web/scripts/optimize-image.mjs <исходник> apps/web/public/images/<папка>/<имя>.webp [макс. ширина] [качество]
 ```
 
-## Docker
+## Деплой — GitHub Pages
 
-Образ: сборка на `node:24-alpine`, раздача статики — `nginx-unprivileged` (без root, порт **8080**). Конфиг nginx — [deploy/nginx](deploy/nginx): SPA-фолбэк на `index.html`, вечный кэш для `/assets/*`, gzip, заголовки безопасности (CSP и др.).
+Фронт выкладывается на GitHub Pages из `main` ([ci.yml](.github/workflows/ci.yml), job «Деплой на GitHub Pages»): адрес — `https://the-g0ose.github.io/wine-boutique/`. Данные — моки MSW прямо в браузере, бэкенд не нужен.
 
-```bash
-docker build -f apps/web/Dockerfile -t wine-boutique .
-docker run --rm -p 8080:8080 wine-boutique   # http://localhost:8080
-```
+- Один раз включить: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+- Сайт живёт в подпапке, поэтому сборка для Pages идёт с `BASE_PATH=/wine-boutique/`: Vite подставляет base в ассеты, роутер — в адреса, картинки из `public/` берутся через `asset()` из `shared/lib`. Локально `BASE_PATH` не задаётся — сайт на `/`.
+- У Pages нет SPA-фолбэка: CI копирует `index.html` в `404.html`, и прямой заход на `/wine-boutique/news/archive` открывает приложение (со статусом 404 — ограничение Pages).
+- Заголовки Pages настроить нельзя, поэтому CSP и Referrer-Policy — мета-тегами, которые вставляет сборка ([vite.config.ts](apps/web/vite.config.ts)). Если `VITE_API_URL` — адрес на другом домене, он сам попадает в `connect-src`.
 
-С настоящим API:
-
-```bash
-docker build -f apps/web/Dockerfile --build-arg VITE_API_MOCKS=false --build-arg VITE_API_URL=https://api.example.ru -t wine-boutique .
-```
-
-Если API будет на другом домене, добавьте его в `connect-src` в [deploy/nginx/security-headers.conf](deploy/nginx/security-headers.conf).
+Бэкенд в CI пока не участвует: он будет разворачиваться на VPS (см. [docs/backend-plan.md](docs/backend-plan.md)).
 
 ## CI
 
-[GitHub Actions](.github/workflows/ci.yml) на каждый push: актуальность сгенерированного из контракта, `pnpm lint`, `pnpm typecheck`, `pnpm build`, затем сборка Docker-образа и смоук-тест контейнера (главная и прямой заход на вложенный путь отдают приложение). Деплоя в Actions нет — его делает хостинг.
-
-## Деплой
-
-Зарубежные платформы для фронтенда (Vercel, Netlify, Cloudflare) из России работают нестабильно, поэтому сайт собирается в переносимый Docker-образ и размещается у российского облачного провайдера.
-
-**По умолчанию — Timeweb Cloud Apps** (автодеплой из GitHub):
-
-1. Создать приложение из репозитория `THE-G0OSE/wine-boutique`, ветка `main`, способ сборки — Dockerfile `apps/web/Dockerfile`, контекст — корень репозитория.
-2. Порт приложения — `8080`.
-3. При необходимости задать аргументы сборки `VITE_API_URL` / `VITE_API_MOCKS`.
-4. Подключить домен и HTTPS в панели провайдера.
-
-**Запасной вариант — Yandex Cloud Serverless Containers:** собрать образ, загрузить в Container Registry и создать ревизию контейнера с портом `8080`.
-
-Регистрация и оплата аккаунта у провайдера — на владельце проекта.
+[GitHub Actions](.github/workflows/ci.yml) на каждый push: актуальность сгенерированного из контракта, `pnpm lint`, `pnpm typecheck`, сборка под Pages. На `main` — ещё и выкладка на Pages.
 
 ## Лицензии и благодарности
 

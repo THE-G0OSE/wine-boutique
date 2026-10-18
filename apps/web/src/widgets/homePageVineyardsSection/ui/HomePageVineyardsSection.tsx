@@ -9,6 +9,7 @@ import { GRAPE_PLACES, GRAPE_TONE, VINEYARD_GLOW, VINEYARD_SHADE, VINEYARD_SHADE
 import GrapeCluster from "./components/grapeCluster/GrapeCluster";
 import GrapeModal from "./components/grapeModal/GrapeModal";
 import GrapeSheet from "./components/grapeSheet/GrapeSheet";
+import { asset } from "@/shared/lib/asset";
 
 interface ISectionProps {
   grapes: GrapeVariety[];
@@ -116,7 +117,7 @@ const HomePageVineyardsSection = () => {
   return (
     <section id={HOME_ANCHORS.vineyards} aria-labelledby={titleId} className="relative scroll-mt-20 overflow-hidden bg-cellar-950">
       <img
-        src="/images/backgrounds/vineyard.webp"
+        src={asset("/images/backgrounds/vineyard.webp")}
         alt=""
         className="absolute inset-0 size-full object-cover object-[40%_50%] lg:object-center"
       />

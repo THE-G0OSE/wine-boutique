@@ -1,5 +1,5 @@
-# Проверки качества на каждый push. Деплоя здесь нет: хостинг собирает Docker-образ
-# из репозитория сам (см. README → «Деплой»).
+# Проверки на каждый push; из main фронт выкладывается на GitHub Pages.
+# Бэкенд в CI пока не участвует — он будет разворачиваться на VPS.
 name: CI
 
 on:
@@ -39,31 +39,39 @@ jobs:
 
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm build
 
-  docker:
-    name: Docker-образ собирается
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/build-push-action@v7
+      # Сборка сразу под GitHub Pages: сайт живёт в подпапке /<имя репозитория>/, API — моки MSW
+      - name: Сборка
+        run: pnpm build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+
+      # У Pages нет SPA-фолбэка: прямой заход на /news/archive отдаёт 404.html — пусть это будет само приложение
+      - name: SPA-фолбэк для Pages
+        run: cp apps/web/dist/index.html apps/web/dist/404.html
+
+      - name: Артефакт для Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
         with:
-          context: .
-          file: apps/web/Dockerfile
-          push: false
-          load: true
-          tags: wine-boutique:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          path: apps/web/dist
 
-      # Контейнер поднимается и отдаёт приложение по любому пути (SPA-фолбэк)
-      - name: Смоук-тест контейнера
-        run: |
-          docker run -d --name app -p 8080:8080 wine-boutique:ci
-          for i in $(seq 1 20); do curl -fs http://localhost:8080/ > /dev/null && break; sleep 1; done
-          curl -fs http://localhost:8080/ | grep -q '<div id="root">'
-          curl -fs http://localhost:8080/shop/red | grep -q '<div id="root">'
-          curl -fsI http://localhost:8080/mockServiceWorker.js | grep -qi 'cache-control: no-cache'
-          docker logs app
+  deploy:
+    name: Деплой на GitHub Pages
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Выкладки не отменяют друг друга на середине
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/configure-pages@v6
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -12,7 +12,12 @@ export const enableMocking = async () => {
   try {
     const { worker } = await import("./browser");
     // bypass: картинки, шрифты и всё, чего нет в контракте, идёт в сеть как обычно
-    await worker.start({ onUnhandledFrame: "bypass", quiet: true });
+    await worker.start({
+      onUnhandledFrame: "bypass",
+      quiet: true,
+      // Воркер лежит в public/ — с учётом base сборки (GitHub Pages: /wine-boutique/)
+      serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` },
+    });
   } catch (error) {
     console.error("[mocks] Не удалось запустить мок-сервер API, данные не загрузятся", error);
   }

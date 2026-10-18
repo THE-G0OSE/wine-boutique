@@ -3,6 +3,7 @@ import { cn } from "@/shared/lib/cn";
 import { stage, stageFont } from "@/shared/lib/stage";
 import type { FC } from "react";
 import { Newsprint } from "uikit;/";
+import { asset } from "@/shared/lib/asset";
 
 const caption = "font-paper tracking-[0.2em] text-letter-label uppercase";
 const ruled = "border-b border-letter-label/45";
@@ -45,7 +46,7 @@ const Envelope: FC<{ review: Review }> = ({ review }) => {
         >
           <div className="flex h-full flex-col items-center justify-between border border-primary-500 bg-stamp-inner px-1 py-1.5">
             <img
-              src="/images/reviews/stamp.webp"
+              src={asset("/images/reviews/stamp.webp")}
               alt=""
               className="object-contain mix-blend-multiply"
               style={{ width: stage(70), height: stage(70) }}
