@@ -1,0 +1,36 @@
+// База сервиса newsletter: подписки на закрытый канал анонсов (docs/backend-plan.md §3).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SubscriptionStatus {
+  active
+  unsubscribed
+
+  @@map("subscription_status")
+}
+
+model Subscription {
+  id             String             @id @default(uuid(7)) @db.Uuid
+  /// citext — уникальность без учёта регистра: Anna@Mail.ru и anna@mail.ru — один подписчик
+  email          String             @unique @db.Citext
+  status         SubscriptionStatus @default(active)
+  /// Откуда подписка (форма в футере)
+  source         String
+  /// Согласие на обработку ПДн — когда появится в форме и контракте (открытый вопрос плана, 152-ФЗ)
+  consentAt      DateTime?          @map("consent_at") @db.Timestamptz
+  consentVersion String?            @map("consent_version")
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("subscriptions")
+}

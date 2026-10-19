@@ -2,11 +2,13 @@ import { Module, type DynamicModule, type InjectionToken, type ModuleMetadata, t
 import { StandardSchemaSerializerInterceptor } from "@nestjs/common";
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, Reflector } from "@nestjs/core";
 import { TerminusModule, type HealthIndicatorFunction } from "@nestjs/terminus";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { LoggerModule } from "nestjs-pino";
 import { SERVICE_CONFIG, type BaseConfig } from "./config/config.js";
 import { HealthController, READINESS_CHECKS } from "./health/health.controller.js";
 import { ApiExceptionFilter } from "./http/api-exception.filter.js";
 import { ContractValidationPipe } from "./http/contract-validation.pipe.js";
+import { ValidationErrorInterceptor } from "./http/validation-error.js";
 import { loggerOptions } from "./logging/logger.options.js";
 
 /**
@@ -44,11 +46,18 @@ export class ServiceKitModule {
         useFactory: (reflector: Reflector) => new StandardSchemaSerializerInterceptor(reflector),
         inject: [Reflector],
       },
+      { provide: APP_INTERCEPTOR, useClass: ValidationErrorInterceptor },
     ];
     return {
       module: ServiceKitModule,
       global: true,
-      imports: [LoggerModule.forRoot(loggerOptions(config)), TerminusModule.forRoot({ logger: false }), ...(readiness?.imports ?? [])],
+      imports: [
+        LoggerModule.forRoot(loggerOptions(config)),
+        TerminusModule.forRoot({ logger: false }),
+        // Лимиты включаются точечно декоратором @RateLimit; здесь — только хранилище и запасное значение
+        ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 10_000 }]),
+        ...(readiness?.imports ?? []),
+      ],
       controllers: [HealthController],
       providers,
       exports: [SERVICE_CONFIG],

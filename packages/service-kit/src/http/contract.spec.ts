@@ -6,6 +6,8 @@ import { z } from "zod";
 import { loadConfig, baseConfigSchema } from "../config/config.js";
 import { ServiceKitModule } from "../service-kit.module.js";
 import { ContractResponse } from "./contract-response.decorator.js";
+import { RateLimit } from "./rate-limit.js";
+import { ValidationError } from "./validation-error.js";
 import { createTestApp } from "../testing.js";
 
 const Item = z.object({ id: z.string(), name: z.string() });
@@ -28,6 +30,12 @@ class ItemsController {
   create(@Body({ schema: NewItem }) body: z.infer<typeof NewItem>) {
     return { accepted: body.name };
   }
+
+  @Post("subscribe")
+  @HttpCode(204)
+  @ValidationError("invalid_email", "Проверьте адрес — кажется, в нём опечатка")
+  @RateLimit(2, 60_000)
+  subscribe(@Body({ schema: z.object({ email: z.email() }) }) _body: { email: string }) {}
 
   @Get("broken")
   @ContractResponse(Item)
@@ -81,6 +89,21 @@ describe("service-kit: контракт на входе и выходе", () => 
   it("верное тело проходит", async () => {
     const res = await app.inject({ method: "POST", url: "/api/items", payload: { name: "Шабли" } });
     expect(res.statusCode).toBe(202);
+  });
+
+  it("@ValidationError: свой код и текст вместо validation_failed, подробности сохраняются", async () => {
+    const res = await app.inject({ method: "POST", url: "/api/items/subscribe", payload: { email: "нет" } });
+    expect(res.statusCode).toBe(422);
+    expect(res.json()).toMatchObject({ code: "invalid_email", message: "Проверьте адрес — кажется, в нём опечатка", details: [{ path: "email" }] });
+  });
+
+  it("@RateLimit: сверх лимита — 429 в формате контракта", async () => {
+    const send = () => app.inject({ method: "POST", url: "/api/items/subscribe", payload: { email: "a@b.ru" }, remoteAddress: "10.0.0.7" });
+    expect((await send()).statusCode).toBe(204);
+    expect((await send()).statusCode).toBe(204);
+    const limited = await send();
+    expect(limited.statusCode).toBe(429);
+    expect(limited.json()).toEqual({ code: "too_many_requests", message: "Слишком много запросов — попробуйте чуть позже" });
   });
 
   it("ответ не по схеме — 500 без подробностей наружу", async () => {

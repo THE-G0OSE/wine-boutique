@@ -1,0 +1,57 @@
+// База сервиса reviews: письма гостей (docs/backend-plan.md §3).
+// Клиент генерируется внутрь сервиса — другие сервисы его не видят.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ReviewTopic {
+  tasting
+  gift
+  reserve
+  hall
+  collection
+
+  @@map("review_topic")
+}
+
+enum LetterStatus {
+  pending
+  published
+  rejected
+
+  @@map("letter_status")
+}
+
+/// Письмо гостя. С сайта приходит pending; модератор публикует, заполнив редакторские поля, или отклоняет
+model Letter {
+  id          String       @id @default(uuid(7)) @db.Uuid
+  /// Что прислал гость (ПДн: имя и город — только для публикации с разрешения автора)
+  authorName  String       @map("author_name")
+  city        String?
+  text        String
+  status      LetterStatus @default(pending)
+  /// Когда письмо пришло; у импортированных из макетов — неизвестно
+  receivedAt  DateTime?    @map("received_at") @db.Timestamptz
+  publishedAt DateTime?    @map("published_at") @db.Timestamptz
+  /// Редакторские поля — обязательны для публикации (контракт Review)
+  topic       ReviewTopic?
+  greeting    String?
+  postscript  String?
+  signature   String?
+  /// Ключ импорта (демо-данные из макетов): по нему повторный сид обновляет, а не дублирует
+  importKey   String?      @unique @map("import_key")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([status, publishedAt])
+  @@map("letters")
+}
