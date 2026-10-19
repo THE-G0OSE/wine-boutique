@@ -7,7 +7,21 @@ http:
       entryPoints: [web]
       service: identity
 
+    catalog:
+      rule: PathPrefix(`/api/wines`) || PathPrefix(`/api/grapes`)
+      entryPoints: [web]
+      service: catalog
+
   services:
+    catalog:
+      loadBalancer:
+        servers:
+          - url: http://catalog:3000
+        healthCheck:
+          path: /health/ready
+          interval: 10s
+          timeout: 3s
+
     identity:
       loadBalancer:
         servers:

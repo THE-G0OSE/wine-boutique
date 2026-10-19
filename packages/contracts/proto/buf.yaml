@@ -1,0 +1,6 @@
+# Buf: lint и проверка обратной совместимости proto (buf breaking против main)
+version: v2
+lint:
+  use: [STANDARD]
+breaking:
+  use: [FILE]

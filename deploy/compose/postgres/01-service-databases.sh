@@ -4,7 +4,8 @@
 set -eu
 for db in ${SERVICE_DATABASES}; do
   psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres <<SQL
-CREATE ROLE ${db} LOGIN PASSWORD '${DEV_DB_PASSWORD}';
+-- CREATEDB — только для разработки: prisma migrate dev создаёт теневую базу
+CREATE ROLE ${db} LOGIN CREATEDB PASSWORD '${DEV_DB_PASSWORD}';
 CREATE DATABASE ${db} OWNER ${db};
 REVOKE ALL ON DATABASE ${db} FROM PUBLIC;
 SQL

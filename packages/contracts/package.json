@@ -3,11 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Контракты между фронтом и сервисами: OpenAPI публичного API (позже — proto внутренних gRPC и схемы событий)",
+  "description": "Контракты между фронтом и сервисами: OpenAPI публичного API, proto внутренних gRPC (позже — схемы событий)",
   "files": [
     "dist",
     "openapi/openapi.yaml",
-    "openapi/generated/schema.ts"
+    "openapi/generated/schema.ts",
+    "proto/**/*.proto"
   ],
   "exports": {
     "./openapi": {
@@ -21,21 +22,40 @@
       "types": "./dist/openapi/ownership.d.ts",
       "default": "./dist/openapi/ownership.js"
     },
-    "./openapi.yaml": "./openapi/openapi.yaml"
+    "./openapi.yaml": "./openapi/openapi.yaml",
+    "./proto/catalog": {
+      "types": "./dist/proto/generated/wine/catalog/v1/catalog.d.ts",
+      "default": "./dist/proto/generated/wine/catalog/v1/catalog.js"
+    },
+    "./proto/*.proto": "./proto/*.proto"
   },
   "scripts": {
-    "contracts:gen": "pnpm run gen:types && pnpm run gen:zod",
+    "contracts:gen": "pnpm run gen:types && pnpm run gen:zod && pnpm run gen:proto",
     "gen:types": "openapi-typescript openapi/openapi.yaml -o openapi/generated/schema.ts",
     "gen:zod": "openapi-ts",
-    "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.build.json"
+    "gen:proto": "cd proto && buf generate",
+    "proto:lint": "cd proto && buf lint",
+    "proto:breaking": "cd proto && buf breaking --against \"../../../.git#branch=main,subdir=packages/contracts/proto\"",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@bufbuild/buf": "1.74.0",
     "@hey-api/openapi-ts": "0.99.0",
+    "@nestjs/common": "12.1.3",
+    "@nestjs/core": "12.1.3",
+    "@nestjs/microservices": "12.1.3",
     "openapi-typescript": "7.13.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "ts-proto": "2.17.0",
     "typescript": "6.0.3"
   },
   "dependencies": {
     "zod": "4.6.7"
+  },
+  "peerDependencies": {
+    "@nestjs/microservices": "^12.0.0",
+    "rxjs": "^7.8.0"
   }
 }

@@ -1,11 +1,11 @@
 {
-  // Сборка того, что сервисы импортируют в рантайме: zod-схемы и раскладка операций по сервисам
+  // Сборка того, что сервисы импортируют в рантайме: zod-схемы, раскладка операций, gRPC-интерфейсы
   "extends": "../../tsconfig.service.json",
   "compilerOptions": {
-    "rootDir": "openapi",
-    "outDir": "dist/openapi",
-    "experimentalDecorators": false,
+    "rootDir": ".",
+    "outDir": "dist",
+    "experimentalDecorators": true,
     "emitDecoratorMetadata": false
   },
-  "include": ["openapi/generated", "openapi/ownership.ts"]
+  "include": ["openapi/generated", "openapi/ownership.ts", "proto/generated"]
 }

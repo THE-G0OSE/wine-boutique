@@ -1,4 +1,4 @@
-import type { Review, ReviewTopic } from "./types";
+import type { Review, ReviewTopic } from "./types.js";
 
 type Letter = [topic: ReviewTopic, greeting: string, text: string, postscript: string | null];
 

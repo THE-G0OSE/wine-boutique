@@ -1,4 +1,4 @@
-import { Module, type DynamicModule, type Provider } from "@nestjs/common";
+import { Module, type DynamicModule, type InjectionToken, type ModuleMetadata, type Provider } from "@nestjs/common";
 import { StandardSchemaSerializerInterceptor } from "@nestjs/common";
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, Reflector } from "@nestjs/core";
 import { TerminusModule, type HealthIndicatorFunction } from "@nestjs/terminus";
@@ -9,11 +9,20 @@ import { ApiExceptionFilter } from "./http/api-exception.filter.js";
 import { ContractValidationPipe } from "./http/contract-validation.pipe.js";
 import { loggerOptions } from "./logging/logger.options.js";
 
+/**
+ * Проверки готовности для /health/ready. Зависят от провайдеров сервиса (клиент БД),
+ * поэтому задаются фабрикой: `imports` — модули с этими провайдерами, `inject` — что передать в фабрику.
+ */
+export interface ReadinessOptions {
+  imports?: ModuleMetadata["imports"];
+  inject?: InjectionToken[];
+  useFactory: (...deps: never[]) => HealthIndicatorFunction[];
+}
+
 export interface ServiceKitOptions<C extends BaseConfig> {
   /** Уже проверенная конфигурация (`loadConfig`) — доступна в DI по токену SERVICE_CONFIG */
   config: C;
-  /** Проверки готовности для /health/ready */
-  readiness?: HealthIndicatorFunction[];
+  readiness?: ReadinessOptions;
 }
 
 /**
@@ -22,10 +31,12 @@ export interface ServiceKitOptions<C extends BaseConfig> {
  */
 @Module({})
 export class ServiceKitModule {
-  static forRoot<C extends BaseConfig>({ config, readiness = [] }: ServiceKitOptions<C>): DynamicModule {
+  static forRoot<C extends BaseConfig>({ config, readiness }: ServiceKitOptions<C>): DynamicModule {
     const providers: Provider[] = [
       { provide: SERVICE_CONFIG, useValue: config },
-      { provide: READINESS_CHECKS, useValue: readiness },
+      readiness
+        ? { provide: READINESS_CHECKS, inject: readiness.inject ?? [], useFactory: readiness.useFactory as (...deps: unknown[]) => HealthIndicatorFunction[] }
+        : { provide: READINESS_CHECKS, useValue: [] },
       { provide: APP_FILTER, useClass: ApiExceptionFilter },
       { provide: APP_PIPE, useClass: ContractValidationPipe },
       {
@@ -37,7 +48,7 @@ export class ServiceKitModule {
     return {
       module: ServiceKitModule,
       global: true,
-      imports: [LoggerModule.forRoot(loggerOptions(config)), TerminusModule.forRoot({ logger: false })],
+      imports: [LoggerModule.forRoot(loggerOptions(config)), TerminusModule.forRoot({ logger: false }), ...(readiness?.imports ?? [])],
       controllers: [HealthController],
       providers,
       exports: [SERVICE_CONFIG],

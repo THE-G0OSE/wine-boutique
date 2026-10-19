@@ -1,5 +1,5 @@
-import type { GrapeVariety } from "./types";
-import { wineFixtures as w } from "./wines";
+import type { GrapeVariety } from "./types.js";
+import { wineFixtures as w } from "./wines.js";
 
 /** Сорта из дизайна (секция «Виноградники» главной) */
 export const grapeFixtures: GrapeVariety[] = [

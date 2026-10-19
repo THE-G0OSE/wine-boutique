@@ -1,4 +1,4 @@
-import type { NewsArticle, NewsClipping } from "../types";
+import type { NewsArticle, NewsClipping } from "../types.js";
 
 const clippings = {
   yquem: { slug: "chateau-d-yquem-1988-v-pogrebe", rubric: "supply", title: "В погреб прибыла партия Château d’Yquem 1988" },

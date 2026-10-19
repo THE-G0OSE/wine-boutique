@@ -1,4 +1,4 @@
-import type { NewsIssue } from "../types";
+import type { NewsIssue } from "../types.js";
 
 /** Свежий выпуск — тексты из артборда News. Плейсхолдеры ([дата], [N] мест) — как в макете; номер выпуска — из подшивки (Archive) */
 export const latestIssueFixture: NewsIssue = {

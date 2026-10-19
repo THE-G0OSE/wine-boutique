@@ -18,6 +18,16 @@ RUN pnpm turbo run build --filter "@wine/${SERVICE}..."
 # Только прод-зависимости сервиса; пакеты workspace (service-kit, contracts) копируются внутрь вместе с dist
 RUN pnpm --filter "@wine/${SERVICE}" deploy --prod --legacy /out
 
+# Миграции и сид — отдельный одноразовый контейнер перед запуском сервиса: Prisma CLI — dev-зависимость
+# и в прод-образ не попадает. docker build --target migrate …; SEED=true — ещё и демо-данные
+FROM build AS migrate
+ARG SERVICE
+WORKDIR /repo/services/${SERVICE}
+# Без баннера «обновитесь до prisma@latest»: latest — это 8.0 RC, мы на 7.10 намеренно
+ENV NODE_ENV=production \
+    PRISMA_HIDE_UPDATE_MESSAGE=true
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && if [ \"$SEED\" = true ]; then node dist/seed.js; fi"]
+
 FROM ${NODE_IMAGE}
 ENV NODE_ENV=production \
     HTTP_PORT=3000

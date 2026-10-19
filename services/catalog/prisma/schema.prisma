@@ -1,0 +1,95 @@
+// База сервиса catalog: вина и сорта винограда (docs/backend-plan.md §3).
+// Клиент генерируется внутрь сервиса — другие сервисы его не видят.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WineCategory {
+  red
+  white
+  sparkling
+  sweet
+
+  @@map("wine_category")
+}
+
+enum GrapeType {
+  red
+  white
+
+  @@map("grape_type")
+}
+
+model Wine {
+  id             String             @id @default(uuid(7)) @db.Uuid
+  slug           String             @unique
+  name           String
+  /// Полки, на которых стоит вино (может быть несколько)
+  categories     WineCategory[]
+  region         String
+  country        String?
+  /// Названия сортов для карточки, как в контракте
+  grapes         String[]
+  volumeMl       Int                @map("volume_ml")
+  vintage        Int?
+  /// С какого года бутылка в погребе бутика; в API — cellarYears
+  cellaredAt     DateTime?          @map("cellared_at") @db.Date
+  /// Цена в копейках; в API — рубли
+  priceKopecks   Int?               @map("price_kopecks")
+  imageUrl       String             @map("image_url")
+  /// Порядок сортировки popular: меньше — выше
+  popularityRank Int                @map("popularity_rank")
+  /// Когда вино появилось в бутике — сортировка new
+  arrivedAt      DateTime           @map("arrived_at") @db.Timestamptz
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+  varieties      GrapeVarietyWine[]
+
+  @@index([categories], type: Gin)
+  @@index([priceKopecks])
+  @@index([vintage])
+  @@index([arrivedAt])
+  @@index([popularityRank])
+  @@map("wines")
+}
+
+model GrapeVariety {
+  id          String             @id @default(uuid(7)) @db.Uuid
+  slug        String             @unique
+  name        String
+  type        GrapeType
+  origin      String
+  taste       String
+  harvest     String
+  description String
+  plantation  String?
+  imageUrl    String             @map("image_url")
+  position    Int
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+  wines       GrapeVarietyWine[]
+
+  @@map("grape_varieties")
+}
+
+/// Вина сорта — до трёх, по порядку
+model GrapeVarietyWine {
+  varietyId String       @map("variety_id") @db.Uuid
+  wineId    String       @map("wine_id") @db.Uuid
+  position  Int
+  variety   GrapeVariety @relation(fields: [varietyId], references: [id], onDelete: Cascade)
+  wine      Wine         @relation(fields: [wineId], references: [id], onDelete: Cascade)
+
+  @@id([varietyId, wineId])
+  @@unique([varietyId, position])
+  @@map("grape_variety_wines")
+}

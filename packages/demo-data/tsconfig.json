@@ -1,12 +1,5 @@
 {
-  "compilerOptions": {
-    "target": "ES2023",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "verbatimModuleSyntax": true,
-    "strict": true,
-    "noEmit": true,
-    "skipLibCheck": true
-  },
+  "extends": "../../tsconfig.service.json",
+  "compilerOptions": { "noEmit": true, "experimentalDecorators": false, "emitDecoratorMetadata": false },
   "include": ["src"]
 }

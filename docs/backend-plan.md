@@ -107,6 +107,8 @@
 
 ### B2 · `catalog`
 
+**Сделано 19.10.2026.** Вина и сорта в Postgres (Prisma 7.10), сид из `@wine/demo-data`, `GET /wines` и `GET /grapes`, gRPC `wine.catalog.v1.CatalogService`; 9 тестов на настоящем Postgres (Testcontainers), включая gRPC и повторный сид. Порядок вин совпадает с моками фронта во всех 25 сочетаниях полки и сортировки. В Docker: миграции и сид — контейнер `catalog-migrate`, сервис за Traefik (`/api/wines`, `/api/grapes`). Фронт с `VITE_API_MOCKS=false` показывает каталог погреба и виноградники с данными из базы. `buf breaking` — локально (`pnpm --filter @wine/contracts proto:breaking`), CI для бэкенда пока нет.
+
 1. Модели, миграции, сиды (вина и сорта), `GET /wines` (фильтр, сортировки с `NULLS LAST`, пагинация), `GET /grapes`.
 2. `proto/wine/catalog/v1/catalog.proto`: `GetWineSummaries`, `ResolveWineSlugs`; gRPC-сервер в сервисе; `buf lint` и `buf breaking` в CI.
 3. Интеграционные и компонентные тесты, ответы — по схемам контракта.

@@ -12,8 +12,11 @@ publicHoistPattern:
   - '@types/*'
 
 onlyBuiltDependencies:
+  - '@prisma/engines'
   - '@swc/core'
   - '@tailwindcss/oxide'
+  - prisma
+  - unrs-resolver
 
 # Скрипт установки protobufjs (из OpenTelemetry) только печатает предупреждения — не нужен
 ignoredBuiltDependencies:

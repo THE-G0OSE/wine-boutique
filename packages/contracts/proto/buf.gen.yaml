@@ -1,0 +1,14 @@
+# Интерфейсы клиентов и контроллеров NestJS из proto (ts-proto, режим nestJs)
+version: v2
+plugins:
+  - local: ["node", "../node_modules/ts-proto/protoc-gen-ts_proto"]
+    out: generated
+    opt:
+      - nestJs=true
+      - addGrpcMetadata=false
+      - importSuffix=.js
+      - esModuleInterop=true
+      - useOptionals=messages
+      - forceLong=number
+      - outputEncodeMethods=false
+      - outputJsonMethods=false

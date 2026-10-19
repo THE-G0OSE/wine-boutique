@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+// Внутренний API сервиса catalog — для других сервисов, не для браузера.
+// Совместимость: поля не переиспользуются и не меняют тип, удалённые — в reserved (buf breaking).
+package wine.catalog.v1;
+
+service CatalogService {
+  // Карточки вин по id — пакетно (до 100 за вызов), в порядке запроса; неизвестные id пропускаются
+  rpc GetWineSummaries(GetWineSummariesRequest) returns (GetWineSummariesResponse);
+  // id вин по slug — для сидов и импорта контента
+  rpc ResolveWineSlugs(ResolveWineSlugsRequest) returns (ResolveWineSlugsResponse);
+}
+
+message GetWineSummariesRequest {
+  repeated string ids = 1;
+}
+
+message WineSummary {
+  string id = 1;
+  string slug = 2;
+  string name = 3;
+  // Год урожая; нет — вино без года
+  optional int32 vintage = 4;
+  // Цена в копейках; нет — цена не назначена
+  optional int64 price_kopecks = 5;
+  string image_url = 6;
+}
+
+message GetWineSummariesResponse {
+  repeated WineSummary wines = 1;
+}
+
+message ResolveWineSlugsRequest {
+  repeated string slugs = 1;
+}
+
+message ResolveWineSlugsResponse {
+  // slug → id для найденных вин
+  map<string, string> ids_by_slug = 1;
+}

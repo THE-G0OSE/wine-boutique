@@ -6,15 +6,23 @@ import { Test } from "@nestjs/testing";
 import { operationsOf, type ServiceName } from "@wine/contracts/openapi/ownership";
 import { parse } from "yaml";
 import { API_PREFIX, configureApp, createFastifyAdapter } from "./bootstrap.js";
+import { connectGrpc, type GrpcServerOptions } from "./grpc.js";
 
 /**
  * Приложение сервиса для тестов: те же адаптер, префикс и глобальные пайпы, без сетевого порта.
  * Запросы — через `app.inject({ method, url })`.
  */
-export const createTestApp = async (module: Type | DynamicModule): Promise<NestFastifyApplication> => {
+export const createTestApp = async (
+  module: Type | DynamicModule,
+  options: { grpc?: GrpcServerOptions } = {}
+): Promise<NestFastifyApplication> => {
   const moduleRef = await Test.createTestingModule({ imports: [module] }).compile();
   const app = moduleRef.createNestApplication<NestFastifyApplication>(createFastifyAdapter(), { logger: false });
   await configureApp(app);
+  if (options.grpc) {
+    connectGrpc(app, options.grpc);
+    await app.startAllMicroservices();
+  }
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   return app;

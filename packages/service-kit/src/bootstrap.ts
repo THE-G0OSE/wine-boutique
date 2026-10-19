@@ -6,6 +6,7 @@ import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
 import { Logger } from "nestjs-pino";
 import type { BaseConfig } from "./config/config.js";
+import { connectGrpc, type GrpcServerOptions } from "./grpc.js";
 import { ensureRequestId, REQUEST_ID_HEADER } from "./http/request-id.js";
 
 /** Публичные пути — с префиксом /api, как `servers.url` в контракте; Traefik маршрутизирует без переписывания */
@@ -30,11 +31,22 @@ export const configureApp = async (app: INestApplication & NestFastifyApplicatio
   app.enableShutdownHooks();
 };
 
-/** Запуск сервиса: `await startService(AppModule.forRoot(config), config)` */
-export const startService = async (module: Type | DynamicModule, config: BaseConfig): Promise<NestFastifyApplication> => {
+/**
+ * Запуск сервиса: `await startService(AppModule.forRoot(config), config)`.
+ * С `{ grpc }` сервис дополнительно слушает свой внутренний gRPC-API.
+ */
+export const startService = async (
+  module: Type | DynamicModule,
+  config: BaseConfig,
+  options: { grpc?: GrpcServerOptions } = {}
+): Promise<NestFastifyApplication> => {
   const app = await NestFactory.create<NestFastifyApplication>(module, createFastifyAdapter(), { bufferLogs: true });
   app.useLogger(app.get(Logger));
   await configureApp(app);
+  if (options.grpc) {
+    connectGrpc(app, options.grpc);
+    await app.startAllMicroservices();
+  }
   await app.listen({ host: config.HTTP_HOST, port: config.HTTP_PORT });
   return app;
 };

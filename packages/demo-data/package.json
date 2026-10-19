@@ -5,9 +5,13 @@
   "type": "module",
   "description": "Данные из макетов: фикстуры MSW во фронте и сиды сервисов. Плейсхолдеры дизайна остаются плейсхолдерами",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -15,5 +19,8 @@
   },
   "devDependencies": {
     "typescript": "6.0.3"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }

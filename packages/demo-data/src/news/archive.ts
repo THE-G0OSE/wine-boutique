@@ -1,4 +1,4 @@
-import type { NewsArchiveIssue, NewsRubric } from "../types";
+import type { NewsArchiveIssue, NewsRubric } from "../types.js";
 
 /** Иллюстрация первой полосы по рубрике главного материала (как в артборде Archive) */
 const RUBRIC_IMAGE: Record<NewsRubric, string> = {

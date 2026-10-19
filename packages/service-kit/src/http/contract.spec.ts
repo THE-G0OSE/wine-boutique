@@ -10,7 +10,8 @@ import { createTestApp } from "../testing.js";
 
 const Item = z.object({ id: z.string(), name: z.string() });
 const NewItem = z.object({ name: z.string().min(2) });
-const ListQuery = z.object({ limit: z.coerce.number().int().min(1).max(10).optional() });
+// Как в сгенерированных схемах контракта: z.int() без coerce — строку приводит пайп
+const ListQuery = z.object({ limit: z.int().min(1).max(10).optional().default(1), slug: z.string().optional() });
 
 @Controller("items")
 class ItemsController {
@@ -19,7 +20,7 @@ class ItemsController {
   @ContractResponse(z.array(Item))
   list(@Query({ schema: ListQuery }) query: z.infer<typeof ListQuery>) {
     // Лишнее поле secret должно отрезаться схемой ответа
-    return Array.from({ length: query.limit ?? 1 }, (_, i) => ({ id: `${i}`, name: "Вино", secret: "x" }));
+    return Array.from({ length: query.limit }, (_, i) => ({ id: `${i}`, name: query.slug ?? "Вино", secret: "x" }));
   }
 
   @Post()
@@ -57,6 +58,12 @@ describe("service-kit: контракт на входе и выходе", () => 
       { id: "0", name: "Вино" },
       { id: "1", name: "Вино" },
     ]);
+  });
+
+  it("числа из строки запроса приводятся по схеме, строки остаются строками", async () => {
+    const res = await app.inject({ method: "GET", url: "/api/items?limit=1&slug=1988" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual([{ id: "0", name: "1988" }]);
   });
 
   it("неверная строка запроса — 400 validation_failed с путём поля", async () => {

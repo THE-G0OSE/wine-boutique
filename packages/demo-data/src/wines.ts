@@ -1,4 +1,4 @@
-import type { WineSummary } from "./types";
+import type { WineSummary } from "./types.js";
 
 /** Бутылки из дизайна. Вина-плейсхолдеры («[Название вина]») — как в макете, данные даст заказчик */
 const bottle = {

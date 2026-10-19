@@ -51,6 +51,8 @@ export default tseslint.config(
           ],
         },
       ],
+      // _имя — сознательно неиспользуемая переменная (отбрасываем поле при деструктуризации)
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" }],
       // Классы Nest с DI объявляют параметры конструктора, даже если тело пустое
       "@typescript-eslint/no-extraneous-class": "off",
     },
