@@ -5,4 +5,4 @@ export { READINESS_CHECKS } from "./health/health.controller.js";
 export { databaseCheck } from "./health/database-check.js";
 export { ServiceKitModule, type ReadinessOptions, type ServiceKitOptions } from "./service-kit.module.js";
 export { API_PREFIX, configureApp, createFastifyAdapter, startService } from "./bootstrap.js";
-export { connectGrpc, type GrpcServerOptions } from "./grpc.js";
+export { connectGrpc, GrpcClient, type GrpcClientOptions, type GrpcServerOptions } from "./grpc.js";

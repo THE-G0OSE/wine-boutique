@@ -12,7 +12,21 @@ http:
       entryPoints: [web]
       service: catalog
 
+    news:
+      rule: PathPrefix(`/api/news`)
+      entryPoints: [web]
+      service: news
+
   services:
+    news:
+      loadBalancer:
+        servers:
+          - url: http://news:3000
+        healthCheck:
+          path: /health/ready
+          interval: 10s
+          timeout: 3s
+
     catalog:
       loadBalancer:
         servers:

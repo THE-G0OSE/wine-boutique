@@ -1,13 +1,14 @@
 import type { NewsArticle, NewsClipping } from "../types.js";
 
 const clippings = {
-  yquem: { slug: "chateau-d-yquem-1988-v-pogrebe", rubric: "supply", title: "В погреб прибыла партия Château d’Yquem 1988" },
-  harvest: { slug: "nachalsya-sbor-vinograda", rubric: "harvest", title: "На наших плантациях начался сбор винограда" },
+  // Неразрывный пробел перед годом — как в заголовке статьи: «1988» не уезжает на новую строку
+  yquem: { slug: "chateau-d-yquem-1988-v-pogrebe", rubric: "supply", title: "В погреб прибыла партия Château d’Yquem 1988" },
   tasting: { slug: "vecher-klassika-starogo-sveta", rubric: "tasting", title: "Вечер «Классика Старого Света»" },
+  harvest: { slug: "nachalsya-sbor-vinograda", rubric: "harvest", title: "На наших плантациях начался сбор винограда" },
   excursions: { slug: "pogreb-otkryt-dlya-ekskursiy", rubric: "events", title: "Погреб открыт для экскурсий по субботам" },
 } satisfies Record<string, NewsClipping>;
 
-/** «Ещё вырезки» — три другие статьи */
+/** «Ещё вырезки» — три свежие статьи с текстом, кроме текущей: по дате выпуска, в выпуске — по порядку (как в сервисе news) */
 export const moreClippings = (slug: string): NewsClipping[] =>
   Object.values(clippings)
     .filter((clipping) => clipping.slug !== slug)

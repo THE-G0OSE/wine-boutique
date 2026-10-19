@@ -120,6 +120,42 @@ services:
       nats: { condition: service_healthy }
       catalog-migrate: { condition: service_completed_successfully }
 
+  # Миграции и демо-данные news; вина статей сид берёт у catalog по gRPC — ждём его готовности
+  news-migrate:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      target: migrate
+      args: { SERVICE: news }
+    image: wine-boutique/news-migrate:dev
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://news:${DEV_DB_PASSWORD:-dev}@postgres:5432/news
+      CATALOG_GRPC_URL: catalog:50051
+      SEED: "true"
+    depends_on:
+      postgres: { condition: service_healthy }
+      catalog: { condition: service_healthy }
+
+  news:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args: { SERVICE: news }
+    image: wine-boutique/news:dev
+    environment:
+      <<: *service-env
+      SERVICE_NAME: news
+      OTEL_SERVICE_NAME: news
+      DATABASE_URL: postgresql://news:${DEV_DB_PASSWORD:-dev}@postgres:5432/news
+      CATALOG_GRPC_URL: catalog:50051
+    # catalog не в зависимостях запуска: без него газета работает, просто без стикера вина
+    depends_on:
+      postgres: { condition: service_healthy }
+      nats: { condition: service_healthy }
+      news-migrate: { condition: service_completed_successfully }
+
   # Трейсы, метрики и логи в одном контейнере: OTel Collector + Tempo + Prometheus + Loki + Grafana
   otel-lgtm:
     image: grafana/otel-lgtm:0.37.0

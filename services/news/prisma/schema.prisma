@@ -1,0 +1,164 @@
+// База сервиса news: газета «Винный Вѣстникъ» (docs/backend-plan.md §3).
+// Клиент генерируется внутрь сервиса — другие сервисы его не видят.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum NewsRubric {
+  supply
+  harvest
+  tasting
+  events
+
+  @@map("news_rubric")
+}
+
+/// Где материал стоит в газете: главная первой полосы, широкий и колонка второй полосы
+enum StoryPlacement {
+  lead
+  second_wide
+  second_column
+
+  @@map("story_placement")
+}
+
+/// Выпуск газеты. У выпусков из подшивки есть только первая полоса (front*), полный номер — у свежих
+model Issue {
+  id              String       @id @default(uuid(7)) @db.Uuid
+  /// Номер выпуска; null — ещё не присвоен
+  number          Int?         @unique
+  publishedAt     DateTime     @unique @map("published_at") @db.Date
+  /// Первая полоса в подшивке: рубрика, заголовок, иллюстрация и статья главного материала
+  frontRubric     NewsRubric   @map("front_rubric")
+  frontTitle      String       @map("front_title")
+  frontImage      String       @map("front_image")
+  frontArticleId  String?      @unique @map("front_article_id") @db.Uuid
+  frontArticle    Article?     @relation("IssueFrontArticle", fields: [frontArticleId], references: [id], onDelete: SetNull)
+  /// Поля полного номера; у выпусков только из подшивки — пусто
+  city            String?
+  weather         String?
+  quoteText       String?      @map("quote_text")
+  quoteAuthor     String?      @map("quote_author")
+  nextIssueTeaser String?      @map("next_issue_teaser")
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+  articles        Article[]    @relation("ArticleIssue")
+  stories         IssueStory[]
+  briefs          Brief[]
+  ads             Ad[]
+  afisha          AfishaItem[]
+
+  @@map("issues")
+}
+
+/// Статья целиком — для страницы /news/{slug}
+model Article {
+  id                      String       @id @default(uuid(7)) @db.Uuid
+  slug                    String       @unique
+  issueId                 String       @map("issue_id") @db.Uuid
+  issue                   Issue        @relation("ArticleIssue", fields: [issueId], references: [id], onDelete: Cascade)
+  /// Порядок внутри выпуска — для «Ещё вырезки» при одной дате
+  position                Int
+  rubric                  NewsRubric
+  kicker                  String
+  title                   String
+  standfirst              String?
+  byline                  String?
+  readingMinutes          Int?         @map("reading_minutes")
+  imageSrc                String?      @map("image_src")
+  imageAlt                String?      @map("image_alt")
+  imageCaption            String?      @map("image_caption")
+  body                    String[]
+  pullQuoteText           String?      @map("pull_quote_text")
+  pullQuoteAfterParagraph Int?         @map("pull_quote_after_paragraph")
+  /// id вина в catalog — без внешнего ключа: другая база
+  relatedWineId           String?      @map("related_wine_id") @db.Uuid
+  /// Текста ещё нет — в body плейсхолдер из дизайна; в «Ещё вырезки» такие статьи не попадают
+  textPending             Boolean      @default(false) @map("text_pending")
+  createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+  frontOf                 Issue?       @relation("IssueFrontArticle")
+  stories                 IssueStory[]
+
+  @@index([issueId])
+  @@map("articles")
+}
+
+/// Материал на полосе выпуска — сокращённая версия статьи со своим текстом и подписями
+model IssueStory {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  issueId        String         @map("issue_id") @db.Uuid
+  issue          Issue          @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  articleId      String         @map("article_id") @db.Uuid
+  article        Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  placement      StoryPlacement
+  rubric         NewsRubric
+  kicker         String
+  title          String
+  standfirst     String?
+  byline         String?
+  readingMinutes Int?           @map("reading_minutes")
+  imageSrc       String?        @map("image_src")
+  imageAlt       String?        @map("image_alt")
+  imageCaption   String?        @map("image_caption")
+  body           String[]
+  /// Анонс события: hasEvent=false — не анонс; дата и места могут быть ещё не назначены
+  hasEvent       Boolean        @default(false) @map("has_event")
+  eventStartsAt  DateTime?      @map("event_starts_at") @db.Timestamptz
+  eventSeats     Int?           @map("event_seats")
+
+  @@unique([issueId, placement])
+  @@map("issue_stories")
+}
+
+model Brief {
+  id       String     @id @default(uuid(7)) @db.Uuid
+  issueId  String     @map("issue_id") @db.Uuid
+  issue    Issue      @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  position Int
+  rubric   NewsRubric
+  title    String
+  text     String
+
+  @@unique([issueId, position])
+  @@map("briefs")
+}
+
+model Ad {
+  id       String  @id @default(uuid(7)) @db.Uuid
+  issueId  String  @map("issue_id") @db.Uuid
+  issue    Issue   @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  position Int
+  kicker   String?
+  title    String
+  text     String
+  image    String?
+  emphasis Boolean
+
+  @@unique([issueId, position])
+  @@map("ads")
+}
+
+model AfishaItem {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  issueId         String    @map("issue_id") @db.Uuid
+  issue           Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  position        Int
+  startsAt        DateTime? @map("starts_at") @db.Timestamptz
+  title           String
+  format          String
+  capacityLimited Boolean   @map("capacity_limited")
+  seats           Int?
+
+  @@unique([issueId, position])
+  @@map("afisha_items")
+}
