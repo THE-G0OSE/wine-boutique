@@ -1,23 +1,53 @@
 # Маршруты шлюза: путь публичного API → сервис-владелец (раскладка — packages/contracts/openapi/ownership.ts).
 # Префикс /api не срезается: сервисы сами обслуживают /api/*.
+# Правила — по целым сегментам пути (PathRegexp …(/|$)): простой PathPrefix(`/api/news`) поймал бы и /api/newsletter.
+# На Windows изменения этого файла Traefik может не заметить — после правки: docker compose restart traefik
 http:
   routers:
     identity:
-      rule: PathPrefix(`/api/auth`)
+      rule: PathRegexp(`^/api/auth(/|$)`)
       entryPoints: [web]
       service: identity
 
     catalog:
-      rule: PathPrefix(`/api/wines`) || PathPrefix(`/api/grapes`)
+      rule: PathRegexp(`^/api/(wines|grapes)(/|$)`)
       entryPoints: [web]
       service: catalog
 
     news:
-      rule: PathPrefix(`/api/news`)
+      rule: PathRegexp(`^/api/news(/|$)`)
       entryPoints: [web]
       service: news
 
+    reviews:
+      rule: PathRegexp(`^/api/reviews(/|$)`)
+      entryPoints: [web]
+      service: reviews
+
+    newsletter:
+      rule: PathRegexp(`^/api/newsletter(/|$)`)
+      entryPoints: [web]
+      service: newsletter
+
   services:
+    reviews:
+      loadBalancer:
+        servers:
+          - url: http://reviews:3000
+        healthCheck:
+          path: /health/ready
+          interval: 10s
+          timeout: 3s
+
+    newsletter:
+      loadBalancer:
+        servers:
+          - url: http://newsletter:3000
+        healthCheck:
+          path: /health/ready
+          interval: 10s
+          timeout: 3s
+
     news:
       loadBalancer:
         servers:

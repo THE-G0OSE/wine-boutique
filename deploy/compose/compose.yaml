@@ -158,6 +158,70 @@ services:
       nats: { condition: service_healthy }
       news-migrate: { condition: service_completed_successfully }
 
+  # Миграции и опубликованные письма из макетов
+  reviews-migrate:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      target: migrate
+      args: { SERVICE: reviews }
+    image: wine-boutique/reviews-migrate:dev
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://reviews:${DEV_DB_PASSWORD:-dev}@postgres:5432/reviews
+      SEED: "true"
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # Модерация писем: docker compose exec reviews node dist/cli.js list
+  reviews:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args: { SERVICE: reviews }
+    image: wine-boutique/reviews:dev
+    environment:
+      <<: *service-env
+      SERVICE_NAME: reviews
+      OTEL_SERVICE_NAME: reviews
+      DATABASE_URL: postgresql://reviews:${DEV_DB_PASSWORD:-dev}@postgres:5432/reviews
+    depends_on:
+      postgres: { condition: service_healthy }
+      nats: { condition: service_healthy }
+      reviews-migrate: { condition: service_completed_successfully }
+
+  # Только миграции: демо-подписчиков нет
+  newsletter-migrate:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      target: migrate
+      args: { SERVICE: newsletter }
+    image: wine-boutique/newsletter-migrate:dev
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://newsletter:${DEV_DB_PASSWORD:-dev}@postgres:5432/newsletter
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  newsletter:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args: { SERVICE: newsletter }
+    image: wine-boutique/newsletter:dev
+    environment:
+      <<: *service-env
+      SERVICE_NAME: newsletter
+      OTEL_SERVICE_NAME: newsletter
+      DATABASE_URL: postgresql://newsletter:${DEV_DB_PASSWORD:-dev}@postgres:5432/newsletter
+    depends_on:
+      postgres: { condition: service_healthy }
+      nats: { condition: service_healthy }
+      newsletter-migrate: { condition: service_completed_successfully }
+
   # Трейсы, метрики и логи в одном контейнере: OTel Collector + Tempo + Prometheus + Loki + Grafana
   otel-lgtm:
     image: grafana/otel-lgtm:0.37.0
