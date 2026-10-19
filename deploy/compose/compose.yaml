@@ -1,4 +1,6 @@
-# Бэкенд целиком для разработки: pnpm backend:up → API на http://localhost:8080/api
+# Бэкенд целиком для разработки: pnpm backend:up → API на http://localhost:18080/api
+# Порты хоста — вне диапазонов, которые Windows резервирует под Hyper-V (8080/8081/8222 там часто заняты);
+# переопределяются переменными GATEWAY_PORT, TRAEFIK_DASHBOARD_PORT, NATS_MONITOR_PORT
 # Наблюдаемость (Grafana на http://localhost:3001): pnpm backend:up:observability
 name: wine-boutique
 
@@ -26,7 +28,7 @@ services:
       - --providers.file.watch=true
       - --ping=true
       - --api.dashboard=true
-      - --api.insecure=true # дашборд только локально, на :8081
+      - --api.insecure=true # дашборд только локально, на :18081
       - --accesslog=true
       - --accesslog.format=json
       # Трейс начинается на шлюзе; включается вместе с профилем observability
@@ -34,8 +36,8 @@ services:
       - --tracing.otlp.http.endpoint=http://otel-lgtm:4318/v1/traces
       - --tracing.serviceName=traefik
     ports:
-      - "8080:80"
-      - "8081:8080"
+      - "${GATEWAY_PORT:-18080}:80"
+      - "${TRAEFIK_DASHBOARD_PORT:-18081}:8080"
     volumes:
       - ../traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
     healthcheck:
@@ -67,7 +69,7 @@ services:
     command: ["--jetstream", "--store_dir", "/data", "--http_port", "8222"]
     ports:
       - "4222:4222"
-      - "8222:8222"
+      - "${NATS_MONITOR_PORT:-18222}:8222"
     volumes:
       - nats-data:/data
     healthcheck:

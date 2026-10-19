@@ -68,7 +68,7 @@ node apps/web/scripts/optimize-image.mjs <исходник> apps/web/public/imag
 
 ```bash
 pnpm test                       # тесты всех пакетов и сервисов
-pnpm backend:up                 # Postgres, NATS, Traefik и сервисы; API — http://localhost:8080/api
+pnpm backend:up                 # Postgres, NATS, Traefik и сервисы; API — http://localhost:18080/api
 pnpm backend:up:observability   # то же + Grafana с трейсами и метриками на http://localhost:3001
 pnpm backend:down
 ```
