@@ -29,8 +29,8 @@ export TAG="$(git rev-parse --short=12 HEAD)"
 compose="docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.prod.yaml --env-file ${home}/.env ${profiles}"
 
 # По одному образу: параллельная сборка всех сервисов упирается в память небольшой ВМ
-if ! docker image inspect "wine-boutique/loyalty:${TAG}" > /dev/null 2>&1; then
-  for service in identity-migrate identity catalog-migrate catalog news-migrate news reviews-migrate reviews newsletter-migrate newsletter reservations-migrate reservations tastings-migrate tastings cellar-migrate cellar requests-migrate requests loyalty-migrate loyalty; do
+if ! docker image inspect "wine-boutique/web:${TAG}" > /dev/null 2>&1; then
+  for service in identity-migrate identity catalog-migrate catalog news-migrate news reviews-migrate reviews newsletter-migrate newsletter reservations-migrate reservations tastings-migrate tastings cellar-migrate cellar requests-migrate requests loyalty-migrate loyalty web; do
     ${compose} build "${service}"
   done
 fi

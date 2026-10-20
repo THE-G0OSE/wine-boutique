@@ -175,6 +175,16 @@ services:
       <<: *prod-service-env
       DATABASE_URL: postgresql://loyalty:${LOYALTY_DB_PASSWORD}@postgres:5432/loyalty
 
+  # Фронт с того же адреса, что и API: Traefik отдаёт сюда всё, кроме /api
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      args:
+        SITE_URL: https://${API_DOMAIN}/
+    image: wine-boutique/web:${TAG:?}
+    restart: unless-stopped
+
   otel-lgtm:
     # Grafana — только через SSH-туннель: ssh -L 3001:127.0.0.1:3001 <vps>
     ports: !override

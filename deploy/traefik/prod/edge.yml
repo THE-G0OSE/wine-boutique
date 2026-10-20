@@ -2,11 +2,12 @@
 # Шаблон Go: значения — из окружения контейнера Traefik.
 http:
   middlewares:
-    # Фронт на Pages и API на своём поддомене — разные origin: браузеру нужен CORS с cookie
+    # Нужен, только если фронт на другом origin (Pages со своим доменом и API на поддомене); фронт с VPS — тот же origin.
+    # Методы — все из контракта: кабинет шлёт PATCH, PUT и DELETE
     cors:
       headers:
         accessControlAllowOriginList: ['{{ env "FRONT_ORIGIN" }}']
-        accessControlAllowMethods: [GET, POST, OPTIONS]
+        accessControlAllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
         accessControlAllowHeaders: [Content-Type]
         accessControlAllowCredentials: true
         accessControlMaxAge: 600
@@ -20,3 +21,21 @@ http:
         average: 100
         period: 1s
         burst: 200
+
+  routers:
+    # Фронт (apps/web/Dockerfile) — всё, что не /api: маршруты API из dynamic.yml сюда не попадают
+    web:
+      rule: "!PathPrefix(`/api`)"
+      priority: 1
+      entryPoints: [web]
+      service: web
+
+  services:
+    web:
+      loadBalancer:
+        servers:
+          - url: http://web:80
+        healthCheck:
+          path: /
+          interval: 10s
+          timeout: 3s

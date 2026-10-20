@@ -1,0 +1,13 @@
+# Контекст образа фронта (apps/web/Dockerfile): общий .dockerignore исключает apps
+**/node_modules
+**/dist
+**/.turbo
+.git
+.github
+.claude
+.vscode
+.idea
+docs
+tests
+**/*.log
+**/.env.local
