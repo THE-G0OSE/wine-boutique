@@ -3,7 +3,24 @@
  * Плейсхолдеры дизайна ([Имя гостя], [цена]) — не выдумываем, держим как есть.
  */
 export type * from "./types.js";
-export { wineFixtures, wineFixtureList } from "./wines.js";
+export { wineFixtures, wineFixtureList, shelfFixtures } from "./wines.js";
+export {
+  ageOf,
+  arrivalRankOf,
+  listShelves,
+  listWines,
+  matchesQuery,
+  normalize,
+  primaryShelfOf,
+  searchSuggestions,
+  toWineSummary,
+  volumeMlOf,
+  WINE_AGES,
+  wineDetails,
+  wineFacets,
+  type WineFilter,
+  type WineListQuery,
+} from "./catalog.js";
 export { grapeFixtures } from "./grapes.js";
 export { latestIssueFixture } from "./news/latestIssue.js";
 export { archiveIssuesFixture, rubricImage } from "./news/archive.js";

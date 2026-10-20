@@ -1,4 +1,5 @@
 import type { GrapeVariety } from "./types.js";
+import { toWineSummary } from "./catalog.js";
 import { wineFixtures as w } from "./wines.js";
 
 /** Сорта из дизайна (секция «Виноградники» главной) */
@@ -15,7 +16,7 @@ export const grapeFixtures: GrapeVariety[] = [
       "Поздний толстокожий сорт с плотными танинами. Его вина годами раскрываются в бутылке — основа больших бордоских купажей.",
     plantation: null,
     image: "/images/grapes/cabernet-sauvignon.webp",
-    wines: [w.sassicaia, w.red1, w.red2],
+    wines: [w.sassicaia, w.red1, w.red2].map(toWineSummary),
   },
   {
     id: "chardonnay",
@@ -28,7 +29,7 @@ export const grapeFixtures: GrapeVariety[] = [
     description: "Самый универсальный белый сорт: от звонкого шабли до плотных вин, выдержанных в дубе, и игристых.",
     plantation: null,
     image: "/images/grapes/chardonnay.webp",
-    wines: [w.cristal, w.white1, w.white2],
+    wines: [w.cristal, w.white1, w.white2].map(toWineSummary),
   },
   {
     id: "merlot",
@@ -41,7 +42,7 @@ export const grapeFixtures: GrapeVariety[] = [
     description: "Мягкий и округлый сорт с бархатной текстурой. Смягчает каберне в купаже и прекрасен сам по себе.",
     plantation: null,
     image: "/images/grapes/merlot.webp",
-    wines: [w.red1, w.red2, w.red3],
+    wines: [w.red1, w.red2, w.red3].map(toWineSummary),
   },
   {
     id: "sauvignon-blanc",
@@ -54,7 +55,7 @@ export const grapeFixtures: GrapeVariety[] = [
     description: "Яркая кислотность и травянистый аромат. Вместе с семильоном даёт легендарные сладкие вина Сотерна.",
     plantation: null,
     image: "/images/grapes/sauvignon-blanc.webp",
-    wines: [w.yquem, w.white1, w.white2],
+    wines: [w.yquem, w.white1, w.white2].map(toWineSummary),
   },
   {
     id: "pinot-noir",
@@ -68,7 +69,7 @@ export const grapeFixtures: GrapeVariety[] = [
       "Капризный тонкокожий сорт: любит прохладу и ручной сбор. В ответ — самые тонкие и сложные красные вина.",
     plantation: null,
     image: "/images/grapes/pinot-noir.webp",
-    wines: [w.cristal, w.red1, w.red2],
+    wines: [w.cristal, w.red1, w.red2].map(toWineSummary),
   },
   {
     id: "riesling",
@@ -81,6 +82,6 @@ export const grapeFixtures: GrapeVariety[] = [
     description: "Звонкая кислотность позволяет рислингу стареть десятилетиями — от сухих вин до сладких поздних сборов.",
     plantation: null,
     image: "/images/grapes/riesling.webp",
-    wines: [w.white1, w.white2, w.sweet1],
+    wines: [w.white1, w.white2, w.sweet1].map(toWineSummary),
   },
 ];

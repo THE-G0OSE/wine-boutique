@@ -7,6 +7,7 @@ import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { zGetGrapesResponse, zGetWinesResponse } from "@wine/contracts/openapi/zod";
+import { listWines, wineFixtureList } from "@wine/demo-data";
 import { loadConfig } from "@wine/service-kit";
 import { createTestApp, missingOperations } from "@wine/service-kit/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -70,22 +71,22 @@ describe("catalog на настоящем Postgres", () => {
     const res = await app.inject({ method: "GET", url: "/api/wines" });
     expect(res.statusCode).toBe(200);
     const page = zGetWinesResponse.parse(res.json());
-    expect(page.total).toBe(9);
-    expect(page.items).toHaveLength(9);
-    expect(page.items[0]).toMatchObject({ slug: "chateau-d-yquem-1988", volume: "0,75 л", vintage: 1988 });
+    expect(page.total).toBe(wineFixtureList.length);
+    expect(page.items).toHaveLength(12);
+    expect(page.items[0]).toMatchObject({ slug: "chateau-d-yquem-1988", volume: "0,75 л", vintage: 1988, bottle: "sweet" });
     expect(res.headers["cache-control"]).toBe("public, max-age=60");
   });
 
   it("пагинация: limit и offset из строки запроса", async () => {
     const all = zGetWinesResponse.parse((await app.inject({ method: "GET", url: "/api/wines?limit=48" })).json());
     const page = zGetWinesResponse.parse((await app.inject({ method: "GET", url: "/api/wines?limit=2&offset=2" })).json());
-    expect(page.total).toBe(9);
+    expect(page.total).toBe(wineFixtureList.length);
     expect(page.items.map((w) => w.slug)).toEqual(all.items.slice(2, 4).map((w) => w.slug));
   });
 
-  it("фильтр по полке и сортировка по году: вина без года — в конце", async () => {
+  it("фильтр по типу и сортировка по году: вина без года — в конце", async () => {
     const sweet = zGetWinesResponse.parse((await app.inject({ method: "GET", url: "/api/wines?category=sweet" })).json());
-    expect(sweet.total).toBe(2);
+    expect(sweet.total).toBe(listWines({ category: "sweet" }).total);
     expect(sweet.items.every((w) => w.categories.includes("sweet"))).toBe(true);
 
     const byVintage = zGetWinesResponse.parse((await app.inject({ method: "GET", url: "/api/wines?sort=vintage_asc&limit=48" })).json());
@@ -134,7 +135,7 @@ describe("catalog на настоящем Postgres", () => {
 
   it("сид можно запускать повторно — данные не дублируются", async () => {
     await seedCatalog(prisma);
-    expect(await prisma.wine.count()).toBe(9);
+    expect(await prisma.wine.count()).toBe(wineFixtureList.length);
     expect(await prisma.grapeVarietyWine.count()).toBe(18);
-  });
+  }, 60_000);
 });

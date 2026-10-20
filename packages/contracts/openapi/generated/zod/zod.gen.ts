@@ -15,6 +15,42 @@ export const zWineCategory = z.enum([
 ]);
 
 /**
+ * red — красные, white — белые, sparkling — игристые и сладкие, aged — коллекция 10+ лет
+ */
+export const zWineShelf = z.enum([
+    'red',
+    'white',
+    'sparkling',
+    'aged'
+]);
+
+/**
+ * Выдержка по годам в погребе — up_to_3 (до 3 лет), from_3_to_10, from_10_to_20, over_20 (20+ лет)
+ */
+export const zWineAge = z.enum([
+    'up_to_3',
+    'from_3_to_10',
+    'from_10_to_20',
+    'over_20'
+]);
+
+/**
+ * Силуэт бутылки на полке — от него зависит картинка и высота
+ */
+export const zBottleShape = z.enum([
+    'red',
+    'white',
+    'sweet',
+    'sparkling',
+    'burgundy',
+    'flute',
+    'black',
+    'prosecco',
+    'port',
+    'tokaji'
+]);
+
+/**
  * popular — популярные, price_asc / price_desc — по цене, vintage_asc — сначала старше урожай, new — новинки
  */
 export const zWineSort = z.enum([
@@ -40,7 +76,100 @@ export const zWineSummary = z.object({
     vintage: z.int().nullable(),
     cellarYears: z.int().nullable(),
     price: z.int().nullable(),
-    image: z.string()
+    image: z.string(),
+    bottle: zBottleShape
+});
+
+export const zShelf = z.object({
+    id: zWineShelf,
+    title: z.string(),
+    note: z.string(),
+    description: z.string(),
+    total: z.int(),
+    wines: z.array(zWineSummary)
+});
+
+export const zFacetOption = z.object({
+    value: z.string(),
+    count: z.int()
+});
+
+export const zAgeFacetOption = z.object({
+    value: zWineAge,
+    count: z.int()
+});
+
+export const zVolumeFacetOption = z.object({
+    value: z.int(),
+    count: z.int()
+});
+
+export const zPriceRange = z.object({
+    min: z.int(),
+    max: z.int()
+});
+
+export const zWineFacets = z.object({
+    total: z.int(),
+    countries: z.array(zFacetOption),
+    grapes: z.array(zFacetOption),
+    ages: z.array(zAgeFacetOption),
+    volumes: z.array(zVolumeFacetOption),
+    price: zPriceRange.nullable()
+});
+
+export const zTasteScale = z.object({
+    level: z.int().gte(1).lte(5),
+    word: z.string()
+});
+
+export const zTasteProfile = z.object({
+    body: zTasteScale,
+    tannins: zTasteScale,
+    acidity: zTasteScale,
+    sweetness: zTasteScale
+});
+
+export const zTastingNotes = z.object({
+    aroma: z.string(),
+    taste: z.string(),
+    finish: z.string()
+});
+
+export const zFoodPairing = z.object({
+    icon: z.string(),
+    text: z.string()
+});
+
+export const zServing = z.object({
+    temperature: z.string(),
+    decanting: z.string(),
+    glass: z.string()
+});
+
+/**
+ * Карточка вина — всё из списка плюс паспорт, вкус, подача и соседи по полке
+ */
+export const zWineDetails = zWineSummary.and(z.object({
+    shelf: zWineShelf,
+    producer: z.string().nullable(),
+    appellation: z.string().nullable(),
+    abv: z.string(),
+    aging: z.string(),
+    potential: z.string(),
+    badges: z.array(z.string()),
+    profile: zTasteProfile.nullable(),
+    notes: zTastingNotes,
+    food: z.array(zFoodPairing),
+    serve: zServing.nullable(),
+    sommelierNote: z.string(),
+    related: z.array(zWineSummary)
+}));
+
+export const zSearchSuggestions = z.object({
+    wines: z.array(zWineSummary),
+    grapes: z.array(z.string()),
+    regions: z.array(z.string())
 });
 
 export const zWinePage = z.object({
@@ -254,8 +383,72 @@ export const zNewsletterSubscription = z.object({
     email: z.email()
 });
 
+/**
+ * Полка магазина; без параметра — все вина
+ */
+export const zWineShelfParam = zWineShelf;
+
+/**
+ * Поиск по названию, сорту, региону, стране и винодельне
+ */
+export const zWineQuery = z.string().min(1).max(100);
+
+/**
+ * Страны (повтор параметра — несколько)
+ */
+export const zWineCountry = z.array(z.string()).max(20);
+
+/**
+ * Сорта (повтор параметра — несколько)
+ */
+export const zWineGrape = z.array(z.string()).max(20);
+
+/**
+ * Цена от, ₽; вина без цены под ценовой фильтр не попадают
+ */
+export const zWinePriceMin = z.int().gte(0);
+
+/**
+ * Цена до, ₽
+ */
+export const zWinePriceMax = z.int().gte(0);
+
+/**
+ * Выдержка — сколько лет вино в погребе
+ */
+export const zWineAge2 = z.array(zWineAge);
+
+/**
+ * Объём бутылки, мл
+ */
+export const zWineVolume = z.array(z.int());
+
+export const zGetShelvesQuery = z.object({
+    q: z.string().min(1).max(100).optional(),
+    country: z.array(z.string()).max(20).optional(),
+    grape: z.array(z.string()).max(20).optional(),
+    priceMin: z.int().gte(0).optional(),
+    priceMax: z.int().gte(0).optional(),
+    age: z.array(zWineAge).optional(),
+    volume: z.array(z.int()).optional(),
+    limit: z.int().gte(1).lte(24).optional().default(10)
+});
+
+/**
+ * Полки по порядку
+ */
+export const zGetShelvesResponse = z.array(zShelf);
+
 export const zGetWinesQuery = z.object({
     category: zWineCategory.optional(),
+    shelf: zWineShelf.optional(),
+    q: z.string().min(1).max(100).optional(),
+    country: z.array(z.string()).max(20).optional(),
+    grape: z.array(z.string()).max(20).optional(),
+    priceMin: z.int().gte(0).optional(),
+    priceMax: z.int().gte(0).optional(),
+    age: z.array(zWineAge).optional(),
+    volume: z.array(z.int()).optional(),
     sort: zWineSort.optional(),
     limit: z.int().gte(1).lte(48).optional().default(12),
     offset: z.int().gte(0).optional().default(0)
@@ -265,6 +458,40 @@ export const zGetWinesQuery = z.object({
  * Страница списка
  */
 export const zGetWinesResponse = zWinePage;
+
+export const zGetWineFacetsQuery = z.object({
+    shelf: zWineShelf.optional(),
+    q: z.string().min(1).max(100).optional(),
+    country: z.array(z.string()).max(20).optional(),
+    grape: z.array(z.string()).max(20).optional(),
+    priceMin: z.int().gte(0).optional(),
+    priceMax: z.int().gte(0).optional(),
+    age: z.array(zWineAge).optional(),
+    volume: z.array(z.int()).optional()
+});
+
+/**
+ * Группы фильтров
+ */
+export const zGetWineFacetsResponse = zWineFacets;
+
+export const zGetWinePath = z.object({
+    slug: z.string()
+});
+
+/**
+ * Вино с паспортом, профилем вкуса и подачей
+ */
+export const zGetWineResponse = zWineDetails;
+
+export const zGetSearchSuggestionsQuery = z.object({
+    q: z.string().min(1).max(100)
+});
+
+/**
+ * Подсказки
+ */
+export const zGetSearchSuggestionsResponse = zSearchSuggestions;
 
 /**
  * Список сортов

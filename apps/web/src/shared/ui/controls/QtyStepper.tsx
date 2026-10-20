@@ -9,13 +9,15 @@ interface IProps {
   incrementLabel: string;
   min?: number;
   max?: number;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
 const sizeToClass = {
   sm: { button: "h-9 w-10 text-lg", value: "h-9 w-9 text-micro" },
   md: { button: "h-9 w-11 text-md", value: "h-9 min-w-10 text-[15px]" },
+  // Карточка вина: 52×56, на тёмной подложке
+  lg: { button: "h-14 w-13 bg-cellar-950/70 text-lg", value: "h-14 w-14 bg-cellar-950/70 text-caption" },
 };
 
 /** Счётчик «− n +» из трёх сегментов */

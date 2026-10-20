@@ -1,3 +1,11 @@
 export * from './model'
 export * from './ui'
-export { useGetWinesQuery } from './api/wineApi'
+export {
+  useGetShelvesQuery,
+  useGetWinesQuery,
+  useGetShelfWinesInfiniteQuery,
+  useGetWineFacetsQuery,
+  useGetWineQuery,
+  useGetSearchSuggestionsQuery,
+  WINES_MOBILE_PAGE_SIZE,
+} from './api/wineApi'

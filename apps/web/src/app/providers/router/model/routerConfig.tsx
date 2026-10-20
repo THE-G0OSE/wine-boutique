@@ -29,6 +29,22 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import("@/pages/article")).ArticlePage }),
       },
       {
+        path: ROUTES.shop,
+        lazy: async () => ({ Component: (await import("@/pages/shop")).ShopPage }),
+      },
+      {
+        path: ROUTES.shelf(":shelf"),
+        lazy: async () => ({ Component: (await import("@/pages/shelf")).ShelfPage }),
+      },
+      {
+        path: ROUTES.search,
+        lazy: async () => ({ Component: (await import("@/pages/search")).SearchPage }),
+      },
+      {
+        path: ROUTES.wine(":slug"),
+        lazy: async () => ({ Component: (await import("@/pages/wine")).WinePage }),
+      },
+      {
         path: ROUTES.reviews,
         lazy: async () => ({ Component: (await import("@/pages/reviews")).ReviewsPage }),
       },

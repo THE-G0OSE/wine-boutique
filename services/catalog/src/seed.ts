@@ -11,8 +11,8 @@ if (!url) throw new Error("Нужна переменная DATABASE_URL");
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 try {
-  const { wines, varieties } = await seedCatalog(prisma);
-  console.log(`catalog: ${wines} вин, ${varieties} сортов`);
+  const { wines, shelves, varieties } = await seedCatalog(prisma);
+  console.log(`catalog: ${wines} вин, ${shelves} полки, ${varieties} сортов`);
 } finally {
   await prisma.$disconnect();
 }

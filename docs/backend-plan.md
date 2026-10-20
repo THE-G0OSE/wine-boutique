@@ -25,7 +25,7 @@
 
 | Сервис | База | Публичные пути (Traefik) | Внутренний gRPC | Ходит к | События |
 |---|---|---|---|---|---|
-| `catalog` | `catalog` | `/api/wines`, `/api/grapes` | `wine.catalog.v1.CatalogService`: `GetWineSummaries(ids)`, `ResolveWineSlugs(slugs)` | — | `catalog.wine-changed.v1` — когда появятся подписчики с копиями |
+| `catalog` | `catalog` | `/api/shelves`, `/api/wines`, `/api/search`, `/api/grapes` | `wine.catalog.v1.CatalogService`: `GetWineSummaries(ids)`, `ResolveWineSlugs(slugs)` | — | `catalog.wine-changed.v1` — когда появятся подписчики с копиями |
 | `news` | `news` | `/api/news` | — | `catalog` (вино для стикера) | — |
 | `reviews` | `reviews` | `/api/reviews` | — | — | `reviews.letter-received.v1` — с уведомлениями сомелье |
 | `newsletter` | `newsletter` | `/api/newsletter` | — | — | `newsletter.subscribed.v1` — с рассылкой |
@@ -39,7 +39,7 @@
 
 | Фаза фронта | Сервисы |
 |---|---|
-| 3 · Каталог | `catalog` растёт: полки, фасеты, карточка вина, поиск (Postgres FTS с русской конфигурацией + `pg_trgm`) |
+| 3 · Каталог | **Сделано 20.10.2026:** `catalog` растёт — полки, фасеты, карточка вина, поиск подстрокой по `pg_trgm` (морфология русского FTS для названий вин и сортов не нужна: ищут «пино», «Бург») |
 | 4 · Бронь | `reservations` (бутики, слоты, бронь; цены и наличие — gRPC к `catalog`; сага с событиями `reservations.*`) |
 | 6 · Услуги | `tastings` (события, записи, лист ожидания; афиша газеты будет браться отсюда), `cellar` (ячейки хранения), `requests` (заявки: зал, подарки, сертификаты, «Набор месяца») |
 | 8 · Кабинет | `identity` (телефон + код, сессии), `loyalty` (бонусы, уровни, избранное), `notifications` (SMS и email по событиям других сервисов) |
@@ -54,6 +54,10 @@
 - **Wine:** `slug` (уник.), `name`, `categories WineCategory[]`, `region`, `country?`, `grapes String[]` (названия для карточки), `volumeMl Int` (в API — «0,75 л»), `vintage Int?`, `cellaredAt Date?` (в API — `cellarYears`), `priceKopecks Int?` (в API — рубли), `imageUrl`, `popularityRank Int` (сортировка `popular`), `arrivedAt` (сортировка `new`). Индексы: GIN по `categories`, B-tree по полям сортировки; сортировки по цене и году — `NULLS LAST`.
 - **GrapeVariety:** `slug`, `name`, `type` (red | white), `origin`, `taste`, `harvest`, `description`, `plantation?`, `imageUrl`, `position`.
 - **GrapeVarietyWine:** `varietyId`, `wineId` (внешние ключи — это одна база), `position` (не больше трёх).
+- Карточка вина (фаза 3) — в той же таблице `wines`: `bottle` (силуэт на полке), `producer?`, `appellation?`, `abv`, `aging`, `potential`, `badges[]`, `profile Json?`, `notes Json`, `food Json`, `serve Json?`, `sommelierNote`; `searchText` — название, сорта, регион, страна, винодельня в нижнем регистре и с «е» вместо «ё», GIN-индекс `gin_trgm_ops` (поиск — каждое слово подстрокой).
+- **Shelf:** `id` (red | white | sparkling | aged), `title`, `note`, `description`, `position`. **ShelfWine:** `shelfId`, `wineId`, `position` — порядок на полке (сортировка popular на полке). **WineRelation:** `wineId`, `relatedId`, `position` — «С этим вином берут» по выбору сомелье; пусто — соседи по полке.
+- Фасеты считаются в сервисе по выборке «полка + тип + поиск» (одна выборка узких колонок, остальные фильтры — в памяти по правилу «все, кроме своей группы»): каталог бутика — сотни вин. Если вырастет до десятков тысяч — `unnest` и `GROUPING SETS` в SQL.
+- Правила выдачи совпадают с эталоном `@wine/demo-data` (моки фронта): тест сверяет 200 сочетаний полок, сортировок и фильтров, фасеты, полки, все карточки и подсказки.
 
 ### `news`
 

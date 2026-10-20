@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/shelves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Полки магазина с первыми бутылками
+         * @description Фильтры — те же, что у /wines; полка показывает подходящие под них вина и их число
+         */
+        get: operations["getShelves"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/wines": {
         parameters: {
             query?: never;
@@ -13,6 +33,61 @@ export interface paths {
         };
         /** Список вин */
         get: operations["getWines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wines/facets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Варианты фильтров и число вин в каждом
+         * @description Счётчик варианта — сколько вин будет, если его выбрать: учитываются все фильтры, кроме фильтра этой же группы
+         *     (выбранная страна не обнуляет счётчики других стран).
+         */
+        get: operations["getWineFacets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wines/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Карточка вина */
+        get: operations["getWine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Подсказки поиска — вина, сорта и регионы */
+        get: operations["getSearchSuggestions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -154,6 +229,21 @@ export interface components {
         /** @enum {string} */
         WineCategory: "red" | "white" | "sparkling" | "sweet";
         /**
+         * @description red — красные, white — белые, sparkling — игристые и сладкие, aged — коллекция 10+ лет
+         * @enum {string}
+         */
+        WineShelf: "red" | "white" | "sparkling" | "aged";
+        /**
+         * @description Выдержка по годам в погребе — up_to_3 (до 3 лет), from_3_to_10, from_10_to_20, over_20 (20+ лет)
+         * @enum {string}
+         */
+        WineAge: "up_to_3" | "from_3_to_10" | "from_10_to_20" | "over_20";
+        /**
+         * @description Силуэт бутылки на полке — от него зависит картинка и высота
+         * @enum {string}
+         */
+        BottleShape: "red" | "white" | "sweet" | "sparkling" | "burgundy" | "flute" | "black" | "prosecco" | "port" | "tokaji";
+        /**
          * @description popular — популярные, price_asc / price_desc — по цене, vintage_asc — сначала старше урожай, new — новинки
          * @enum {string}
          */
@@ -187,6 +277,117 @@ export interface components {
             price: number | null;
             /** @description URL изображения бутылки на прозрачном фоне */
             image: string;
+            bottle: components["schemas"]["BottleShape"];
+        };
+        Shelf: {
+            id: components["schemas"]["WineShelf"];
+            /** @example Красные */
+            title: string;
+            /**
+             * @description Подпись рядом с табличкой полки в магазине
+             * @example от Бордо до Мендосы
+             */
+            note: string;
+            /** @description Вступление на странице полки */
+            description: string;
+            /** @description Сколько вин на полке подходит под фильтры */
+            total: number;
+            wines: components["schemas"]["WineSummary"][];
+        };
+        FacetOption: {
+            value: string;
+            count: number;
+        };
+        AgeFacetOption: {
+            value: components["schemas"]["WineAge"];
+            count: number;
+        };
+        VolumeFacetOption: {
+            /** @description Объём, мл */
+            value: number;
+            count: number;
+        };
+        PriceRange: {
+            min: number;
+            max: number;
+        };
+        WineFacets: {
+            /** @description Сколько вин подходит под все фильтры сразу */
+            total: number;
+            countries: components["schemas"]["FacetOption"][];
+            grapes: components["schemas"]["FacetOption"][];
+            ages: components["schemas"]["AgeFacetOption"][];
+            volumes: components["schemas"]["VolumeFacetOption"][];
+            /** @description Диапазон цен подходящих вин; null — ни у одного нет цены */
+            price: components["schemas"]["PriceRange"] | null;
+        };
+        TasteScale: {
+            level: number;
+            /** @example полнотелое */
+            word: string;
+        };
+        TasteProfile: {
+            body: components["schemas"]["TasteScale"];
+            tannins: components["schemas"]["TasteScale"];
+            acidity: components["schemas"]["TasteScale"];
+            sweetness: components["schemas"]["TasteScale"];
+        };
+        TastingNotes: {
+            aroma: string;
+            taste: string;
+            finish: string;
+        };
+        FoodPairing: {
+            /** @description Эмодзи */
+            icon: string;
+            text: string;
+        };
+        Serving: {
+            /** @example 16–18 °C */
+            temperature: string;
+            /** @example 1 час */
+            decanting: string;
+            /** @example Бордо */
+            glass: string;
+        };
+        /** @description Карточка вина — всё из списка плюс паспорт, вкус, подача и соседи по полке */
+        WineDetails: components["schemas"]["WineSummary"] & {
+            shelf: components["schemas"]["WineShelf"];
+            /** @example Tenuta San Guido */
+            producer: string | null;
+            /** @example Bolgheri Sassicaia DOC */
+            appellation: string | null;
+            /** @description Крепость, как на этикетке */
+            abv: string;
+            /** @description Выдержка до розлива */
+            aging: string;
+            /** @description До какого года вино будет раскрываться */
+            potential: string;
+            /**
+             * @example [
+             *       "Красное сухое",
+             *       "Bolgheri DOC",
+             *       "11 лет в погребе"
+             *     ]
+             */
+            badges: string[];
+            /** @description Профиль вкуса; null — сомелье его ещё не описал */
+            profile: components["schemas"]["TasteProfile"] | null;
+            notes: components["schemas"]["TastingNotes"];
+            food: components["schemas"]["FoodPairing"][];
+            /** @description Подача; null — ещё не описана */
+            serve: components["schemas"]["Serving"] | null;
+            sommelierNote: string;
+            /** @description С этим вином берут — до шести вин */
+            related: components["schemas"]["WineSummary"][];
+        };
+        SearchSuggestions: {
+            /** @description До трёх вин */
+            wines: components["schemas"]["WineSummary"][];
+            /** @description Сорта, в названии которых есть запрос */
+            grapes: string[];
+            /** @description Регионы и страны, в названии которых есть запрос */
+            regions: string[];
         };
         WinePage: {
             items: components["schemas"]["WineSummary"][];
@@ -454,18 +655,89 @@ export interface components {
             };
         };
     };
-    parameters: never;
+    parameters: {
+        /** @description Полка магазина; без параметра — все вина */
+        WineShelfParam: components["schemas"]["WineShelf"];
+        /** @description Поиск по названию, сорту, региону, стране и винодельне */
+        WineQuery: string;
+        /** @description Страны (повтор параметра — несколько) */
+        WineCountry: string[];
+        /** @description Сорта (повтор параметра — несколько) */
+        WineGrape: string[];
+        /** @description Цена от, ₽; вина без цены под ценовой фильтр не попадают */
+        WinePriceMin: number;
+        /** @description Цена до, ₽ */
+        WinePriceMax: number;
+        /** @description Выдержка — сколько лет вино в погребе */
+        WineAge: components["schemas"]["WineAge"][];
+        /** @description Объём бутылки, мл */
+        WineVolume: number[];
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getShelves: {
+        parameters: {
+            query?: {
+                /** @description Поиск по названию, сорту, региону, стране и винодельне */
+                q?: components["parameters"]["WineQuery"];
+                /** @description Страны (повтор параметра — несколько) */
+                country?: components["parameters"]["WineCountry"];
+                /** @description Сорта (повтор параметра — несколько) */
+                grape?: components["parameters"]["WineGrape"];
+                /** @description Цена от, ₽; вина без цены под ценовой фильтр не попадают */
+                priceMin?: components["parameters"]["WinePriceMin"];
+                /** @description Цена до, ₽ */
+                priceMax?: components["parameters"]["WinePriceMax"];
+                /** @description Выдержка — сколько лет вино в погребе */
+                age?: components["parameters"]["WineAge"];
+                /** @description Объём бутылки, мл */
+                volume?: components["parameters"]["WineVolume"];
+                /** @description Сколько бутылок показать на каждой полке */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Полки по порядку */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Shelf"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
     getWines: {
         parameters: {
             query?: {
-                /** @description Полка; без параметра — все вина */
+                /** @description Тип вина (каталог погреба на главной); без параметра — все вина */
                 category?: components["schemas"]["WineCategory"];
+                /** @description Полка магазина; без параметра — все вина */
+                shelf?: components["parameters"]["WineShelfParam"];
+                /** @description Поиск по названию, сорту, региону, стране и винодельне */
+                q?: components["parameters"]["WineQuery"];
+                /** @description Страны (повтор параметра — несколько) */
+                country?: components["parameters"]["WineCountry"];
+                /** @description Сорта (повтор параметра — несколько) */
+                grape?: components["parameters"]["WineGrape"];
+                /** @description Цена от, ₽; вина без цены под ценовой фильтр не попадают */
+                priceMin?: components["parameters"]["WinePriceMin"];
+                /** @description Цена до, ₽ */
+                priceMax?: components["parameters"]["WinePriceMax"];
+                /** @description Выдержка — сколько лет вино в погребе */
+                age?: components["parameters"]["WineAge"];
+                /** @description Объём бутылки, мл */
+                volume?: components["parameters"]["WineVolume"];
                 sort?: components["schemas"]["WineSort"];
                 limit?: number;
                 offset?: number;
@@ -483,6 +755,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WinePage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    getWineFacets: {
+        parameters: {
+            query?: {
+                /** @description Полка магазина; без параметра — все вина */
+                shelf?: components["parameters"]["WineShelfParam"];
+                /** @description Поиск по названию, сорту, региону, стране и винодельне */
+                q?: components["parameters"]["WineQuery"];
+                /** @description Страны (повтор параметра — несколько) */
+                country?: components["parameters"]["WineCountry"];
+                /** @description Сорта (повтор параметра — несколько) */
+                grape?: components["parameters"]["WineGrape"];
+                /** @description Цена от, ₽; вина без цены под ценовой фильтр не попадают */
+                priceMin?: components["parameters"]["WinePriceMin"];
+                /** @description Цена до, ₽ */
+                priceMax?: components["parameters"]["WinePriceMax"];
+                /** @description Выдержка — сколько лет вино в погребе */
+                age?: components["parameters"]["WineAge"];
+                /** @description Объём бутылки, мл */
+                volume?: components["parameters"]["WineVolume"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Группы фильтров */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WineFacets"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    getWine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Вино с паспортом, профилем вкуса и подачей */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WineDetails"];
+                };
+            };
+            /** @description Такого вина нет */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getSearchSuggestions: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Подсказки */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchSuggestions"];
                 };
             };
             400: components["responses"]["BadRequest"];

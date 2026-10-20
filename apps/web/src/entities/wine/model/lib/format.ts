@@ -1,6 +1,6 @@
 import { formatPrice } from "@/shared/lib/formatPrice";
 import { plural } from "@/shared/lib/plural";
-import type { WineCategory, WineSummary } from "../types";
+import type { WineCategory, WineShelf, WineSummary } from "../types";
 
 /** «Сотерн, Франция · семильон, совиньон блан» */
 export const formatWineOrigin = (wine: WineSummary) =>
@@ -25,4 +25,13 @@ export const WINE_CATEGORY_LABELS: Record<WineCategory, string> = {
   white: "Белые",
   sparkling: "Игристые",
   sweet: "Сладкие",
+};
+
+/**
+ * Подпись на бирке бутылки: на десктопе — регион и сорта, на мобильных — только регион (MShop).
+ * На полке «10+ лет» вместо сортов — срок в погребе, если он известен («Сотерн · 38 лет в погребе»)
+ */
+export const formatShelfMeta = (wine: WineSummary, { shelf, compact = false }: { shelf?: WineShelf; compact?: boolean } = {}) => {
+  if (shelf === "aged" && wine.cellarYears !== null) return `${wine.region} · ${formatCellarAge(wine.cellarYears)}`;
+  return compact ? wine.region : formatWineRegionGrapes(wine);
 };

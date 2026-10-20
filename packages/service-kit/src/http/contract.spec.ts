@@ -14,7 +14,12 @@ import { createTestApp } from "../testing.js";
 const Item = z.object({ id: z.string(), name: z.string() });
 const NewItem = z.object({ name: z.string().min(2) });
 // Как в сгенерированных схемах контракта: z.int() без coerce — строку приводит пайп
-const ListQuery = z.object({ limit: z.int().min(1).max(10).optional().default(1), slug: z.string().optional() });
+const ListQuery = z.object({
+  limit: z.int().min(1).max(10).optional().default(1),
+  slug: z.string().optional(),
+  volume: z.array(z.int()).optional(),
+  country: z.array(z.string()).optional(),
+});
 
 @Controller("items")
 class ItemsController {
@@ -37,6 +42,11 @@ class ItemsController {
   @ValidationError("invalid_email", "Проверьте адрес — кажется, в нём опечатка")
   @RateLimit(2, 60_000)
   subscribe(@Body({ schema: z.object({ email: z.email() }) }) _body: { email: string }) {}
+
+  @Get("filters")
+  filters(@Query({ schema: ListQuery }) query: z.infer<typeof ListQuery>) {
+    return { volume: query.volume ?? null, country: query.country ?? null };
+  }
 
   @Get("me")
   me(@CurrentUser() userId: string | null) {
@@ -86,6 +96,13 @@ describe("service-kit: контракт на входе и выходе", () => 
     const res = await app.inject({ method: "GET", url: "/api/items?limit=1&slug=1988" });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual([{ id: "0", name: "1988" }]);
+  });
+
+  it("массивы в строке запроса: один повтор — тоже массив, элементы приводятся по схеме", async () => {
+    const get = async (qs: string) => (await app.inject({ method: "GET", url: `/api/items/filters?${qs}` })).json();
+    expect(await get("volume=750&country=Италия")).toEqual({ volume: [750], country: ["Италия"] });
+    expect(await get("volume=375&volume=750&country=1988&country=Франция")).toEqual({ volume: [375, 750], country: ["1988", "Франция"] });
+    expect((await app.inject({ method: "GET", url: "/api/items/filters?volume=много" })).statusCode).toBe(400);
   });
 
   it("неверная строка запроса — 400 validation_failed с путём поля", async () => {

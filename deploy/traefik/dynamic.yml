@@ -27,7 +27,7 @@ http:
       service: identity
 
     catalog:
-      rule: PathRegexp(`^/api/(wines|grapes)(/|$)`)
+      rule: PathRegexp(`^/api/(wines|grapes|shelves|search)(/|$)`)
       entryPoints: [web]
       service: catalog
 

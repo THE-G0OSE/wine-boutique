@@ -77,7 +77,7 @@ const VineyardsStrip: FC<ISectionProps> = ({ grapes, titleId, onOpen }) => (
       </Text>
     </div>
 
-    <div className="absolute inset-x-0 bottom-10 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-5 [scrollbar-width:none]">
+    <div className="absolute inset-x-0 bottom-10 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto px-5 [scrollbar-width:none]">
       {grapes.map((grape, index) => (
         <button
           key={grape.id}

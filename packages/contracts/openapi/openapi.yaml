@@ -24,6 +24,40 @@ tags:
     description: Письма гостей
 
 paths:
+  /shelves:
+    get:
+      tags: [catalog]
+      operationId: getShelves
+      summary: Полки магазина с первыми бутылками
+      description: Фильтры — те же, что у /wines; полка показывает подходящие под них вина и их число
+      parameters:
+        - $ref: "#/components/parameters/WineQuery"
+        - $ref: "#/components/parameters/WineCountry"
+        - $ref: "#/components/parameters/WineGrape"
+        - $ref: "#/components/parameters/WinePriceMin"
+        - $ref: "#/components/parameters/WinePriceMax"
+        - $ref: "#/components/parameters/WineAge"
+        - $ref: "#/components/parameters/WineVolume"
+        - name: limit
+          in: query
+          description: Сколько бутылок показать на каждой полке
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 24
+            default: 10
+      responses:
+        "200":
+          description: Полки по порядку
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Shelf"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
   /wines:
     get:
       tags: [catalog]
@@ -32,9 +66,17 @@ paths:
       parameters:
         - name: category
           in: query
-          description: Полка; без параметра — все вина
+          description: Тип вина (каталог погреба на главной); без параметра — все вина
           schema:
             $ref: "#/components/schemas/WineCategory"
+        - $ref: "#/components/parameters/WineShelfParam"
+        - $ref: "#/components/parameters/WineQuery"
+        - $ref: "#/components/parameters/WineCountry"
+        - $ref: "#/components/parameters/WineGrape"
+        - $ref: "#/components/parameters/WinePriceMin"
+        - $ref: "#/components/parameters/WinePriceMax"
+        - $ref: "#/components/parameters/WineAge"
+        - $ref: "#/components/parameters/WineVolume"
         - name: sort
           in: query
           schema:
@@ -59,6 +101,82 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WinePage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /wines/facets:
+    get:
+      tags: [catalog]
+      operationId: getWineFacets
+      summary: Варианты фильтров и число вин в каждом
+      description: |
+        Счётчик варианта — сколько вин будет, если его выбрать: учитываются все фильтры, кроме фильтра этой же группы
+        (выбранная страна не обнуляет счётчики других стран).
+      parameters:
+        - $ref: "#/components/parameters/WineShelfParam"
+        - $ref: "#/components/parameters/WineQuery"
+        - $ref: "#/components/parameters/WineCountry"
+        - $ref: "#/components/parameters/WineGrape"
+        - $ref: "#/components/parameters/WinePriceMin"
+        - $ref: "#/components/parameters/WinePriceMax"
+        - $ref: "#/components/parameters/WineAge"
+        - $ref: "#/components/parameters/WineVolume"
+      responses:
+        "200":
+          description: Группы фильтров
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WineFacets"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /wines/{slug}:
+    get:
+      tags: [catalog]
+      operationId: getWine
+      summary: Карточка вина
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            examples: [sassicaia-2015]
+      responses:
+        "200":
+          description: Вино с паспортом, профилем вкуса и подачей
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WineDetails"
+        "404":
+          description: Такого вина нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /search/suggest:
+    get:
+      tags: [catalog]
+      operationId: getSearchSuggestions
+      summary: Подсказки поиска — вина, сорта и регионы
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      responses:
+        "200":
+          description: Подсказки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchSuggestions"
         "400":
           $ref: "#/components/responses/BadRequest"
 
@@ -232,6 +350,79 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
 
 components:
+  parameters:
+    WineShelfParam:
+      name: shelf
+      in: query
+      description: Полка магазина; без параметра — все вина
+      schema:
+        $ref: "#/components/schemas/WineShelf"
+    WineQuery:
+      name: q
+      in: query
+      description: Поиск по названию, сорту, региону, стране и винодельне
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    WineCountry:
+      name: country
+      in: query
+      description: Страны (повтор параметра — несколько)
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 20
+        items:
+          type: string
+    WineGrape:
+      name: grape
+      in: query
+      description: Сорта (повтор параметра — несколько)
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 20
+        items:
+          type: string
+    WinePriceMin:
+      name: priceMin
+      in: query
+      description: Цена от, ₽; вина без цены под ценовой фильтр не попадают
+      schema:
+        type: integer
+        minimum: 0
+    WinePriceMax:
+      name: priceMax
+      in: query
+      description: Цена до, ₽
+      schema:
+        type: integer
+        minimum: 0
+    WineAge:
+      name: age
+      in: query
+      description: Выдержка — сколько лет вино в погребе
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/WineAge"
+    WineVolume:
+      name: volume
+      in: query
+      description: Объём бутылки, мл
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: integer
+          examples: [750]
+
   responses:
     BadRequest:
       description: Некорректные параметры запроса
@@ -268,6 +459,21 @@ components:
       type: string
       enum: [red, white, sparkling, sweet]
 
+    WineShelf:
+      type: string
+      description: red — красные, white — белые, sparkling — игристые и сладкие, aged — коллекция 10+ лет
+      enum: [red, white, sparkling, aged]
+
+    WineAge:
+      type: string
+      description: Выдержка по годам в погребе — up_to_3 (до 3 лет), from_3_to_10, from_10_to_20, over_20 (20+ лет)
+      enum: [up_to_3, from_3_to_10, from_10_to_20, over_20]
+
+    BottleShape:
+      type: string
+      description: Силуэт бутылки на полке — от него зависит картинка и высота
+      enum: [red, white, sweet, sparkling, burgundy, flute, black, prosecco, port, tokaji]
+
     WineSort:
       type: string
       description: popular — популярные, price_asc / price_desc — по цене, vintage_asc — сначала старше урожай, new — новинки
@@ -276,7 +482,7 @@ components:
     WineSummary:
       type: object
       description: Вино в списках (полки, каталог погреба, корзина)
-      required: [id, slug, name, categories, region, country, grapes, volume, vintage, cellarYears, price, image]
+      required: [id, slug, name, categories, region, country, grapes, volume, vintage, cellarYears, price, image, bottle]
       properties:
         id:
           type: string
@@ -316,6 +522,231 @@ components:
         image:
           type: string
           description: URL изображения бутылки на прозрачном фоне
+        bottle:
+          $ref: "#/components/schemas/BottleShape"
+
+    Shelf:
+      type: object
+      required: [id, title, note, description, total, wines]
+      properties:
+        id:
+          $ref: "#/components/schemas/WineShelf"
+        title:
+          type: string
+          examples: [Красные]
+        note:
+          type: string
+          description: Подпись рядом с табличкой полки в магазине
+          examples: [от Бордо до Мендосы]
+        description:
+          type: string
+          description: Вступление на странице полки
+        total:
+          type: integer
+          description: Сколько вин на полке подходит под фильтры
+        wines:
+          type: array
+          items:
+            $ref: "#/components/schemas/WineSummary"
+
+    FacetOption:
+      type: object
+      required: [value, count]
+      properties:
+        value:
+          type: string
+        count:
+          type: integer
+
+    AgeFacetOption:
+      type: object
+      required: [value, count]
+      properties:
+        value:
+          $ref: "#/components/schemas/WineAge"
+        count:
+          type: integer
+
+    VolumeFacetOption:
+      type: object
+      required: [value, count]
+      properties:
+        value:
+          type: integer
+          description: Объём, мл
+        count:
+          type: integer
+
+    PriceRange:
+      type: object
+      required: [min, max]
+      properties:
+        min:
+          type: integer
+        max:
+          type: integer
+
+    WineFacets:
+      type: object
+      required: [total, countries, grapes, ages, volumes, price]
+      properties:
+        total:
+          type: integer
+          description: Сколько вин подходит под все фильтры сразу
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacetOption"
+        grapes:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacetOption"
+        ages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgeFacetOption"
+        volumes:
+          type: array
+          items:
+            $ref: "#/components/schemas/VolumeFacetOption"
+        price:
+          description: Диапазон цен подходящих вин; null — ни у одного нет цены
+          oneOf:
+            - $ref: "#/components/schemas/PriceRange"
+            - type: "null"
+
+    TasteScale:
+      type: object
+      required: [level, word]
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        word:
+          type: string
+          examples: [полнотелое]
+
+    TasteProfile:
+      type: object
+      required: [body, tannins, acidity, sweetness]
+      properties:
+        body:
+          $ref: "#/components/schemas/TasteScale"
+        tannins:
+          $ref: "#/components/schemas/TasteScale"
+        acidity:
+          $ref: "#/components/schemas/TasteScale"
+        sweetness:
+          $ref: "#/components/schemas/TasteScale"
+
+    TastingNotes:
+      type: object
+      required: [aroma, taste, finish]
+      properties:
+        aroma:
+          type: string
+        taste:
+          type: string
+        finish:
+          type: string
+
+    FoodPairing:
+      type: object
+      required: [icon, text]
+      properties:
+        icon:
+          type: string
+          description: Эмодзи
+        text:
+          type: string
+
+    Serving:
+      type: object
+      required: [temperature, decanting, glass]
+      properties:
+        temperature:
+          type: string
+          examples: [16–18 °C]
+        decanting:
+          type: string
+          examples: [1 час]
+        glass:
+          type: string
+          examples: [Бордо]
+
+    WineDetails:
+      description: Карточка вина — всё из списка плюс паспорт, вкус, подача и соседи по полке
+      allOf:
+        - $ref: "#/components/schemas/WineSummary"
+        - type: object
+          required: [shelf, producer, appellation, abv, aging, potential, badges, profile, notes, food, serve, sommelierNote, related]
+          properties:
+            shelf:
+              $ref: "#/components/schemas/WineShelf"
+            producer:
+              type: [string, "null"]
+              examples: [Tenuta San Guido]
+            appellation:
+              type: [string, "null"]
+              examples: [Bolgheri Sassicaia DOC]
+            abv:
+              type: string
+              description: Крепость, как на этикетке
+            aging:
+              type: string
+              description: Выдержка до розлива
+            potential:
+              type: string
+              description: До какого года вино будет раскрываться
+            badges:
+              type: array
+              items:
+                type: string
+              examples: [[Красное сухое, Bolgheri DOC, 11 лет в погребе]]
+            profile:
+              description: Профиль вкуса; null — сомелье его ещё не описал
+              oneOf:
+                - $ref: "#/components/schemas/TasteProfile"
+                - type: "null"
+            notes:
+              $ref: "#/components/schemas/TastingNotes"
+            food:
+              type: array
+              items:
+                $ref: "#/components/schemas/FoodPairing"
+            serve:
+              description: Подача; null — ещё не описана
+              oneOf:
+                - $ref: "#/components/schemas/Serving"
+                - type: "null"
+            sommelierNote:
+              type: string
+            related:
+              type: array
+              description: С этим вином берут — до шести вин
+              items:
+                $ref: "#/components/schemas/WineSummary"
+
+    SearchSuggestions:
+      type: object
+      required: [wines, grapes, regions]
+      properties:
+        wines:
+          type: array
+          description: До трёх вин
+          items:
+            $ref: "#/components/schemas/WineSummary"
+        grapes:
+          type: array
+          description: Сорта, в названии которых есть запрос
+          items:
+            type: string
+        regions:
+          type: array
+          description: Регионы и страны, в названии которых есть запрос
+          items:
+            type: string
 
     WinePage:
       type: object

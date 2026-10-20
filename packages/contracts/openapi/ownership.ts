@@ -8,7 +8,11 @@ export type ServiceName = "catalog" | "news" | "reviews" | "newsletter" | "ident
  * новая операция в openapi.yaml без строки здесь — ошибка компиляции. Traefik маршрутизирует по этой же раскладке.
  */
 export const OPERATION_OWNERS = {
+  getShelves: "catalog",
   getWines: "catalog",
+  getWineFacets: "catalog",
+  getWine: "catalog",
+  getSearchSuggestions: "catalog",
   getGrapes: "catalog",
   getSession: "identity",
   getLatestNewsIssue: "news",

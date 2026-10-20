@@ -1,4 +1,4 @@
-// База сервиса catalog: вина и сорта винограда (docs/backend-plan.md §3).
+// База сервиса catalog: вина, полки магазина и сорта винограда (docs/backend-plan.md §3).
 // Клиент генерируется внутрь сервиса — другие сервисы его не видят.
 
 generator client {
@@ -20,6 +20,32 @@ enum WineCategory {
   sweet
 
   @@map("wine_category")
+}
+
+/// Полки магазина: red — красные, white — белые, sparkling — игристые и сладкие, aged — коллекция 10+ лет
+enum WineShelf {
+  red
+  white
+  sparkling
+  aged
+
+  @@map("wine_shelf")
+}
+
+/// Силуэт бутылки на полке — от него зависят картинка и высота
+enum BottleShape {
+  red
+  white
+  sweet
+  sparkling
+  burgundy
+  flute
+  black
+  prosecco
+  port
+  tokaji
+
+  @@map("bottle_shape")
 }
 
 enum GrapeType {
@@ -50,11 +76,37 @@ model Wine {
   popularityRank Int                @map("popularity_rank")
   /// Когда вино появилось в бутике — сортировка new
   arrivedAt      DateTime           @map("arrived_at") @db.Timestamptz
+  bottle         BottleShape        @default(red)
+  // Карточка вина (паспорт, вкус, подача): тексты — как на этикетке
+  producer       String?
+  appellation    String?
+  abv            String             @default("")
+  aging          String             @default("")
+  potential      String             @default("")
+  badges         String[]           @default([])
+  /// { body, tannins, acidity, sweetness }, у каждой шкалы { level 1–5, word }; null — сомелье ещё не описал
+  profile        Json?
+  /// { aroma, taste, finish }
+  notes          Json               @default("{}")
+  /// [{ icon, text }] — с чем подавать
+  food           Json               @default("[]")
+  /// { temperature, decanting, glass }; null — подача не описана
+  serve          Json?
+  sommelierNote  String             @default("") @map("sommelier_note")
+  /// Текст для поиска: название, сорта, регион, страна, винодельня, апелласьон — в нижнем регистре, «ё» → «е».
+  /// Собирает приложение при записи; ищется подстрокой по триграммному индексу
+  searchText     String             @default("") @map("search_text")
   createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz
   varieties      GrapeVarietyWine[]
+  shelves        ShelfWine[]
+  related        WineRelation[]     @relation("related_from")
+  relatedTo      WineRelation[]     @relation("related_to")
 
   @@index([categories], type: Gin)
+  @@index([grapes], type: Gin)
+  @@index([country])
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin, map: "wines_search_text_trgm_idx")
   @@index([priceKopecks])
   @@index([vintage])
   @@index([arrivedAt])
@@ -92,4 +144,44 @@ model GrapeVarietyWine {
   @@id([varietyId, wineId])
   @@unique([varietyId, position])
   @@map("grape_variety_wines")
+}
+
+/// Полка магазина: название, подпись к табличке и вступление страницы полки
+model Shelf {
+  id          WineShelf   @id
+  title       String
+  note        String
+  description String
+  /// Порядок полок в магазине
+  position    Int
+  wines       ShelfWine[]
+
+  @@map("shelves")
+}
+
+/// Бутылки на полке — в том порядке, как их расставил бутик (сортировка popular на полке)
+model ShelfWine {
+  shelfId  WineShelf @map("shelf_id")
+  wineId   String    @map("wine_id") @db.Uuid
+  position Int
+  shelf    Shelf     @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  wine     Wine      @relation(fields: [wineId], references: [id], onDelete: Cascade)
+
+  @@id([shelfId, wineId])
+  @@unique([shelfId, position])
+  @@index([wineId])
+  @@map("shelf_wines")
+}
+
+/// «С этим вином берут» по выбору сомелье; если пусто — соседи по полке
+model WineRelation {
+  wineId    String @map("wine_id") @db.Uuid
+  relatedId String @map("related_id") @db.Uuid
+  position  Int
+  wine      Wine   @relation("related_from", fields: [wineId], references: [id], onDelete: Cascade)
+  related   Wine   @relation("related_to", fields: [relatedId], references: [id], onDelete: Cascade)
+
+  @@id([wineId, relatedId])
+  @@index([relatedId])
+  @@map("wine_relations")
 }
