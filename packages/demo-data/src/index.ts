@@ -41,3 +41,21 @@ export {
   weekdayOf,
   zonedInstant,
 } from "./reservations.js";
+export {
+  addMonths,
+  daysInMonth,
+  findTastingFixture,
+  listTastings,
+  TASTING_CAPACITY,
+  TASTING_DESCRIPTIONS,
+  TASTING_MAX_GUESTS,
+  TASTING_MONTHS,
+  TASTING_TIMEZONE,
+  tastingFixtures,
+  tastingId,
+  tastingMonths,
+  tastingSchedule,
+  tastingStatus,
+  toTasting,
+  type TastingFixture,
+} from "./tastings.js";

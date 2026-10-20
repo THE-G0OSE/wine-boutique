@@ -23,6 +23,6 @@ const serializeParams = (params: Record<string, unknown>) => {
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: env.apiUrl, credentials: "include", paramsSerializer: serializeParams }),
-  tagTypes: ["Wine", "Shelf", "Grape", "Session", "NewsIssue", "NewsArticle"],
+  tagTypes: ["Wine", "Shelf", "Grape", "Session", "NewsIssue", "NewsArticle", "Tasting"],
   endpoints: () => ({}),
 });

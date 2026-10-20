@@ -242,6 +242,54 @@ export const zReservation = z.object({
     total: z.int().nullable()
 });
 
+/**
+ * vertical — вертикаль, blind — слепая, dinner — гастроужин, masterclass — мастер-класс
+ */
+export const zTastingKind = z.enum([
+    'vertical',
+    'blind',
+    'dinner',
+    'masterclass'
+]);
+
+export const zTasting = z.object({
+    id: z.string(),
+    kind: zTastingKind,
+    title: z.string(),
+    description: z.string(),
+    startsAt: z.iso.datetime({ offset: true }),
+    durationMinutes: z.int(),
+    wines: z.int(),
+    capacity: z.int(),
+    seatsLeft: z.int().gte(0),
+    price: z.int().nullable(),
+    host: z.string(),
+    status: z.enum([
+        'open',
+        'full',
+        'past'
+    ])
+});
+
+export const zNewTastingBooking = z.object({
+    name: z.string().min(1).max(80),
+    phone: z.string().regex(/^\+7\d{10}$/),
+    guests: z.int().gte(1).lte(6),
+    consents: z.object({
+        personalData: z.literal(true)
+    })
+});
+
+/**
+ * Приглашение — телефон в ответ не попадает
+ */
+export const zTastingBooking = z.object({
+    id: z.uuid(),
+    tasting: zTasting,
+    guests: z.int(),
+    customerName: z.string()
+});
+
 export const zWinePage = z.object({
     items: z.array(zWineSummary),
     total: z.int()
@@ -454,6 +502,11 @@ export const zNewsletterSubscription = z.object({
 });
 
 /**
+ * Дата и время начала — «2026-10-17-1900»
+ */
+export const zTastingId = z.string().regex(/^\d{4}-\d{2}-\d{2}-\d{4}$/);
+
+/**
  * Полка магазина; без параметра — все вина
  */
 export const zWineShelfParam = zWineShelf;
@@ -633,6 +686,37 @@ export const zGetReservationPath = z.object({
  * Бронь
  */
 export const zGetReservationResponse = zReservation;
+
+export const zGetTastingsQuery = z.object({
+    month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+});
+
+/**
+ * Дегустации по времени начала
+ */
+export const zGetTastingsResponse = z.array(zTasting);
+
+export const zCreateTastingBookingBody = zNewTastingBooking;
+
+export const zCreateTastingBookingPath = z.object({
+    id: z.string().regex(/^\d{4}-\d{2}-\d{2}-\d{4}$/)
+});
+
+/**
+ * Гости записаны — приглашение
+ */
+export const zCreateTastingBookingResponse = zTastingBooking;
+
+export const zJoinTastingWaitlistBody = zNewTastingBooking;
+
+export const zJoinTastingWaitlistPath = z.object({
+    id: z.string().regex(/^\d{4}-\d{2}-\d{2}-\d{4}$/)
+});
+
+/**
+ * Гость в листе ожидания
+ */
+export const zJoinTastingWaitlistResponse = z.void();
 
 export const zGetReviewsQuery = z.object({
     limit: z.int().gte(1).lte(20).optional().default(5),

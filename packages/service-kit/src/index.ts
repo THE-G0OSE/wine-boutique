@@ -9,3 +9,4 @@ export { databaseCheck } from "./health/database-check.js";
 export { ServiceKitModule, type ReadinessOptions, type ServiceKitOptions } from "./service-kit.module.js";
 export { API_PREFIX, configureApp, createCliContext, createFastifyAdapter, startService } from "./bootstrap.js";
 export { connectGrpc, GrpcClient, type GrpcClientOptions, type GrpcServerOptions } from "./grpc.js";
+export { localDate, toZonedIso, zonedInstant } from "./time.js";

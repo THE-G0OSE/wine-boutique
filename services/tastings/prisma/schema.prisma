@@ -1,0 +1,81 @@
+// База сервиса tastings: афиша дегустаций, записи и лист ожидания (docs/backend-plan.md §3).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TastingKind {
+  vertical
+  blind
+  dinner
+  masterclass
+
+  @@map("tasting_kind")
+}
+
+model Tasting {
+  /// Дата и время начала по часам погреба: «2026-10-17-1900» — читаемый и стабильный id для ссылок
+  id              String         @id
+  kind            TastingKind
+  title           String
+  description     String
+  startsAt        DateTime       @map("starts_at") @db.Timestamptz
+  durationMinutes Int            @map("duration_minutes")
+  /// Вин в сете
+  wines           Int
+  capacity        Int
+  /// Занято мест: записи прибавляют атомарно, не больше capacity
+  seatsTaken      Int            @default(0) @map("seats_taken")
+  /// Копейки за гостя; null — цена не назначена
+  priceKopecks    Int?           @map("price_kopecks")
+  host            String
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+  bookings        Booking[]
+  waitlist        WaitlistEntry[]
+
+  @@index([startsAt])
+  @@map("tastings")
+}
+
+/// Запись гостя: снимок контактов и согласие на обработку ПДн
+model Booking {
+  id             String   @id @default(uuid(4)) @db.Uuid
+  tastingId      String   @map("tasting_id")
+  tasting        Tasting  @relation(fields: [tastingId], references: [id])
+  customerName   String   @map("customer_name")
+  /// +7XXXXXXXXXX — наружу не отдаётся
+  phone          String
+  guests         Int
+  consentAt      DateTime @map("consent_at") @db.Timestamptz
+  consentVersion String   @map("consent_version")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([tastingId])
+  @@map("bookings")
+}
+
+/// Лист ожидания: один телефон — одна строка на дегустацию, повтор обновляет имя и гостей
+model WaitlistEntry {
+  id             String   @id @default(uuid(4)) @db.Uuid
+  tastingId      String   @map("tasting_id")
+  tasting        Tasting  @relation(fields: [tastingId], references: [id])
+  customerName   String   @map("customer_name")
+  phone          String
+  guests         Int
+  consentAt      DateTime @map("consent_at") @db.Timestamptz
+  consentVersion String   @map("consent_version")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([tastingId, phone])
+  @@map("waitlist_entries")
+}

@@ -273,6 +273,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tastings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Дегустации месяца
+         * @description Время — по часам погреба (Europe/Moscow). Месяц вне афиши приходит пустым списком.
+         *     Места меняются с каждой записью — ответ не кэшируется.
+         */
+        get: operations["getTastings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tastings/{id}/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Записаться на дегустацию */
+        post: operations["createTastingBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tastings/{id}/waitlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Встать в лист ожидания — позвоним, если место освободится
+         * @description Повтор с тем же телефоном обновляет запись в листе, а не добавляет вторую
+         */
+        post: operations["joinTastingWaitlist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reviews": {
         parameters: {
             query?: never;
@@ -575,6 +633,61 @@ export interface components {
             /** @description Сумма в рублях; null — пока хоть у одного вина нет цены */
             total: number | null;
         };
+        /**
+         * @description vertical — вертикаль, blind — слепая, dinner — гастроужин, masterclass — мастер-класс
+         * @enum {string}
+         */
+        TastingKind: "vertical" | "blind" | "dinner" | "masterclass";
+        Tasting: {
+            /** @example 2026-10-17-1900 */
+            id: string;
+            kind: components["schemas"]["TastingKind"];
+            /** @example Угадай сорт */
+            title: string;
+            description: string;
+            /**
+             * Format: date-time
+             * @description Начало по часам погреба, со смещением пояса
+             */
+            startsAt: string;
+            /** @example 120 */
+            durationMinutes: number;
+            /** @description Вин в сете */
+            wines: number;
+            /** @example 12 */
+            capacity: number;
+            seatsLeft: number;
+            /** @description За гостя в рублях; null — цена ещё не назначена */
+            price: number | null;
+            /** @description Кто ведёт */
+            host: string;
+            /**
+             * @description open — можно записаться, full — мест нет (лист ожидания), past — уже началась
+             * @enum {string}
+             */
+            status: "open" | "full" | "past";
+        };
+        NewTastingBooking: {
+            name: string;
+            /** @description Российский номер в формате +7XXXXXXXXXX */
+            phone: string;
+            guests: number;
+            consents: {
+                /**
+                 * @description Согласие на обработку персональных данных
+                 * @constant
+                 */
+                personalData: true;
+            };
+        };
+        /** @description Приглашение — телефон в ответ не попадает */
+        TastingBooking: {
+            /** Format: uuid */
+            id: string;
+            tasting: components["schemas"]["Tasting"];
+            guests: number;
+            customerName: string;
+        };
         WinePage: {
             items: components["schemas"]["WineSummary"][];
             /** @description Сколько всего вин подходит под фильтр */
@@ -842,6 +955,8 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Дата и время начала — «2026-10-17-1900» */
+        TastingId: string;
         /** @description Полка магазина; без параметра — все вина */
         WineShelfParam: components["schemas"]["WineShelf"];
         /** @description Поиск по названию, сорту, региону, стране и винодельне */
@@ -1314,6 +1429,142 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+        };
+    };
+    getTastings: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Дегустации по времени начала */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tasting"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    createTastingBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Дата и время начала — «2026-10-17-1900» */
+                id: components["parameters"]["TastingId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewTastingBooking"];
+            };
+        };
+        responses: {
+            /** @description Гости записаны — приглашение */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TastingBooking"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Такой дегустации нет */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /**
+             * @description Запись не принята: tasting_closed — дегустация уже началась, not_enough_seats — свободных мест меньше,
+             *     чем гостей (details — { seatsLeft }); при 0 мест — лист ожидания
+             */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Неверные имя или телефон, нет согласия (code invalid_booking) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    joinTastingWaitlist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Дата и время начала — «2026-10-17-1900» */
+                id: components["parameters"]["TastingId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewTastingBooking"];
+            };
+        };
+        responses: {
+            /** @description Гость в листе ожидания */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Такой дегустации нет */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description tasting_closed — дегустация уже началась, seats_available — места есть, можно записаться */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Неверные имя или телефон, нет согласия (code invalid_booking) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
         };
     };
     getReviews: {

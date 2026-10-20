@@ -19,7 +19,7 @@ import { useAppSelector } from "@/shared/lib/hooks/useAppSelector";
 import { plural } from "@/shared/lib/plural";
 import { Button, Text } from "uikit;/";
 import { useCreateReservationMutation } from "../api/createReservationApi";
-import { formatPhone, isCompletePhone, toApiPhone } from "../model/phone";
+import { formatPhone, isCompletePhone, toApiPhone } from "@/shared/lib/phone";
 
 interface IProps {
   /** desktop — форма слева и сводка справа (Reserve), mobile — сводка сверху, кнопка внизу (MReserve) */

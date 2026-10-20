@@ -72,6 +72,8 @@
     --color-stamp: #FBF7EE;
     --color-stamp-inner: #F4E9D8;
     --color-airmail: #2B4C8C;
+    /* Дегустации: метка мастер-класса (вертикаль — amber-350, слепая — secondary-200, гастроужин — primary-200) */
+    --color-sage: #8FB3A3;
     --color-success: #13E101;
     --color-error: #FD2F20;
 

@@ -24,6 +24,8 @@ tags:
     description: Письма гостей
   - name: reservations
     description: Бутики, бронь бутылок и самовывоз
+  - name: tastings
+    description: Дегустации в погребе — афиша, запись и лист ожидания
 
 paths:
   /shelves:
@@ -408,6 +410,119 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /tastings:
+    get:
+      tags: [tastings]
+      operationId: getTastings
+      summary: Дегустации месяца
+      description: |
+        Время — по часам погреба (Europe/Moscow). Месяц вне афиши приходит пустым списком.
+        Места меняются с каждой записью — ответ не кэшируется.
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^\\d{4}-(0[1-9]|1[0-2])$"
+            examples: ["2026-10"]
+      responses:
+        "200":
+          description: Дегустации по времени начала
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tasting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /tastings/{id}/bookings:
+    post:
+      tags: [tastings]
+      operationId: createTastingBooking
+      summary: Записаться на дегустацию
+      parameters:
+        - $ref: "#/components/parameters/TastingId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewTastingBooking"
+      responses:
+        "201":
+          description: Гости записаны — приглашение
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TastingBooking"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "404":
+          description: Такой дегустации нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: |
+            Запись не принята: tasting_closed — дегустация уже началась, not_enough_seats — свободных мест меньше,
+            чем гостей (details — { seatsLeft }); при 0 мест — лист ожидания
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Неверные имя или телефон, нет согласия (code invalid_booking)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /tastings/{id}/waitlist:
+    post:
+      tags: [tastings]
+      operationId: joinTastingWaitlist
+      summary: Встать в лист ожидания — позвоним, если место освободится
+      description: Повтор с тем же телефоном обновляет запись в листе, а не добавляет вторую
+      parameters:
+        - $ref: "#/components/parameters/TastingId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewTastingBooking"
+      responses:
+        "204":
+          description: Гость в листе ожидания
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "404":
+          description: Такой дегустации нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: tasting_closed — дегустация уже началась, seats_available — места есть, можно записаться
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Неверные имя или телефон, нет согласия (code invalid_booking)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
   /reviews:
     get:
       tags: [reviews]
@@ -462,6 +577,14 @@ paths:
 
 components:
   parameters:
+    TastingId:
+      name: id
+      in: path
+      required: true
+      description: Дата и время начала — «2026-10-17-1900»
+      schema:
+        type: string
+        pattern: "^\\d{4}-\\d{2}-\\d{2}-\\d{4}$"
     WineShelfParam:
       name: shelf
       in: query
@@ -1033,6 +1156,92 @@ components:
         total:
           type: [integer, "null"]
           description: Сумма в рублях; null — пока хоть у одного вина нет цены
+
+    TastingKind:
+      type: string
+      description: vertical — вертикаль, blind — слепая, dinner — гастроужин, masterclass — мастер-класс
+      enum: [vertical, blind, dinner, masterclass]
+
+    Tasting:
+      type: object
+      required: [id, kind, title, description, startsAt, durationMinutes, wines, capacity, seatsLeft, price, host, status]
+      properties:
+        id:
+          type: string
+          examples: ["2026-10-17-1900"]
+        kind:
+          $ref: "#/components/schemas/TastingKind"
+        title:
+          type: string
+          examples: ["Угадай сорт"]
+        description:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+          description: Начало по часам погреба, со смещением пояса
+        durationMinutes:
+          type: integer
+          examples: [120]
+        wines:
+          type: integer
+          description: Вин в сете
+        capacity:
+          type: integer
+          examples: [12]
+        seatsLeft:
+          type: integer
+          minimum: 0
+        price:
+          type: [integer, "null"]
+          description: За гостя в рублях; null — цена ещё не назначена
+        host:
+          type: string
+          description: Кто ведёт
+        status:
+          type: string
+          description: open — можно записаться, full — мест нет (лист ожидания), past — уже началась
+          enum: [open, full, past]
+
+    NewTastingBooking:
+      type: object
+      required: [name, phone, guests, consents]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+        guests:
+          type: integer
+          minimum: 1
+          maximum: 6
+        consents:
+          type: object
+          required: [personalData]
+          properties:
+            personalData:
+              type: boolean
+              const: true
+              description: Согласие на обработку персональных данных
+
+    TastingBooking:
+      type: object
+      required: [id, tasting, guests, customerName]
+      description: Приглашение — телефон в ответ не попадает
+      properties:
+        id:
+          type: string
+          format: uuid
+        tasting:
+          $ref: "#/components/schemas/Tasting"
+        guests:
+          type: integer
+        customerName:
+          type: string
 
     WinePage:
       type: object

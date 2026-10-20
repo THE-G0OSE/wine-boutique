@@ -51,11 +51,25 @@ http:
       entryPoints: [web]
       service: reservations
 
+    tastings:
+      rule: PathRegexp(`^/api/tastings(/|$)`)
+      entryPoints: [web]
+      service: tastings
+
   services:
     reservations:
       loadBalancer:
         servers:
           - url: http://reservations:3000
+        healthCheck:
+          path: /health/ready
+          interval: 10s
+          timeout: 3s
+
+    tastings:
+      loadBalancer:
+        servers:
+          - url: http://tastings:3000
         healthCheck:
           path: /health/ready
           interval: 10s
