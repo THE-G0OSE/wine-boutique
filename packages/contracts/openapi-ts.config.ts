@@ -4,5 +4,6 @@ import { defineConfig } from "@hey-api/openapi-ts";
 export default defineConfig({
   input: "./openapi/openapi.yaml",
   output: { path: "./openapi/generated/zod", postProcess: [] },
-  plugins: [{ name: "zod", requests: true, responses: true }],
+  // date-time со смещением пояса («2026-10-21T15:00:00+03:00»): время самовывоза — по часам бутика
+  plugins: [{ name: "zod", requests: true, responses: true, dates: { offset: true } }],
 });

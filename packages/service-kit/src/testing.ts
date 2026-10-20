@@ -1,4 +1,6 @@
+import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import type { DynamicModule, Type } from "@nestjs/common";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
@@ -51,4 +53,27 @@ export const missingOperations = async (app: NestFastifyApplication, service: Se
     }
   }
   return missing;
+};
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * Миграции сервиса на базе из Testcontainers (`prisma migrate deploy` в каталоге сервиса).
+ * Docker Desktop на Windows открывает проброшенный порт не сразу после старта контейнера — первые попытки
+ * могут получить P1001 (база недоступна), поэтому несколько повторов с паузой.
+ */
+export const migrateDatabase = async (databaseUrl: string, { attempts = 10, delayMs = 2000 } = {}): Promise<void> => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await execFileAsync("pnpm", ["exec", "prisma", "migrate", "deploy"], {
+        env: { ...process.env, DATABASE_URL: databaseUrl },
+        shell: process.platform === "win32",
+      });
+      return;
+    } catch (error) {
+      const output = `${(error as { stdout?: string }).stdout ?? ""}${(error as { stderr?: string }).stderr ?? ""}`;
+      if (attempt >= attempts || !output.includes("P1001")) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
 };

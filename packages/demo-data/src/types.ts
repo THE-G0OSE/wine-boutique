@@ -26,4 +26,5 @@ export type NewsArticle = Schemas["NewsArticle"];
 export type NewsClipping = Schemas["NewsClipping"];
 export type NewsArchiveIssue = Schemas["NewsArchiveIssue"];
 export type Review = Schemas["Review"];
+export type Boutique = Schemas["Boutique"];
 export type ReviewTopic = Schemas["ReviewTopic"];

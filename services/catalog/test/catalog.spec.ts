@@ -1,5 +1,4 @@
 import "reflect-metadata";
-import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
@@ -9,7 +8,7 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testconta
 import { zGetGrapesResponse, zGetWinesResponse } from "@wine/contracts/openapi/zod";
 import { listWines, wineFixtureList } from "@wine/demo-data";
 import { loadConfig } from "@wine/service-kit";
-import { createTestApp, missingOperations } from "@wine/service-kit/testing";
+import { createTestApp, migrateDatabase, missingOperations } from "@wine/service-kit/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AppModule } from "../src/app.module.js";
 import { configSchema } from "../src/config.js";
@@ -38,7 +37,7 @@ describe("catalog на настоящем Postgres", () => {
     pg = await new PostgreSqlContainer("postgres:18.6-alpine").start();
     const DATABASE_URL = pg.getConnectionUri();
     // Те же миграции, что уходят в прод
-    execSync("pnpm exec prisma migrate deploy", { env: { ...process.env, DATABASE_URL }, stdio: "pipe" });
+    await migrateDatabase(DATABASE_URL);
     prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
     await seedCatalog(prisma);
 

@@ -29,18 +29,19 @@
 | `news` | `news` | `/api/news` | — | `catalog` (вино для стикера) | — |
 | `reviews` | `reviews` | `/api/reviews` | — | — | `reviews.letter-received.v1` — с уведомлениями сомелье |
 | `newsletter` | `newsletter` | `/api/newsletter` | — | — | `newsletter.subscribed.v1` — с рассылкой |
+| `reservations` | `reservations` | `/api/boutiques`, `/api/reservations` | — | `catalog` (вина и цены для брони) | `reservations.created.v1` — с уведомлениями (SMS) |
 | `identity` | `identity` | `/api/auth` | — (шлюзу — HTTP `GET /internal/forward-auth`: Traefik forwardAuth умеет только HTTP) | — | — |
 
 Вина и сорта винограда — в одном сервисе: это одна предметная область (паспорт вина ссылается на сорта, сорт показывает свои вина), и они меняются вместе. Отдельный сервис для сортов дал бы лишний сетевой вызов на каждый `GET /grapes`.
 
-Граф синхронных вызовов: `news → catalog`, Traefik → `identity` (forward-auth). Больше никто никого не вызывает.
+Граф синхронных вызовов: `news → catalog`, `reservations → catalog`, Traefik → `identity` (forward-auth). Больше никто никого не вызывает.
 
 ### 2.2 Дальше (вместе с фазами фронта)
 
 | Фаза фронта | Сервисы |
 |---|---|
 | 3 · Каталог | **Сделано 20.10.2026:** `catalog` растёт — полки, фасеты, карточка вина, поиск подстрокой по `pg_trgm` (морфология русского FTS для названий вин и сортов не нужна: ищут «пино», «Бург») |
-| 4 · Бронь | `reservations` (бутики, слоты, бронь; цены и наличие — gRPC к `catalog`; сага с событиями `reservations.*`) |
+| 4 · Бронь | **Сделано 20.10.2026:** `reservations` — бутики, слоты, бронь со снимком вин и цен (один gRPC-вызов `catalog`, не ответил — 503, бронь не создаётся), квитанция. Наличия в каталоге пока нет; сага и события `reservations.*` — с уведомлениями и списанием остатков |
 | 6 · Услуги | `tastings` (события, записи, лист ожидания; афиша газеты будет браться отсюда), `cellar` (ячейки хранения), `requests` (заявки: зал, подарки, сертификаты, «Набор месяца») |
 | 8 · Кабинет | `identity` (телефон + код, сессии), `loyalty` (бонусы, уровни, избранное), `notifications` (SMS и email по событиям других сервисов) |
 | — · Контент | Админка или headless CMS — отдельное решение (§6) |
@@ -75,6 +76,12 @@
 ### `newsletter`
 
 - **Subscription:** `email citext` (уник.), `status` (active | unsubscribed), `source`, `consentAt`, `consentVersion`. Повтор — 204 без дубля и без раскрытия, был ли адрес.
+
+### `reservations`
+
+- **Boutique:** `id` (slug), `name`, `address`, `hours` (для людей), `phone`, `timezone` (IANA), `schedule Json` — `[{ weekday 1–7, opens, closes }]`, дня нет — закрыто; `position`.
+- **Reservation:** `id` — uuid v4 (ссылка на квитанцию — по нему, телефон и почта в ответ не попадают), `number` — последовательность (`WB-000123`), `status` (active | completed | cancelled | expired), `boutiqueId`, `pickupAt`, `holdUntil`, `customerName`, `phone`, `email?`, `comment?`, `consentAt` и `consentVersion` (152-ФЗ). **ReservationItem:** снимок вина — `wineId` (без внешнего ключа, база catalog — чужая), `slug`, `name`, `imageUrl`, `qty`, `priceKopecks?`.
+- Правила (совпадают с эталоном `@wine/demo-data`, тест сверяет): слоты на семь дней по часам бутика, по часу, последний — за час до закрытия, сегодняшние — не раньше чем через час; держим до закрытия на третий день, считая день самовывоза. Одно вино в нескольких строках складывается (до 12 бутылок).
 
 ### `identity`
 

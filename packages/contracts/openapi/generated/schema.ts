@@ -198,6 +198,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/boutiques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Бутики, где можно забрать бронь */
+        get: operations["getBoutiques"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/boutiques/{id}/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Когда можно забрать бронь — ближайшие семь дней
+         * @description Время — по часам бутика, слоты по часу: последний — за час до закрытия, сегодняшние — не раньше чем через час.
+         *     День, когда бутик закрыт или время уже вышло, приходит с пустым списком.
+         */
+        get: operations["getBoutiqueSlots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Забронировать бутылки — отложим на имя гостя до самовывоза */
+        post: operations["createReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reservations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Квитанция о брони
+         * @description id — длинный случайный идентификатор, ссылку знает только гость; телефон и почта в ответ не попадают
+         */
+        get: operations["getReservation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reviews": {
         parameters: {
             query?: never;
@@ -225,6 +300,8 @@ export interface components {
             code: string;
             /** @description Текст для пользователя, на русском */
             message: string;
+            /** @description Подробности для разработчика — ошибки полей при validation_failed, id вин при unknown_wines */
+            details?: unknown;
         };
         /** @enum {string} */
         WineCategory: "red" | "white" | "sparkling" | "sweet";
@@ -388,6 +465,115 @@ export interface components {
             grapes: string[];
             /** @description Регионы и страны, в названии которых есть запрос */
             regions: string[];
+        };
+        Boutique: {
+            /** @example street */
+            id: string;
+            /** @example Бутик на [улице] */
+            name: string;
+            address: string;
+            /**
+             * @description Часы работы для людей
+             * @example ежедневно 12:00–22:00
+             */
+            hours: string;
+            phone: string;
+            /**
+             * @description Часовой пояс бутика (IANA) — в нём даты и время самовывоза
+             * @example Europe/Moscow
+             */
+            timezone: string;
+            /** @description Часы работы по дням недели (1 — понедельник … 7 — воскресенье); дня нет — бутик закрыт */
+            schedule: components["schemas"]["OpeningHours"][];
+        };
+        OpeningHours: {
+            weekday: number;
+            /** @example 12:00 */
+            opens: string;
+            /** @example 22:00 */
+            closes: string;
+        };
+        PickupDay: {
+            /**
+             * Format: date
+             * @example 2026-10-21
+             */
+            date: string;
+            /** @description Свободное время самовывоза по часам бутика; пусто — бутик закрыт или день уже закончился */
+            times: string[];
+        };
+        NewReservation: {
+            boutiqueId: string;
+            /** Format: date */
+            date: string;
+            time: string;
+            name: string;
+            /**
+             * @description Российский номер в формате +7XXXXXXXXXX
+             * @example +79161234567
+             */
+            phone: string;
+            /** Format: email */
+            email?: string;
+            comment?: string;
+            items: {
+                wineId: string;
+                qty: number;
+            }[];
+            /** @description Обе галочки формы — без них бронь не принимается */
+            consents: {
+                /**
+                 * @description Гостю есть 18, при получении покажет паспорт
+                 * @constant
+                 */
+                adult: true;
+                /**
+                 * @description Согласие на обработку персональных данных и правила брони
+                 * @constant
+                 */
+                personalData: true;
+            };
+        };
+        /** @description Вино в брони — как было на полке в момент брони */
+        ReservationItem: {
+            wineId: string;
+            slug: string;
+            name: string;
+            image: string;
+            qty: number;
+            /** @description Цена за бутылку в рублях на момент брони; null — цена ещё не назначена */
+            price: number | null;
+        };
+        Reservation: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Номер для SMS и бутика
+             * @example WB-000123
+             */
+            number: string;
+            /**
+             * @description active — ждёт гостя, completed — выдана, cancelled — отменена, expired — срок вышел
+             * @enum {string}
+             */
+            status: "active" | "completed" | "cancelled" | "expired";
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Когда гость придёт (со смещением часового пояса бутика)
+             */
+            pickupAt: string;
+            /**
+             * Format: date-time
+             * @description До какого момента держим бронь — закрытие бутика на третий день, считая день самовывоза
+             */
+            holdUntil: string;
+            boutique: components["schemas"]["Boutique"];
+            customerName: string;
+            items: components["schemas"]["ReservationItem"][];
+            /** @description Сумма в рублях; null — пока хоть у одного вина нет цены */
+            total: number | null;
         };
         WinePage: {
             items: components["schemas"]["WineSummary"][];
@@ -999,6 +1185,135 @@ export interface operations {
                 };
             };
             429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getBoutiques: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Бутики по порядку */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Boutique"][];
+                };
+            };
+        };
+    };
+    getBoutiqueSlots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Семь дней начиная с сегодняшнего */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickupDay"][];
+                };
+            };
+            /** @description Такого бутика нет */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewReservation"];
+            };
+        };
+        responses: {
+            /** @description Бронь принята */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Reservation"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /**
+             * @description Бронь не принята: invalid_reservation — неверные контакты или нет согласий, slot_unavailable — время уже занято
+             *     или бутик закрыт, unknown_wines — каких-то вин больше нет на полках (details — их id)
+             */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+            /** @description Каталог не ответил — бронь не создана, можно повторить (code catalog_unavailable) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Бронь */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Reservation"];
+                };
+            };
+            /** @description Такой брони нет */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     getReviews: {

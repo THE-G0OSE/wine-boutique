@@ -44,13 +44,18 @@ services:
   postgres:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    ports: !reset []
+
+  postgres-init:
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?}
       ROLE_CREATEDB: "false"
       CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD:?}
       NEWS_DB_PASSWORD: ${NEWS_DB_PASSWORD:?}
       REVIEWS_DB_PASSWORD: ${REVIEWS_DB_PASSWORD:?}
       NEWSLETTER_DB_PASSWORD: ${NEWSLETTER_DB_PASSWORD:?}
       IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD:?}
-    ports: !reset []
+      RESERVATIONS_DB_PASSWORD: ${RESERVATIONS_DB_PASSWORD:?}
 
   nats:
     ports: !reset []
@@ -111,6 +116,17 @@ services:
     environment:
       <<: *prod-service-env
       DATABASE_URL: postgresql://newsletter:${NEWSLETTER_DB_PASSWORD}@postgres:5432/newsletter
+
+  reservations-migrate:
+    image: wine-boutique/reservations-migrate:${TAG:?}
+    environment:
+      DATABASE_URL: postgresql://reservations:${RESERVATIONS_DB_PASSWORD}@postgres:5432/reservations
+      SEED: ${SEED:-false}
+  reservations:
+    image: wine-boutique/reservations:${TAG:?}
+    environment:
+      <<: *prod-service-env
+      DATABASE_URL: postgresql://reservations:${RESERVATIONS_DB_PASSWORD}@postgres:5432/reservations
 
   otel-lgtm:
     # Grafana — только через SSH-туннель: ssh -L 3001:127.0.0.1:3001 <vps>

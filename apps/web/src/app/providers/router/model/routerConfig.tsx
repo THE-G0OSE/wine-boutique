@@ -45,6 +45,18 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import("@/pages/wine")).WinePage }),
       },
       {
+        path: ROUTES.reserve,
+        lazy: async () => ({ Component: (await import("@/pages/reserve")).ReservePage }),
+      },
+      {
+        path: ROUTES.reservation(":id"),
+        lazy: async () => ({ Component: (await import("@/pages/reserveSuccess")).ReserveSuccessPage }),
+      },
+      {
+        path: ROUTES.pickup,
+        lazy: async () => ({ Component: (await import("@/pages/pickup")).PickupPage }),
+      },
+      {
         path: ROUTES.reviews,
         lazy: async () => ({ Component: (await import("@/pages/reviews")).ReviewsPage }),
       },

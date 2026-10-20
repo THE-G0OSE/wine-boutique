@@ -17,6 +17,8 @@
     --inset-shadow-top: inset 0 100px 80px 0 rgba(0, 0, 0, .67);
     --inset-shadow-top-sm: inset 0 80px 70px 0 rgba(0, 0, 0, .5);
     --inset-shadow-card-bottom: inset 0 -61px 37px 0 rgba(0, 0, 0, .73);
+    /* Потемневшие края старой карты (самовывоз) */
+    --inset-shadow-map: inset 0 0 160px 0 rgba(80, 45, 15, .45);
 
     --text-shadow-2xl: 18px 22px 5px rgba(0, 0, 0, .4);
     --text-shadow-xl: 21px 19px 3px rgba(0, 0, 0, .4);

@@ -1,0 +1,85 @@
+// База сервиса reservations: бутики и брони (docs/backend-plan.md §3).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ReservationStatus {
+  active
+  completed
+  cancelled
+  expired
+
+  @@map("reservation_status")
+}
+
+/// Бутик самовывоза: часы работы по дням недели и часовой пояс
+model Boutique {
+  id           String        @id
+  name         String
+  address      String
+  /// Часы работы для людей: «ежедневно 12:00–22:00»
+  hours        String
+  phone        String
+  /// IANA: Europe/Moscow — в нём дни и время самовывоза
+  timezone     String
+  /// [{ weekday 1–7, opens "12:00", closes "22:00" }]; дня нет — бутик закрыт
+  schedule     Json
+  position     Int
+  reservations Reservation[]
+
+  @@map("boutiques")
+}
+
+model Reservation {
+  /// Случайный uuid v4: ссылка на квитанцию знает только гость
+  id             String            @id @default(uuid(4)) @db.Uuid
+  /// Номер для SMS и бутика: WB-000123
+  number         Int               @unique @default(autoincrement())
+  status         ReservationStatus @default(active)
+  boutiqueId     String            @map("boutique_id")
+  boutique       Boutique          @relation(fields: [boutiqueId], references: [id])
+  pickupAt       DateTime          @map("pickup_at") @db.Timestamptz
+  holdUntil      DateTime          @map("hold_until") @db.Timestamptz
+  customerName   String            @map("customer_name")
+  /// +7XXXXXXXXXX — наружу (квитанция) не отдаётся
+  phone          String
+  email          String?
+  comment        String?
+  /// Согласие на обработку ПДн и правила брони: когда и какая версия текста (152-ФЗ)
+  consentAt      DateTime          @map("consent_at") @db.Timestamptz
+  consentVersion String            @map("consent_version")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  items          ReservationItem[]
+
+  @@index([boutiqueId, pickupAt])
+  @@index([status, holdUntil])
+  @@map("reservations")
+}
+
+/// Вино в брони — снимок с полки на момент брони (название, картинка, цена)
+model ReservationItem {
+  reservationId String      @map("reservation_id") @db.Uuid
+  position      Int
+  /// id вина в catalog — без внешнего ключа: это чужая база
+  wineId        String      @map("wine_id")
+  slug          String
+  name          String
+  imageUrl      String      @map("image_url")
+  qty           Int
+  /// Цена бутылки в копейках на момент брони; null — не назначена
+  priceKopecks  Int?        @map("price_kopecks")
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@id([reservationId, position])
+  @@map("reservation_items")
+}

@@ -9,6 +9,7 @@ export const ROUTES = {
   wine: (slug: string) => `/wine/${slug}`,
   search: "/search",
   reserve: "/reserve",
+  reservation: (id: string) => `/reserve/${id}`,
   pickup: "/pickup",
   reviews: "/reviews",
   tastings: "/tastings",

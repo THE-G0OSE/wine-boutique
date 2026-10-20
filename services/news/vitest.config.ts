@@ -12,5 +12,6 @@ export default defineConfig({
       },
     }),
   ],
-  test: { include: ["src/**/*.spec.ts", "test/**/*.spec.ts"] },
+  // Тесты ходят в настоящий Postgres (Testcontainers): на медленном диске 5 секунд по умолчанию мало
+  test: { include: ["src/**/*.spec.ts", "test/**/*.spec.ts"], testTimeout: 30_000 },
 });

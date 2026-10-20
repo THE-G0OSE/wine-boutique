@@ -1,5 +1,4 @@
 import "reflect-metadata";
-import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
@@ -8,7 +7,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { zGetLatestNewsIssueResponse, zGetNewsArchiveResponse, zGetNewsArticleResponse } from "@wine/contracts/openapi/zod";
 import { loadConfig } from "@wine/service-kit";
-import { createTestApp, missingOperations } from "@wine/service-kit/testing";
+import { createTestApp, migrateDatabase, missingOperations } from "@wine/service-kit/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AppModule } from "../src/app.module.js";
 import { configSchema } from "../src/config.js";
@@ -70,7 +69,7 @@ describe("news на настоящем Postgres", () => {
   beforeAll(async () => {
     pg = await new PostgreSqlContainer("postgres:18.6-alpine").start();
     DATABASE_URL = pg.getConnectionUri();
-    execSync("pnpm exec prisma migrate deploy", { env: { ...process.env, DATABASE_URL }, stdio: "pipe" });
+    await migrateDatabase(DATABASE_URL);
     prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
     await seedNews(prisma, async (slugs) => new Map(slugs.filter((s) => s === "chateau-d-yquem-1988").map((s) => [s, YQUEM_ID])));
     catalog = await startFakeCatalog();

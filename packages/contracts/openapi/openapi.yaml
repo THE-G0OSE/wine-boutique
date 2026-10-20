@@ -22,6 +22,8 @@ tags:
     description: Газета бутика «Винный Вѣстникъ»
   - name: reviews
     description: Письма гостей
+  - name: reservations
+    description: Бутики, бронь бутылок и самовывоз
 
 paths:
   /shelves:
@@ -297,6 +299,115 @@ paths:
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
+  /boutiques:
+    get:
+      tags: [reservations]
+      operationId: getBoutiques
+      summary: Бутики, где можно забрать бронь
+      responses:
+        "200":
+          description: Бутики по порядку
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Boutique"
+
+  /boutiques/{id}/slots:
+    get:
+      tags: [reservations]
+      operationId: getBoutiqueSlots
+      summary: Когда можно забрать бронь — ближайшие семь дней
+      description: |
+        Время — по часам бутика, слоты по часу: последний — за час до закрытия, сегодняшние — не раньше чем через час.
+        День, когда бутик закрыт или время уже вышло, приходит с пустым списком.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Семь дней начиная с сегодняшнего
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PickupDay"
+        "404":
+          description: Такого бутика нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /reservations:
+    post:
+      tags: [reservations]
+      operationId: createReservation
+      summary: Забронировать бутылки — отложим на имя гостя до самовывоза
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewReservation"
+      responses:
+        "201":
+          description: Бронь принята
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "422":
+          description: |
+            Бронь не принята: invalid_reservation — неверные контакты или нет согласий, slot_unavailable — время уже занято
+            или бутик закрыт, unknown_wines — каких-то вин больше нет на полках (details — их id)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          description: Каталог не ответил — бронь не создана, можно повторить (code catalog_unavailable)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /reservations/{id}:
+    get:
+      tags: [reservations]
+      operationId: getReservation
+      summary: Квитанция о брони
+      description: id — длинный случайный идентификатор, ссылку знает только гость; телефон и почта в ответ не попадают
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Бронь
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "404":
+          description: Такой брони нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /reviews:
     get:
       tags: [reviews]
@@ -454,6 +565,8 @@ components:
         message:
           type: string
           description: Текст для пользователя, на русском
+        details:
+          description: Подробности для разработчика — ошибки полей при validation_failed, id вин при unknown_wines
 
     WineCategory:
       type: string
@@ -747,6 +860,179 @@ components:
           description: Регионы и страны, в названии которых есть запрос
           items:
             type: string
+
+    Boutique:
+      type: object
+      required: [id, name, address, hours, phone, timezone, schedule]
+      properties:
+        id:
+          type: string
+          examples: [street]
+        name:
+          type: string
+          examples: ["Бутик на [улице]"]
+        address:
+          type: string
+        hours:
+          type: string
+          description: Часы работы для людей
+          examples: [ежедневно 12:00–22:00]
+        phone:
+          type: string
+        timezone:
+          type: string
+          description: Часовой пояс бутика (IANA) — в нём даты и время самовывоза
+          examples: [Europe/Moscow]
+        schedule:
+          type: array
+          description: Часы работы по дням недели (1 — понедельник … 7 — воскресенье); дня нет — бутик закрыт
+          items:
+            $ref: "#/components/schemas/OpeningHours"
+
+    OpeningHours:
+      type: object
+      required: [weekday, opens, closes]
+      properties:
+        weekday:
+          type: integer
+          minimum: 1
+          maximum: 7
+        opens:
+          type: string
+          pattern: "^\\d{2}:\\d{2}$"
+          examples: ["12:00"]
+        closes:
+          type: string
+          pattern: "^\\d{2}:\\d{2}$"
+          examples: ["22:00"]
+
+    PickupDay:
+      type: object
+      required: [date, times]
+      properties:
+        date:
+          type: string
+          format: date
+          examples: ["2026-10-21"]
+        times:
+          type: array
+          description: Свободное время самовывоза по часам бутика; пусто — бутик закрыт или день уже закончился
+          items:
+            type: string
+            examples: ["15:00"]
+
+    NewReservation:
+      type: object
+      required: [boutiqueId, date, time, name, phone, items, consents]
+      properties:
+        boutiqueId:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          pattern: "^\\d{2}:\\d{2}$"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+          examples: ["+79161234567"]
+        email:
+          type: string
+          format: email
+          maxLength: 120
+        comment:
+          type: string
+          maxLength: 500
+        items:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items:
+            type: object
+            required: [wineId, qty]
+            properties:
+              wineId:
+                type: string
+              qty:
+                type: integer
+                minimum: 1
+                maximum: 12
+        consents:
+          type: object
+          required: [adult, personalData]
+          description: Обе галочки формы — без них бронь не принимается
+          properties:
+            adult:
+              type: boolean
+              const: true
+              description: Гостю есть 18, при получении покажет паспорт
+            personalData:
+              type: boolean
+              const: true
+              description: Согласие на обработку персональных данных и правила брони
+
+    ReservationItem:
+      type: object
+      required: [wineId, slug, name, image, qty, price]
+      description: Вино в брони — как было на полке в момент брони
+      properties:
+        wineId:
+          type: string
+        slug:
+          type: string
+        name:
+          type: string
+        image:
+          type: string
+        qty:
+          type: integer
+        price:
+          type: [integer, "null"]
+          description: Цена за бутылку в рублях на момент брони; null — цена ещё не назначена
+
+    Reservation:
+      type: object
+      required: [id, number, status, createdAt, pickupAt, holdUntil, boutique, customerName, items, total]
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+          description: Номер для SMS и бутика
+          examples: [WB-000123]
+        status:
+          type: string
+          description: active — ждёт гостя, completed — выдана, cancelled — отменена, expired — срок вышел
+          enum: [active, completed, cancelled, expired]
+        createdAt:
+          type: string
+          format: date-time
+        pickupAt:
+          type: string
+          format: date-time
+          description: Когда гость придёт (со смещением часового пояса бутика)
+        holdUntil:
+          type: string
+          format: date-time
+          description: До какого момента держим бронь — закрытие бутика на третий день, считая день самовывоза
+        boutique:
+          $ref: "#/components/schemas/Boutique"
+        customerName:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReservationItem"
+        total:
+          type: [integer, "null"]
+          description: Сумма в рублях; null — пока хоть у одного вина нет цены
 
     WinePage:
       type: object

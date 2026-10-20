@@ -4,7 +4,8 @@ import * as z from 'zod';
 
 export const zError = z.object({
     code: z.string(),
-    message: z.string()
+    message: z.string(),
+    details: z.unknown().optional()
 });
 
 export const zWineCategory = z.enum([
@@ -172,6 +173,75 @@ export const zSearchSuggestions = z.object({
     regions: z.array(z.string())
 });
 
+export const zOpeningHours = z.object({
+    weekday: z.int().gte(1).lte(7),
+    opens: z.string().regex(/^\d{2}:\d{2}$/),
+    closes: z.string().regex(/^\d{2}:\d{2}$/)
+});
+
+export const zBoutique = z.object({
+    id: z.string(),
+    name: z.string(),
+    address: z.string(),
+    hours: z.string(),
+    phone: z.string(),
+    timezone: z.string(),
+    schedule: z.array(zOpeningHours)
+});
+
+export const zPickupDay = z.object({
+    date: z.iso.date(),
+    times: z.array(z.string())
+});
+
+export const zNewReservation = z.object({
+    boutiqueId: z.string(),
+    date: z.iso.date(),
+    time: z.string().regex(/^\d{2}:\d{2}$/),
+    name: z.string().min(1).max(80),
+    phone: z.string().regex(/^\+7\d{10}$/),
+    email: z.email().max(120).optional(),
+    comment: z.string().max(500).optional(),
+    items: z.array(z.object({
+        wineId: z.string(),
+        qty: z.int().gte(1).lte(12)
+    })).min(1).max(30),
+    consents: z.object({
+        adult: z.literal(true),
+        personalData: z.literal(true)
+    })
+});
+
+/**
+ * Вино в брони — как было на полке в момент брони
+ */
+export const zReservationItem = z.object({
+    wineId: z.string(),
+    slug: z.string(),
+    name: z.string(),
+    image: z.string(),
+    qty: z.int(),
+    price: z.int().nullable()
+});
+
+export const zReservation = z.object({
+    id: z.uuid(),
+    number: z.string(),
+    status: z.enum([
+        'active',
+        'completed',
+        'cancelled',
+        'expired'
+    ]),
+    createdAt: z.iso.datetime({ offset: true }),
+    pickupAt: z.iso.datetime({ offset: true }),
+    holdUntil: z.iso.datetime({ offset: true }),
+    boutique: zBoutique,
+    customerName: z.string(),
+    items: z.array(zReservationItem),
+    total: z.int().nullable()
+});
+
 export const zWinePage = z.object({
     items: z.array(zWineSummary),
     total: z.int()
@@ -221,7 +291,7 @@ export const zNewsImage = z.object({
  * Когда и сколько мест — для материалов-анонсов (дегустация, встреча)
  */
 export const zNewsEvent = z.object({
-    startsAt: z.iso.datetime().nullable(),
+    startsAt: z.iso.datetime({ offset: true }).nullable(),
     seats: z.int().nullable()
 });
 
@@ -259,7 +329,7 @@ export const zNewsAd = z.object({
 });
 
 export const zNewsAfishaItem = z.object({
-    startsAt: z.iso.datetime().nullable(),
+    startsAt: z.iso.datetime({ offset: true }).nullable(),
     title: z.string(),
     format: z.string(),
     capacityLimited: z.boolean(),
@@ -533,6 +603,36 @@ export const zSubscribeNewsletterBody = zNewsletterSubscription;
  * Подписка оформлена (повторная подписка тоже 204)
  */
 export const zSubscribeNewsletterResponse = z.void();
+
+/**
+ * Бутики по порядку
+ */
+export const zGetBoutiquesResponse = z.array(zBoutique);
+
+export const zGetBoutiqueSlotsPath = z.object({
+    id: z.string()
+});
+
+/**
+ * Семь дней начиная с сегодняшнего
+ */
+export const zGetBoutiqueSlotsResponse = z.array(zPickupDay);
+
+export const zCreateReservationBody = zNewReservation;
+
+/**
+ * Бронь принята
+ */
+export const zCreateReservationResponse = zReservation;
+
+export const zGetReservationPath = z.object({
+    id: z.uuid()
+});
+
+/**
+ * Бронь
+ */
+export const zGetReservationResponse = zReservation;
 
 export const zGetReviewsQuery = z.object({
     limit: z.int().gte(1).lte(20).optional().default(5),

@@ -16,7 +16,7 @@ React 19 · Vite 7 · TypeScript · Tailwind CSS v4 · motion · Redux Toolkit +
 | `packages/contracts` | `@wine/contracts` — контракт API (`openapi/openapi.yaml`) и сгенерированные из него типы и zod-схемы |
 | `packages/demo-data` | `@wine/demo-data` — данные из макетов: моки MSW, позже сиды бэкенда |
 | `packages/service-kit` | `@wine/service-kit` — общая техника сервисов: конфиг, логи, ошибки и валидация по контракту, health, запуск |
-| `services/*` | Микросервисы бэкенда: `catalog`, `news`, `reviews`, `newsletter`, `identity` |
+| `services/*` | Микросервисы бэкенда: `catalog`, `news`, `reviews`, `newsletter`, `identity`, `reservations` |
 | `tests/e2e` | Сквозные тесты через шлюз |
 | `deploy` | Compose (разработка и VPS), маршруты Traefik, скрипт выкатки |
 

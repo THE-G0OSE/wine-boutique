@@ -1,5 +1,4 @@
 import "reflect-metadata";
-import { execSync } from "node:child_process";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
@@ -21,7 +20,7 @@ import {
   type WineFilter,
 } from "@wine/demo-data";
 import { loadConfig } from "@wine/service-kit";
-import { createTestApp } from "@wine/service-kit/testing";
+import { createTestApp, migrateDatabase } from "@wine/service-kit/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AppModule } from "../src/app.module.js";
 import { configSchema } from "../src/config.js";
@@ -67,7 +66,7 @@ describe("магазин на настоящем Postgres: как эталон �
   beforeAll(async () => {
     pg = await new PostgreSqlContainer("postgres:18.6-alpine").start();
     const DATABASE_URL = pg.getConnectionUri();
-    execSync("pnpm exec prisma migrate deploy", { env: { ...process.env, DATABASE_URL }, stdio: "pipe" });
+    await migrateDatabase(DATABASE_URL);
     prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
     await seedCatalog(prisma);
     const config = loadConfig(configSchema, { SERVICE_NAME: "catalog", NODE_ENV: "test", LOG_LEVEL: "silent", DATABASE_URL });

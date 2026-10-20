@@ -46,7 +46,21 @@ http:
       entryPoints: [web]
       service: newsletter
 
+    reservations:
+      rule: PathRegexp(`^/api/(boutiques|reservations)(/|$)`)
+      entryPoints: [web]
+      service: reservations
+
   services:
+    reservations:
+      loadBalancer:
+        servers:
+          - url: http://reservations:3000
+        healthCheck:
+          path: /health/ready
+          interval: 10s
+          timeout: 3s
+
     reviews:
       loadBalancer:
         servers:

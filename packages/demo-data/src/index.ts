@@ -26,3 +26,18 @@ export { latestIssueFixture } from "./news/latestIssue.js";
 export { archiveIssuesFixture, rubricImage } from "./news/archive.js";
 export { articleFixtures, moreClippings } from "./news/articles.js";
 export { reviewsFixture } from "./reviews.js";
+export { boutiqueFixtures } from "./boutiques.js";
+export {
+  addDays,
+  HOLD_DAYS,
+  holdUntilOf,
+  isSlotAvailable,
+  localDate,
+  PICKUP_DAYS,
+  PICKUP_LEAD_MINUTES,
+  pickupDays,
+  reservationNumber,
+  toZonedIso,
+  weekdayOf,
+  zonedInstant,
+} from "./reservations.js";
