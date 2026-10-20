@@ -80,7 +80,7 @@ services:
       PGHOST: postgres
       PGUSER: postgres
       PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      SERVICE_DATABASES: catalog news reviews newsletter identity reservations tastings cellar
+      SERVICE_DATABASES: catalog news reviews newsletter identity reservations tastings cellar requests
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD:-dev}
       # Для prisma migrate dev (теневая база); на VPS — false
       ROLE_CREATEDB: "true"
@@ -380,6 +380,40 @@ services:
       postgres: { condition: service_healthy }
       nats: { condition: service_healthy }
       cellar-migrate: { condition: service_completed_successfully }
+
+  # Миграции и ящики «Набора месяца» из макетов
+  requests-migrate:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      target: migrate
+      args: { SERVICE: requests }
+    image: wine-boutique/requests-migrate:dev
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://requests:${DEV_DB_PASSWORD:-dev}@postgres:5432/requests
+      SEED: "true"
+    depends_on:
+      postgres: { condition: service_healthy }
+      postgres-init: { condition: service_completed_successfully }
+
+  # Заявки на зал и подарки, набор месяца, сертификаты
+  requests:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args: { SERVICE: requests }
+    image: wine-boutique/requests:dev
+    environment:
+      <<: *service-env
+      SERVICE_NAME: requests
+      OTEL_SERVICE_NAME: requests
+      DATABASE_URL: postgresql://requests:${DEV_DB_PASSWORD:-dev}@postgres:5432/requests
+    depends_on:
+      postgres: { condition: service_healthy }
+      nats: { condition: service_healthy }
+      requests-migrate: { condition: service_completed_successfully }
 
   # Трейсы, метрики и логи в одном контейнере: OTel Collector + Tempo + Prometheus + Loki + Grafana
   otel-lgtm:

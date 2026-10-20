@@ -1,0 +1,138 @@
+// База сервиса requests: заявки на услуги, набор месяца, сертификаты (docs/backend-plan.md §3).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RequestKind {
+  hall
+  gift
+
+  @@map("request_kind")
+}
+
+enum RequestStatus {
+  new
+  contacted
+  closed
+
+  @@map("request_status")
+}
+
+/// Заявка, по которой менеджер перезванивает: зал или корпоративные подарки. Параметры — в details (у каждого вида свои)
+model ServiceRequest {
+  id             String        @id @default(uuid(4)) @db.Uuid
+  /// Номер для звонка: R-000123
+  number         Int           @unique @default(autoincrement())
+  kind           RequestKind
+  status         RequestStatus @default(new)
+  /// +7XXXXXXXXXX — наружу не отдаётся
+  phone          String
+  contactName    String?       @map("contact_name")
+  email          String?
+  company        String?
+  /// hall: { layout, date, guests }; gift: { pack, bottles, extras, engraving, run }
+  details        Json
+  consentAt      DateTime      @map("consent_at") @db.Timestamptz
+  consentVersion String        @map("consent_version")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([kind, status, createdAt])
+  @@map("service_requests")
+}
+
+/// Ящик «Набора месяца»: тема и вина, собранные сомелье
+model MonthlyCrate {
+  /// «2026-10»
+  month     String   @id
+  theme     String
+  wines     String[]
+  sommelier String
+
+  @@map("monthly_crates")
+}
+
+enum MonthlyPlan {
+  duo
+  classic
+  cellar
+
+  @@map("monthly_plan")
+}
+
+enum SubscriptionStatus {
+  active
+  paused
+  cancelled
+
+  @@map("subscription_status")
+}
+
+/// Подписка на набор месяца: один телефон — одна подписка, повтор меняет набор и бутик
+model MonthlySubscription {
+  id             String             @id @default(uuid(4)) @db.Uuid
+  /// Номер для SMS: M-000123
+  number         Int                @unique @default(autoincrement())
+  phone          String             @unique
+  name           String
+  plan           MonthlyPlan
+  /// id бутика из reservations — без внешнего ключа, база чужая
+  boutiqueId     String             @map("boutique_id")
+  status         SubscriptionStatus @default(active)
+  consentAt      DateTime           @map("consent_at") @db.Timestamptz
+  consentVersion String             @map("consent_version")
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("monthly_subscriptions")
+}
+
+enum CertificateFormat {
+  email
+  envelope
+
+  @@map("certificate_format")
+}
+
+enum CertificateStatus {
+  awaiting_payment
+  active
+  redeemed
+  expired
+
+  @@map("certificate_status")
+}
+
+model Certificate {
+  id             String            @id @default(uuid(4)) @db.Uuid
+  /// Сквозной номер; на сертификате — WB-<year>-000123
+  number         Int               @unique @default(autoincrement())
+  /// Год оформления по Москве — первая часть номера на сертификате
+  year           Int
+  /// Рублей
+  nominal        Int
+  recipientName  String            @map("recipient_name")
+  senderName     String            @map("sender_name")
+  message        String?
+  format         CertificateFormat
+  recipientEmail String?           @map("recipient_email")
+  /// Телефон покупателя — для ссылки на оплату
+  phone          String
+  status         CertificateStatus @default(awaiting_payment)
+  validUntil     DateTime          @map("valid_until") @db.Date
+  consentAt      DateTime          @map("consent_at") @db.Timestamptz
+  consentVersion String            @map("consent_version")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("certificates")
+}

@@ -339,6 +339,137 @@ export const zCellarRequest = z.object({
     term: zCellarTerm
 });
 
+/**
+ * Принятая заявка — контакты в ответ не попадают
+ */
+export const zServiceRequest = z.object({
+    id: z.uuid(),
+    number: z.string()
+});
+
+/**
+ * banquet — длинный стол до 14 гостей, buffet — фуршет до 30, lecture — лекция до 24
+ */
+export const zHallLayout = z.enum([
+    'banquet',
+    'buffet',
+    'lecture'
+]);
+
+export const zNewHallRequest = z.object({
+    layout: zHallLayout,
+    date: z.iso.date(),
+    guests: z.int().gte(1).lte(30),
+    phone: z.string().regex(/^\+7\d{10}$/),
+    consents: z.object({
+        personalData: z.literal(true)
+    })
+});
+
+/**
+ * wooden — деревянный ящик, tube — чёрный тубус, kraft — крафт-коробка
+ */
+export const zGiftPack = z.enum([
+    'wooden',
+    'tube',
+    'kraft'
+]);
+
+/**
+ * glasses — пара бокалов, chocolate — горький шоколад, logo — логотип на ящике
+ */
+export const zGiftExtra = z.enum([
+    'glasses',
+    'chocolate',
+    'logo'
+]);
+
+/**
+ * Тираж — от 10, от 50, от 100 подарков
+ */
+export const zGiftRun = z.enum([
+    'from10',
+    'from50',
+    'from100'
+]);
+
+export const zNewGiftRequest = z.object({
+    pack: zGiftPack,
+    bottles: z.int().gte(1).lte(3),
+    extras: z.array(zGiftExtra),
+    engraving: z.string().max(40).optional(),
+    run: zGiftRun,
+    company: z.string().min(1).max(120),
+    contactName: z.string().min(1).max(80),
+    phone: z.string().regex(/^\+7\d{10}$/),
+    email: z.email().max(120),
+    consents: z.object({
+        personalData: z.literal(true)
+    })
+});
+
+export const zMonthlyCrate = z.object({
+    month: z.string(),
+    theme: z.string(),
+    wines: z.array(z.string()),
+    sommelier: z.string()
+});
+
+export const zMonthlyCrates = z.object({
+    current: zMonthlyCrate,
+    archive: z.array(zMonthlyCrate)
+});
+
+/**
+ * duo — два вина, classic — три, cellar — шесть (три на сейчас, три на хранение)
+ */
+export const zMonthlyPlan = z.enum([
+    'duo',
+    'classic',
+    'cellar'
+]);
+
+export const zNewMonthlySubscription = z.object({
+    plan: zMonthlyPlan,
+    name: z.string().min(1).max(80),
+    phone: z.string().regex(/^\+7\d{10}$/),
+    boutiqueId: z.string().min(1).max(40),
+    consents: z.object({
+        personalData: z.literal(true)
+    })
+});
+
+/**
+ * email — PDF на почту получателя, envelope — в конверте с сургучом, забрать в бутике
+ */
+export const zCertificateFormat = z.enum(['email', 'envelope']);
+
+export const zNewCertificate = z.object({
+    nominal: z.int().gte(3000).lte(300000),
+    to: z.string().min(1).max(24),
+    from: z.string().min(1).max(24),
+    message: z.string().max(90).optional(),
+    format: zCertificateFormat,
+    recipientEmail: z.email().max(120).optional(),
+    phone: z.string().regex(/^\+7\d{10}$/),
+    consents: z.object({
+        personalData: z.literal(true)
+    })
+});
+
+export const zCertificate = z.object({
+    id: z.uuid(),
+    serial: z.string(),
+    nominal: z.int(),
+    validUntil: z.iso.date(),
+    status: z.enum([
+        'awaiting_payment',
+        'active',
+        'redeemed',
+        'expired'
+    ])
+});
+
 export const zWinePage = z.object({
     items: z.array(zWineSummary),
     total: z.int()
@@ -778,6 +909,39 @@ export const zCreateCellarRequestBody = zNewCellarRequest;
  * Заявка принята
  */
 export const zCreateCellarRequestResponse = zCellarRequest;
+
+export const zCreateHallRequestBody = zNewHallRequest;
+
+/**
+ * Заявка принята
+ */
+export const zCreateHallRequestResponse = zServiceRequest;
+
+export const zCreateGiftRequestBody = zNewGiftRequest;
+
+/**
+ * Заявка принята
+ */
+export const zCreateGiftRequestResponse = zServiceRequest;
+
+/**
+ * Текущий ящик и архив от новых к старым
+ */
+export const zGetMonthlyCratesResponse = zMonthlyCrates;
+
+export const zCreateMonthlySubscriptionBody = zNewMonthlySubscription;
+
+/**
+ * Заявка принята
+ */
+export const zCreateMonthlySubscriptionResponse = zServiceRequest;
+
+export const zCreateCertificateBody = zNewCertificate;
+
+/**
+ * Заявка принята
+ */
+export const zCreateCertificateResponse = zCertificate;
 
 export const zGetReviewsQuery = z.object({
     limit: z.int().gte(1).lte(20).optional().default(5),

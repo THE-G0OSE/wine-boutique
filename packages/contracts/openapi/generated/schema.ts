@@ -371,6 +371,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/requests/hall": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Заявка на аренду зала — перезвоним в течение часа
+         * @description Гостей — не больше вместимости рассадки, дата — с завтрашнего дня и не дальше года
+         */
+        post: operations["createHallRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/requests/gift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Запрос сметы на корпоративные подарки */
+        post: operations["createGiftRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monthly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Набор месяца — текущий ящик и прошлые */
+        get: operations["getMonthlyCrates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monthly/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Откладывать ящик каждый месяц
+         * @description Повтор с тем же телефоном обновляет набор и бутик, а не заводит вторую подписку
+         */
+        post: operations["createMonthlySubscription"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Оформить подарочный сертификат
+         * @description Онлайн-оплаты пока нет — сертификат ждёт оплаты, ссылку пришлём SMS на телефон покупателя
+         */
+        post: operations["createCertificate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reviews": {
         parameters: {
             query?: never;
@@ -782,6 +876,150 @@ export interface components {
             cellNumber: string;
             tier: components["schemas"]["CellarTier"];
             term: components["schemas"]["CellarTerm"];
+        };
+        /** @description Принятая заявка — контакты в ответ не попадают */
+        ServiceRequest: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Номер для звонка менеджера
+             * @example R-000123
+             */
+            number: string;
+        };
+        /**
+         * @description banquet — длинный стол до 14 гостей, buffet — фуршет до 30, lecture — лекция до 24
+         * @enum {string}
+         */
+        HallLayout: "banquet" | "buffet" | "lecture";
+        NewHallRequest: {
+            layout: components["schemas"]["HallLayout"];
+            /** Format: date */
+            date: string;
+            guests: number;
+            /** @description Российский номер в формате +7XXXXXXXXXX */
+            phone: string;
+            consents: {
+                /**
+                 * @description Согласие с политикой конфиденциальности — отправка заявки
+                 * @constant
+                 */
+                personalData: true;
+            };
+        };
+        /**
+         * @description wooden — деревянный ящик, tube — чёрный тубус, kraft — крафт-коробка
+         * @enum {string}
+         */
+        GiftPack: "wooden" | "tube" | "kraft";
+        /**
+         * @description glasses — пара бокалов, chocolate — горький шоколад, logo — логотип на ящике
+         * @enum {string}
+         */
+        GiftExtra: "glasses" | "chocolate" | "logo";
+        /**
+         * @description Тираж — от 10, от 50, от 100 подарков
+         * @enum {string}
+         */
+        GiftRun: "from10" | "from50" | "from100";
+        NewGiftRequest: {
+            pack: components["schemas"]["GiftPack"];
+            bottles: number;
+            extras: components["schemas"]["GiftExtra"][];
+            /** @description Текст на бирке; нет — «С благодарностью за год» */
+            engraving?: string;
+            run: components["schemas"]["GiftRun"];
+            company: string;
+            contactName: string;
+            /** @description Российский номер в формате +7XXXXXXXXXX */
+            phone: string;
+            /** Format: email */
+            email: string;
+            consents: {
+                /**
+                 * @description Согласие с политикой конфиденциальности — отправка заявки
+                 * @constant
+                 */
+                personalData: true;
+            };
+        };
+        MonthlyCrate: {
+            /** @example 2026-10 */
+            month: string;
+            /** @example Вина у камина */
+            theme: string;
+            wines: string[];
+            /** @description Кто собрал ящик */
+            sommelier: string;
+        };
+        MonthlyCrates: {
+            current: components["schemas"]["MonthlyCrate"];
+            /** @description Прошлые ящики от новых к старым */
+            archive: components["schemas"]["MonthlyCrate"][];
+        };
+        /**
+         * @description duo — два вина, classic — три, cellar — шесть (три на сейчас, три на хранение)
+         * @enum {string}
+         */
+        MonthlyPlan: "duo" | "classic" | "cellar";
+        NewMonthlySubscription: {
+            plan: components["schemas"]["MonthlyPlan"];
+            name: string;
+            /** @description Российский номер в формате +7XXXXXXXXXX */
+            phone: string;
+            /** @description Где забирать ящик — id из GET /boutiques */
+            boutiqueId: string;
+            consents: {
+                /**
+                 * @description Согласие с политикой конфиденциальности — отправка заявки
+                 * @constant
+                 */
+                personalData: true;
+            };
+        };
+        /**
+         * @description email — PDF на почту получателя, envelope — в конверте с сургучом, забрать в бутике
+         * @enum {string}
+         */
+        CertificateFormat: "email" | "envelope";
+        NewCertificate: {
+            /** @description Рублей — 5 000, 10 000, 25 000 или своя сумма от 3 000 */
+            nominal: number;
+            to: string;
+            from: string;
+            message?: string;
+            format: components["schemas"]["CertificateFormat"];
+            /**
+             * Format: email
+             * @description Обязателен для электронного сертификата
+             */
+            recipientEmail?: string;
+            /** @description Российский номер в формате +7XXXXXXXXXX */
+            phone: string;
+            consents: {
+                /**
+                 * @description Согласие с политикой конфиденциальности — отправка заявки
+                 * @constant
+                 */
+                personalData: true;
+            };
+        };
+        Certificate: {
+            /** Format: uuid */
+            id: string;
+            /** @example WB-2026-000123 */
+            serial: string;
+            nominal: number;
+            /**
+             * Format: date
+             * @description Год с даты оформления
+             */
+            validUntil: string;
+            /**
+             * @description awaiting_payment — ждёт оплаты, active — оплачен, redeemed — потрачен, expired — срок вышел
+             * @enum {string}
+             */
+            status: "awaiting_payment" | "active" | "redeemed" | "expired";
         };
         WinePage: {
             items: components["schemas"]["WineSummary"][];
@@ -1715,6 +1953,175 @@ export interface operations {
                 };
             };
             /** @description Неверные имя, телефон или ячейка (code invalid_request) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createHallRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewHallRequest"];
+            };
+        };
+        responses: {
+            /** @description Заявка принята */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRequest"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Заявка не принята — неверные поля (code invalid_request) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createGiftRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewGiftRequest"];
+            };
+        };
+        responses: {
+            /** @description Заявка принята */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRequest"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Заявка не принята — неверные поля (code invalid_request) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getMonthlyCrates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Текущий ящик и архив от новых к старым */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonthlyCrates"];
+                };
+            };
+            /** @description Ящиков ещё нет */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createMonthlySubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewMonthlySubscription"];
+            };
+        };
+        responses: {
+            /** @description Заявка принята */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRequest"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Заявка не принята — неверные поля (code invalid_request) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewCertificate"];
+            };
+        };
+        responses: {
+            /** @description Заявка принята */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Certificate"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Заявка не принята — неверные поля (code invalid_request) */
             422: {
                 headers: {
                     [name: string]: unknown;

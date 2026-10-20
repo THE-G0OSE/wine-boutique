@@ -79,6 +79,19 @@
     --color-rack-700: #3A2618;
     --color-rack-800: #2A1B11;
     --color-rack-neck: #3A2A20;
+    /* Чертёж зала: калька и чернила */
+    --color-blueprint: #E9DCC4;
+    --color-blueprint-ink: #5B3A22;
+    /* Подарочная упаковка: дно ящика, чёрный тубус, крафт; шоколад в ящике */
+    --color-crate-inner: #6B4A2E;
+    --color-tube: #1A1A1A;
+    --color-tube-950: #0B0B0B;
+    --color-tube-inner: #151515;
+    --color-kraft: #B48A5E;
+    --color-kraft-600: #8E6A44;
+    --color-kraft-inner: #7A5A3A;
+    --color-chocolate: #3B2216;
+    --color-chocolate-dark: #2A160D;
     --color-success: #13E101;
     --color-error: #FD2F20;
 

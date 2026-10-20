@@ -28,6 +28,8 @@ tags:
     description: Дегустации в погребе — афиша, запись и лист ожидания
   - name: cellar
     description: Личные ячейки хранения в погребе
+  - name: requests
+    description: Заявки на услуги — зал, корпоративные подарки, набор месяца, сертификаты
 
 paths:
   /shelves:
@@ -570,6 +572,144 @@ paths:
                 $ref: "#/components/schemas/Error"
         "422":
           description: Неверные имя, телефон или ячейка (code invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /requests/hall:
+    post:
+      tags: [requests]
+      operationId: createHallRequest
+      summary: Заявка на аренду зала — перезвоним в течение часа
+      description: Гостей — не больше вместимости рассадки, дата — с завтрашнего дня и не дальше года
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewHallRequest"
+      responses:
+        "201":
+          description: Заявка принята
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "422":
+          description: Заявка не принята — неверные поля (code invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /requests/gift:
+    post:
+      tags: [requests]
+      operationId: createGiftRequest
+      summary: Запрос сметы на корпоративные подарки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewGiftRequest"
+      responses:
+        "201":
+          description: Заявка принята
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "422":
+          description: Заявка не принята — неверные поля (code invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /monthly:
+    get:
+      tags: [requests]
+      operationId: getMonthlyCrates
+      summary: Набор месяца — текущий ящик и прошлые
+      responses:
+        "200":
+          description: Текущий ящик и архив от новых к старым
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyCrates"
+        "404":
+          description: Ящиков ещё нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /monthly/subscriptions:
+    post:
+      tags: [requests]
+      operationId: createMonthlySubscription
+      summary: Откладывать ящик каждый месяц
+      description: Повтор с тем же телефоном обновляет набор и бутик, а не заводит вторую подписку
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewMonthlySubscription"
+      responses:
+        "201":
+          description: Заявка принята
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "422":
+          description: Заявка не принята — неверные поля (code invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /certificates:
+    post:
+      tags: [requests]
+      operationId: createCertificate
+      summary: Оформить подарочный сертификат
+      description: Онлайн-оплаты пока нет — сертификат ждёт оплаты, ссылку пришлём SMS на телефон покупателя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCertificate"
+      responses:
+        "201":
+          description: Заявка принята
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "422":
+          description: Заявка не принята — неверные поля (code invalid_request)
           content:
             application/json:
               schema:
@@ -1379,6 +1519,240 @@ components:
           $ref: "#/components/schemas/CellarTier"
         term:
           $ref: "#/components/schemas/CellarTerm"
+
+    ServiceRequest:
+      type: object
+      required: [id, number]
+      description: Принятая заявка — контакты в ответ не попадают
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+          description: Номер для звонка менеджера
+          examples: [R-000123]
+
+    HallLayout:
+      type: string
+      description: banquet — длинный стол до 14 гостей, buffet — фуршет до 30, lecture — лекция до 24
+      enum: [banquet, buffet, lecture]
+
+    NewHallRequest:
+      type: object
+      required: [layout, date, guests, phone, consents]
+      properties:
+        layout:
+          $ref: "#/components/schemas/HallLayout"
+        date:
+          type: string
+          format: date
+        guests:
+          type: integer
+          minimum: 1
+          maximum: 30
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+        consents:
+          type: object
+          required: [personalData]
+          properties:
+            personalData:
+              type: boolean
+              const: true
+              description: Согласие с политикой конфиденциальности — отправка заявки
+
+    GiftPack:
+      type: string
+      description: wooden — деревянный ящик, tube — чёрный тубус, kraft — крафт-коробка
+      enum: [wooden, tube, kraft]
+
+    GiftExtra:
+      type: string
+      description: glasses — пара бокалов, chocolate — горький шоколад, logo — логотип на ящике
+      enum: [glasses, chocolate, logo]
+
+    GiftRun:
+      type: string
+      description: Тираж — от 10, от 50, от 100 подарков
+      enum: [from10, from50, from100]
+
+    NewGiftRequest:
+      type: object
+      required: [pack, bottles, extras, run, company, contactName, phone, email, consents]
+      properties:
+        pack:
+          $ref: "#/components/schemas/GiftPack"
+        bottles:
+          type: integer
+          minimum: 1
+          maximum: 3
+        extras:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/GiftExtra"
+        engraving:
+          type: string
+          maxLength: 40
+          description: Текст на бирке; нет — «С благодарностью за год»
+        run:
+          $ref: "#/components/schemas/GiftRun"
+        company:
+          type: string
+          minLength: 1
+          maxLength: 120
+        contactName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+        email:
+          type: string
+          format: email
+          maxLength: 120
+        consents:
+          type: object
+          required: [personalData]
+          properties:
+            personalData:
+              type: boolean
+              const: true
+              description: Согласие с политикой конфиденциальности — отправка заявки
+
+    MonthlyCrate:
+      type: object
+      required: [month, theme, wines, sommelier]
+      properties:
+        month:
+          type: string
+          examples: ["2026-10"]
+        theme:
+          type: string
+          examples: ["Вина у камина"]
+        wines:
+          type: array
+          items:
+            type: string
+        sommelier:
+          type: string
+          description: Кто собрал ящик
+
+    MonthlyCrates:
+      type: object
+      required: [current, archive]
+      properties:
+        current:
+          $ref: "#/components/schemas/MonthlyCrate"
+        archive:
+          type: array
+          description: Прошлые ящики от новых к старым
+          items:
+            $ref: "#/components/schemas/MonthlyCrate"
+
+    MonthlyPlan:
+      type: string
+      description: duo — два вина, classic — три, cellar — шесть (три на сейчас, три на хранение)
+      enum: [duo, classic, cellar]
+
+    NewMonthlySubscription:
+      type: object
+      required: [plan, name, phone, boutiqueId, consents]
+      properties:
+        plan:
+          $ref: "#/components/schemas/MonthlyPlan"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+        boutiqueId:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: Где забирать ящик — id из GET /boutiques
+        consents:
+          type: object
+          required: [personalData]
+          properties:
+            personalData:
+              type: boolean
+              const: true
+              description: Согласие с политикой конфиденциальности — отправка заявки
+
+    CertificateFormat:
+      type: string
+      description: email — PDF на почту получателя, envelope — в конверте с сургучом, забрать в бутике
+      enum: [email, envelope]
+
+    NewCertificate:
+      type: object
+      required: [nominal, to, from, format, phone, consents]
+      properties:
+        nominal:
+          type: integer
+          minimum: 3000
+          maximum: 300000
+          description: Рублей — 5 000, 10 000, 25 000 или своя сумма от 3 000
+        to:
+          type: string
+          minLength: 1
+          maxLength: 24
+        from:
+          type: string
+          minLength: 1
+          maxLength: 24
+        message:
+          type: string
+          maxLength: 90
+        format:
+          $ref: "#/components/schemas/CertificateFormat"
+        recipientEmail:
+          type: string
+          format: email
+          maxLength: 120
+          description: Обязателен для электронного сертификата
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+        consents:
+          type: object
+          required: [personalData]
+          properties:
+            personalData:
+              type: boolean
+              const: true
+              description: Согласие с политикой конфиденциальности — отправка заявки
+
+    Certificate:
+      type: object
+      required: [id, serial, nominal, validUntil, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        serial:
+          type: string
+          examples: [WB-2026-000123]
+        nominal:
+          type: integer
+        validUntil:
+          type: string
+          format: date
+          description: Год с даты оформления
+        status:
+          type: string
+          description: awaiting_payment — ждёт оплаты, active — оплачен, redeemed — потрачен, expired — срок вышел
+          enum: [awaiting_payment, active, redeemed, expired]
 
     WinePage:
       type: object

@@ -1,7 +1,7 @@
 import type { operations } from "./generated/schema.js";
 
 /** Сервисы бэкенда — владельцы частей публичного API */
-export type ServiceName = "catalog" | "news" | "reviews" | "newsletter" | "identity" | "reservations" | "tastings" | "cellar";
+export type ServiceName = "catalog" | "news" | "reviews" | "newsletter" | "identity" | "reservations" | "tastings" | "cellar" | "requests";
 
 /**
  * Какой сервис реализует каждую операцию контракта. Тип требует владельца у каждого `operationId`:
@@ -30,6 +30,11 @@ export const OPERATION_OWNERS = {
   joinTastingWaitlist: "tastings",
   getCellarCells: "cellar",
   createCellarRequest: "cellar",
+  createHallRequest: "requests",
+  createGiftRequest: "requests",
+  getMonthlyCrates: "requests",
+  createMonthlySubscription: "requests",
+  createCertificate: "requests",
 } as const satisfies Record<keyof operations, ServiceName>;
 
 export type OperationId = keyof typeof OPERATION_OWNERS;

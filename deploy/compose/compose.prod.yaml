@@ -58,6 +58,7 @@ services:
       RESERVATIONS_DB_PASSWORD: ${RESERVATIONS_DB_PASSWORD:?}
       TASTINGS_DB_PASSWORD: ${TASTINGS_DB_PASSWORD:?}
       CELLAR_DB_PASSWORD: ${CELLAR_DB_PASSWORD:?}
+      REQUESTS_DB_PASSWORD: ${REQUESTS_DB_PASSWORD:?}
 
   nats:
     ports: !reset []
@@ -151,6 +152,17 @@ services:
     environment:
       <<: *prod-service-env
       DATABASE_URL: postgresql://cellar:${CELLAR_DB_PASSWORD}@postgres:5432/cellar
+
+  requests-migrate:
+    image: wine-boutique/requests-migrate:${TAG:?}
+    environment:
+      DATABASE_URL: postgresql://requests:${REQUESTS_DB_PASSWORD}@postgres:5432/requests
+      SEED: ${SEED:-false}
+  requests:
+    image: wine-boutique/requests:${TAG:?}
+    environment:
+      <<: *prod-service-env
+      DATABASE_URL: postgresql://requests:${REQUESTS_DB_PASSWORD}@postgres:5432/requests
 
   otel-lgtm:
     # Grafana — только через SSH-туннель: ssh -L 3001:127.0.0.1:3001 <vps>

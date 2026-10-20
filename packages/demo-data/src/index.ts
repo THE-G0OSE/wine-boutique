@@ -60,3 +60,14 @@ export {
   type TastingFixture,
 } from "./tastings.js";
 export { CELLAR_CAPACITY, CELLAR_COLUMNS, CELLAR_ROWS, cellarCellFixtures } from "./cellar.js";
+export {
+  certificateSerial,
+  certificateValidUntil,
+  HALL_BOOKING_DAYS,
+  HALL_CAPACITY,
+  isHallDateAllowed,
+  MONTHLY_ARCHIVE_SIZE,
+  monthlyCrateFixtures,
+  monthlyCrates,
+  requestNumber,
+} from "./requests.js";

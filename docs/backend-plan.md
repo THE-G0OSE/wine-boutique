@@ -31,6 +31,7 @@
 | `newsletter` | `newsletter` | `/api/newsletter` | — | — | `newsletter.subscribed.v1` — с рассылкой |
 | `reservations` | `reservations` | `/api/boutiques`, `/api/reservations` | — | `catalog` (вина и цены для брони) | `reservations.created.v1` — с уведомлениями (SMS) |
 | `cellar` | `cellar` | `/api/cellar` | — | — | `cellar.cell-requested.v1` — с уведомлениями управляющему |
+| `requests` | `requests` | `/api/requests`, `/api/monthly`, `/api/certificates` | — | — | `requests.*.v1` — с уведомлениями менеджеру; оплата сертификатов — с платёжным сервисом |
 | `tastings` | `tastings` | `/api/tastings` | — | — | `tastings.booked.v1`, `tastings.seat-released.v1` — с уведомлениями (SMS-напоминание, лист ожидания) |
 | `identity` | `identity` | `/api/auth` | — (шлюзу — HTTP `GET /internal/forward-auth`: Traefik forwardAuth умеет только HTTP) | — | — |
 
@@ -44,7 +45,7 @@
 |---|---|
 | 3 · Каталог | **Сделано 20.10.2026:** `catalog` растёт — полки, фасеты, карточка вина, поиск подстрокой по `pg_trgm` (морфология русского FTS для названий вин и сортов не нужна: ищут «пино», «Бург») |
 | 4 · Бронь | **Сделано 20.10.2026:** `reservations` — бутики, слоты, бронь со снимком вин и цен (один gRPC-вызов `catalog`, не ответил — 503, бронь не создаётся), квитанция. Наличия в каталоге пока нет; сага и события `reservations.*` — с уведомлениями и списанием остатков |
-| 6 · Услуги | **`tastings` сделан 20.10.2026:** афиша месяца, запись с атомарным занятием мест, лист ожидания (афиша газеты будет браться отсюда). **`cellar` сделан 20.10.2026:** стена ячеек и заявки на ячейку (заявка ячейку не занимает — занятость по договору меняет управляющий). Дальше — `requests` (заявки: зал, подарки, сертификаты, «Набор месяца») |
+| 6 · Услуги | **`tastings` сделан 20.10.2026:** афиша месяца, запись с атомарным занятием мест, лист ожидания (афиша газеты будет браться отсюда). **`cellar` сделан 20.10.2026:** стена ячеек и заявки на ячейку (заявка ячейку не занимает — занятость по договору меняет управляющий). **`requests` сделан 20.10.2026:** заявки на зал и подарки, набор месяца (ящики и подписки), сертификаты в статусе «ждёт оплаты». Фаза 6 закрыта |
 | 8 · Кабинет | `identity` (телефон + код, сессии), `loyalty` (бонусы, уровни, избранное), `notifications` (SMS и email по событиям других сервисов) |
 | — · Контент | Админка или headless CMS — отдельное решение (§6) |
 
@@ -97,6 +98,13 @@
 - **Cell:** `number` — номер на табличке (`101` … `408`, ключ), `row`, `position` (уник. пара), `tier` (small | medium | large), `capacity` (12 / 24 / 48), `status` (free | busy — по договору хранения, меняет управляющий), `priceKopecks?`.
 - **CellRequest:** uuid v4, `cellNumber`, `term` (3m | 1y | 3y — в Prisma `m3`/`y1`/`y3`: идентификатор не может начинаться с цифры, в базе — как в API через `@map`), `status` (new | contacted | closed), `customerName`, `phone`, `email?`, `bottles?`, `consentAt`/`consentVersion`. Только на свободную ячейку (иначе 409 `cell_busy`).
 - Стена совпадает с эталоном `@wine/demo-data` (тест сверяет). Сид создаёт ячейки с занятостью из макета и не трогает занятость существующих. Опись бутылок и «Моя ячейка» — с кабинетом (фаза 8).
+
+### `requests`
+
+- **ServiceRequest:** заявки, по которым перезванивает менеджер: `kind` (hall | gift), `number` — последовательность (`R-000123`), `status` (new | contacted | closed), `phone`, `contactName?`, `email?`, `company?`, `details Json` (зал — рассадка, дата, гости; подарки — упаковка, бутылки, дополнения, бирка, тираж), согласие. Правила зала: гостей не больше вместимости (банкет 14, фуршет 30, лекция 24), дата — с завтрашнего дня по Москве и не дальше года.
+- **MonthlyCrate:** `month` (ключ, «2026-10»), `theme`, `wines String[]`, `sommelier`. `GET /monthly`: текущий — свежий ящик не позже текущего месяца, архив — шесть предыдущих (совпадает с эталоном `@wine/demo-data`).
+- **MonthlySubscription:** уник. `phone` (повтор меняет набор и бутик, номер `M-000123` прежний), `plan` (duo | classic | cellar), `boutiqueId` (id из reservations, без проверки — база чужая), `status` (active | paused | cancelled).
+- **Certificate:** `number` + `year` (на бумаге — `WB-2026-000123`), `nominal` (₽, 3 000–300 000), `recipientName`, `senderName`, `message?`, `format` (email | envelope; электронному нужен `recipientEmail`), `phone` покупателя, `status` (awaiting_payment → active → redeemed | expired), `validUntil` — год с даты оформления по Москве. Оплата — отдельный этап (платёжный провайдер, вебхук переводит в active).
 
 ### `identity`
 
