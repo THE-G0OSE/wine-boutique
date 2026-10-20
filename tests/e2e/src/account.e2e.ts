@@ -37,7 +37,9 @@ describe("кабинет через шлюз", () => {
   let bookedTasting = "";
 
   const json = async (path: string, init: RequestInit = {}) => {
-    const res = await request(path, { ...init, headers: { cookie, ...ORIGIN, "content-type": "application/json", ...(init.headers ?? {}) } });
+    // content-type — только с телом: Fastify отвечает 400 на JSON-заголовок без тела (так делает и fetchBaseQuery)
+    const type = init.body ? { "content-type": "application/json" } : {};
+    const res = await request(path, { ...init, headers: { cookie, ...ORIGIN, ...type, ...(init.headers ?? {}) } });
     return { status: res.status, body: res.status === 204 ? null : await res.json(), headers: res.headers };
   };
 
