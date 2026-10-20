@@ -25,6 +25,18 @@ export interface WineSummary {
   /** Цена в копейках; нет — цена не назначена */
   priceKopecks?: number | undefined;
   imageUrl: string;
+  /** Поля списка вин публичного API — для избранного и подборок в других сервисах */
+  categories: string[];
+  region: string;
+  country?: string | undefined;
+  grapes: string[];
+  volumeMl: number;
+  /** Лет в погребе бутика на сегодня; нет — срок не указан */
+  cellarYears?:
+    | number
+    | undefined;
+  /** Силуэт бутылки на полке: red, white, sparkling… */
+  bottle: string;
 }
 
 export interface GetWineSummariesResponse {

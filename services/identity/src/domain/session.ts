@@ -18,6 +18,7 @@ export interface ActiveSession {
   sessionId: string;
   userId: string;
   userName: string;
+  cardNumber: string | null;
   expiresAt: Date;
   lastSeenAt: Date;
 }

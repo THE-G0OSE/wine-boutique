@@ -11,7 +11,7 @@ import {
   type HallLayout,
   type MonthlyCrate,
 } from "../domain/requests.js";
-import { RequestsRepository, type StoredCertificate } from "./ports.js";
+import { RequestsRepository, type OwnedCertificate, type StoredCertificate, type StoredSubscription } from "./ports.js";
 
 const consent = (now: Date) => ({ consentAt: now, consentVersion: CONSENT_VERSION });
 const optional = (value: string | undefined) => value?.trim() || null;
@@ -85,10 +85,10 @@ export class GetMonthlyCrates {
 export class SubscribeMonthly {
   constructor(private readonly requests: RequestsRepository) {}
 
-  execute(input: { plan: "duo" | "classic" | "cellar"; name: string; phone: string; boutiqueId: string }, now = new Date()) {
+  execute(input: { plan: "duo" | "classic" | "cellar"; name: string; phone: string; boutiqueId: string; userId?: string | null }, now = new Date()) {
     const name = input.name.trim();
     if (!name) throw new InvalidRequest("Напишите, как к вам обращаться");
-    return this.requests.upsertSubscription({ plan: input.plan, name, phone: input.phone, boutiqueId: input.boutiqueId.trim(), ...consent(now) });
+    return this.requests.upsertSubscription({ plan: input.plan, name, phone: input.phone, boutiqueId: input.boutiqueId.trim(), userId: input.userId ?? null, ...consent(now) });
   }
 }
 
@@ -125,5 +125,61 @@ export class IssueCertificate {
       validUntil: certificateValidUntil(now),
       ...consent(now),
     });
+  }
+}
+
+/** Следующий месяц по Москве: «2026-11» */
+const nextMonth = (now: Date) => {
+  const [y, m] = localDate(now, TIMEZONE).split("-").map(Number);
+  return new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7);
+};
+
+/** Подписка в кабинете: GET и PATCH /me/monthly — пауза и пропуск следующего месяца */
+@Injectable()
+export class MyMonthly {
+  constructor(private readonly requests: RequestsRepository) {}
+
+  /** Пропуск в прошлом уже не действует — показываем как «не пропускаем» */
+  private present(subscription: StoredSubscription | null, now: Date): StoredSubscription | null {
+    if (!subscription || subscription.status === "cancelled") return null;
+    const current = localDate(now, TIMEZONE).slice(0, 7);
+    return subscription.skipMonth && subscription.skipMonth < current ? { ...subscription, skipMonth: null } : subscription;
+  }
+
+  async get(userId: string, now = new Date()) {
+    return this.present(await this.requests.findSubscription(userId), now);
+  }
+
+  async update(userId: string, changes: { status?: "active" | "paused"; skipNext?: boolean }, now = new Date()) {
+    const updated = await this.requests.updateSubscription(userId, {
+      ...(changes.status && { status: changes.status }),
+      ...(changes.skipNext !== undefined && { skipMonth: changes.skipNext ? nextMonth(now) : null }),
+    });
+    if (!updated) throw new InvalidRequest("Подписки нет");
+    return this.present(updated, now);
+  }
+}
+
+export class CertificateUnavailable extends Error {}
+export class CertificateNotFound extends Error {}
+
+/** Сертификаты в кабинете: GET /me/certificates и привязка по номеру POST /me/certificates */
+@Injectable()
+export class MyCertificates {
+  constructor(private readonly requests: RequestsRepository) {}
+
+  list(userId: string): Promise<OwnedCertificate[]> {
+    return this.requests.listCertificates(userId);
+  }
+
+  async claim(userId: string, serial: string): Promise<OwnedCertificate> {
+    const [, year, number] = /^WB-(\d{4})-(\d{6})$/.exec(serial) ?? [];
+    const certificate = year ? await this.requests.findCertificate(Number(year), Number(number)) : null;
+    if (!certificate) throw new CertificateNotFound("Такого сертификата нет — проверьте номер");
+    if (certificate.ownerId === userId) return certificate;
+    if (certificate.ownerId) throw new CertificateUnavailable("Сертификат уже привязан к другому кабинету");
+    if (certificate.status !== "active") throw new CertificateUnavailable(certificate.status === "awaiting_payment" ? "Сертификат ещё не оплачен" : "Сертификат уже не действует");
+    if (!(await this.requests.claimCertificate(Number(year), Number(number), userId))) throw new CertificateUnavailable("Сертификат уже привязан к другому кабинету");
+    return { ...certificate, ownerId: userId };
   }
 }

@@ -19,3 +19,11 @@ export const setSessionCookie = (reply: FastifyReply, token: string, expires: Da
     stringifySetCookie({ name: SESSION_COOKIE, value: token, expires, path: "/", httpOnly: true, secure: true, sameSite: "lax" })
   );
 };
+
+/** Выход: та же cookie с датой в прошлом — браузер её удалит */
+export const clearSessionCookie = (reply: FastifyReply): void => {
+  reply.header(
+    "set-cookie",
+    stringifySetCookie({ name: SESSION_COOKIE, value: "", expires: new Date(0), path: "/", httpOnly: true, secure: true, sameSite: "lax" })
+  );
+};

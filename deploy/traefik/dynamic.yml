@@ -20,11 +20,76 @@ http:
         # Продлённая сессия — cookie с новым сроком в ответ клиенту
         addAuthCookiesToResponse: [__Host-session]
 
+    # Для публичных форм (бронь, запись, подписка): вошёл — X-User-Id уходит в сервис и запись попадёт в кабинет,
+    # гость — запрос проходит как есть. Только на POST форм: чтения лишний вызов identity не платят
+    optional-session:
+      forwardAuth:
+        address: http://identity:3000/internal/forward-auth-optional
+        authRequestHeaders: [Cookie]
+        authResponseHeaders: [X-User-Id]
+        addAuthCookiesToResponse: [__Host-session]
+
   routers:
     identity:
       rule: PathRegexp(`^/api/auth(/|$)`)
       entryPoints: [web]
       service: identity
+
+    # Кабинет: всё под /api/me — только для вошедших, раскладка по сервисам-владельцам (ownership.ts)
+    identity-me:
+      rule: PathRegexp(`^/api/me(/sign-out-everywhere)?$`)
+      entryPoints: [web]
+      middlewares: [require-session]
+      service: identity
+
+    reservations-me:
+      rule: PathRegexp(`^/api/me/reservations(/|$)`)
+      entryPoints: [web]
+      middlewares: [require-session]
+      service: reservations
+
+    tastings-me:
+      rule: PathRegexp(`^/api/me/tastings(/|$)`)
+      entryPoints: [web]
+      middlewares: [require-session]
+      service: tastings
+
+    cellar-me:
+      rule: PathRegexp(`^/api/me/cell(/|$)`)
+      entryPoints: [web]
+      middlewares: [require-session]
+      service: cellar
+
+    requests-me:
+      rule: PathRegexp(`^/api/me/(monthly|certificates)(/|$)`)
+      entryPoints: [web]
+      middlewares: [require-session]
+      service: requests
+
+    loyalty-me:
+      rule: PathRegexp(`^/api/me/(loyalty|favorites)(/|$)`)
+      entryPoints: [web]
+      middlewares: [require-session]
+      service: loyalty
+
+    # Формы, чьи записи видны в кабинете: необязательная сессия (правило длиннее — выигрывает у общего маршрута сервиса)
+    reservations-form:
+      rule: Method(`POST`) && PathRegexp(`^/api/reservations$`)
+      entryPoints: [web]
+      middlewares: [optional-session]
+      service: reservations
+
+    tastings-form:
+      rule: Method(`POST`) && PathRegexp(`^/api/tastings/[^/]+/(bookings|waitlist)$`)
+      entryPoints: [web]
+      middlewares: [optional-session]
+      service: tastings
+
+    requests-form:
+      rule: Method(`POST`) && PathRegexp(`^/api/monthly/subscriptions$`)
+      entryPoints: [web]
+      middlewares: [optional-session]
+      service: requests
 
     catalog:
       rule: PathRegexp(`^/api/(wines|grapes|shelves|search)(/|$)`)
@@ -98,6 +163,15 @@ http:
       loadBalancer:
         servers:
           - url: http://requests:3000
+        healthCheck:
+          path: /health/ready
+          interval: 10s
+          timeout: 3s
+
+    loyalty:
+      loadBalancer:
+        servers:
+          - url: http://loyalty:3000
         healthCheck:
           path: /health/ready
           interval: 10s

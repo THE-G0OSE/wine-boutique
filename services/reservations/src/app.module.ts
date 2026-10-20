@@ -1,8 +1,9 @@
 import { Module, type DynamicModule } from "@nestjs/common";
 import { databaseCheck, ServiceKitModule } from "@wine/service-kit";
-import { CreateReservation, GetBoutiqueSlots, GetReservation, ListBoutiques } from "./application/reservations.js";
+import { CreateReservation, GetBoutiqueSlots, GetReservation, ListBoutiques, ListMyReservations, ManageMyReservation } from "./application/reservations.js";
 import type { ReservationsConfig } from "./config.js";
 import { BoutiquesController } from "./http/boutiques.controller.js";
+import { MeReservationsController } from "./http/me-reservations.controller.js";
 import { ReservationsController } from "./http/reservations.controller.js";
 import { InfrastructureModule } from "./infrastructure/infrastructure.module.js";
 import { ReservationsPrisma } from "./infrastructure/prisma/reservations-prisma.js";
@@ -23,8 +24,8 @@ export class AppModule {
         }),
         InfrastructureModule,
       ],
-      controllers: [BoutiquesController, ReservationsController],
-      providers: [ListBoutiques, GetBoutiqueSlots, CreateReservation, GetReservation],
+      controllers: [BoutiquesController, ReservationsController, MeReservationsController],
+      providers: [ListBoutiques, GetBoutiqueSlots, CreateReservation, GetReservation, ListMyReservations, ManageMyReservation],
     };
   }
 }

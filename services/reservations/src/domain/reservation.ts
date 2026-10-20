@@ -22,6 +22,7 @@ export interface Reservation {
   holdUntil: Date;
   customerName: string;
   createdAt: Date;
+  extended: boolean;
   items: ReservationItem[];
 }
 
@@ -32,7 +33,20 @@ export const totalRubles = (items: ReservationItem[]): number | null =>
     : null;
 
 /** Ошибки правил брони — сценарий переводит их в ответ API */
-export type ReservationErrorCode = "invalid_reservation" | "slot_unavailable" | "unknown_wines" | "catalog_unavailable" | "not_found";
+export type ReservationErrorCode =
+  | "invalid_reservation"
+  | "slot_unavailable"
+  | "unknown_wines"
+  | "catalog_unavailable"
+  | "not_found"
+  | "cannot_extend"
+  | "cannot_cancel";
+
+/** Продление брони из кабинета — на 3 дня и один раз */
+export const EXTENSION_DAYS = 3;
+
+/** Бронь ждёт гостя: активна и срок не вышел (истечение не ждёт фоновой задачи — считается при чтении) */
+export const isWaiting = (reservation: Reservation, now: Date) => reservation.status === "active" && reservation.holdUntil > now;
 
 export class ReservationError extends Error {
   constructor(

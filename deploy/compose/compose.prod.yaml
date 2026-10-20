@@ -59,6 +59,7 @@ services:
       TASTINGS_DB_PASSWORD: ${TASTINGS_DB_PASSWORD:?}
       CELLAR_DB_PASSWORD: ${CELLAR_DB_PASSWORD:?}
       REQUESTS_DB_PASSWORD: ${REQUESTS_DB_PASSWORD:?}
+      LOYALTY_DB_PASSWORD: ${LOYALTY_DB_PASSWORD:?}
 
   nats:
     ports: !reset []
@@ -163,6 +164,16 @@ services:
     environment:
       <<: *prod-service-env
       DATABASE_URL: postgresql://requests:${REQUESTS_DB_PASSWORD}@postgres:5432/requests
+
+  loyalty-migrate:
+    image: wine-boutique/loyalty-migrate:${TAG:?}
+    environment:
+      DATABASE_URL: postgresql://loyalty:${LOYALTY_DB_PASSWORD}@postgres:5432/loyalty
+  loyalty:
+    image: wine-boutique/loyalty:${TAG:?}
+    environment:
+      <<: *prod-service-env
+      DATABASE_URL: postgresql://loyalty:${LOYALTY_DB_PASSWORD}@postgres:5432/loyalty
 
   otel-lgtm:
     # Grafana — только через SSH-туннель: ssh -L 3001:127.0.0.1:3001 <vps>

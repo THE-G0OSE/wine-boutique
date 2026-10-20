@@ -83,16 +83,21 @@ model MonthlySubscription {
   /// Номер для SMS: M-000123
   number         Int                @unique @default(autoincrement())
   phone          String             @unique
+  /// Вошедший гость (id из identity, без внешнего ключа) — подписка видна в кабинете
+  userId         String?            @map("user_id") @db.Uuid
   name           String
   plan           MonthlyPlan
   /// id бутика из reservations — без внешнего ключа, база чужая
   boutiqueId     String             @map("boutique_id")
   status         SubscriptionStatus @default(active)
+  /// Пропускаемый месяц «2026-11»; null — не пропускаем
+  skipMonth      String?            @map("skip_month")
   consentAt      DateTime           @map("consent_at") @db.Timestamptz
   consentVersion String             @map("consent_version")
   createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([userId])
   @@map("monthly_subscriptions")
 }
 
@@ -128,11 +133,16 @@ model Certificate {
   /// Телефон покупателя — для ссылки на оплату
   phone          String
   status         CertificateStatus @default(awaiting_payment)
+  /// Остаток, ₽: тратится частями при оплате в бутике
+  balance        Int
+  /// Кабинет, к которому привязали сертификат по номеру (получатель); null — не привязан
+  ownerId        String?           @map("owner_id") @db.Uuid
   validUntil     DateTime          @map("valid_until") @db.Date
   consentAt      DateTime          @map("consent_at") @db.Timestamptz
   consentVersion String            @map("consent_version")
   createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([ownerId])
   @@map("certificates")
 }

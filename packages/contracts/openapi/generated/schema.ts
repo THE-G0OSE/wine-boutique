@@ -130,6 +130,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/phone/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Прислать SMS с кодом входа
+         * @description Код из 4 цифр живёт 5 минут, новый — не чаще раза в минуту и не больше 5 в час на номер.
+         *     Ответ одинаковый для новых и известных номеров — по нему нельзя узнать, есть ли у номера карта.
+         */
+        post: operations["requestPhoneCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/phone/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Проверить код из SMS
+         * @description Номер с картой — вход: ставим cookie сессии. Новый номер — токен регистрации на 15 минут.
+         *     На код — 5 попыток, после них код сгорает.
+         */
+        post: operations["verifyPhoneCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Завести карту гостя после подтверждения номера */
+        post: operations["registerGuest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Выйти — сессия отзывается, cookie стирается */
+        post: operations["signOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/news/issues/latest": {
         parameters: {
             query?: never;
@@ -460,6 +536,232 @@ export interface paths {
          */
         post: operations["createCertificate"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Профиль гостя */
+        get: operations["getProfile"];
+        put?: never;
+        post?: never;
+        /** Удалить кабинет — карта, бонусы и сессии */
+        delete: operations["deleteProfile"];
+        options?: never;
+        head?: never;
+        /** Изменить профиль */
+        patch: operations["updateProfile"];
+        trace?: never;
+    };
+    "/me/sign-out-everywhere": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Выйти на всех устройствах */
+        post: operations["signOutEverywhere"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Мои брони — активные и история */
+        get: operations["getMyReservations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/reservations/{id}/extend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Продлить бронь на 3 дня — один раз */
+        post: operations["extendMyReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/reservations/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Отменить бронь — бутылки вернутся на полку */
+        post: operations["cancelMyReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/tastings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Мои дегустации — записи и лист ожидания */
+        get: operations["getMyTastings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/cell": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Моя ячейка и опись */
+        get: operations["getMyCell"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/cell/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Подготовить бутылки к визиту */
+        post: operations["prepareMyCell"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/monthly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Моя подписка на набор месяца */
+        get: operations["getMyMonthly"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Пауза или пропуск месяца */
+        patch: operations["updateMyMonthly"];
+        trace?: never;
+    };
+    "/me/certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Мои сертификаты */
+        get: operations["getMyCertificates"];
+        put?: never;
+        /** Добавить сертификат по номеру */
+        post: operations["addMyCertificate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/loyalty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Бонусы и уровень клуба */
+        get: operations["getMyLoyalty"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Избранные вина */
+        get: operations["getMyFavorites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/favorites/{wineId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Добавить вино в избранное */
+        put: operations["addFavorite"];
+        post?: never;
+        /** Убрать вино из избранного */
+        delete: operations["removeFavorite"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1021,6 +1323,188 @@ export interface components {
              */
             status: "awaiting_payment" | "active" | "redeemed" | "expired";
         };
+        NotificationChannels: {
+            sms: boolean;
+            email: boolean;
+        };
+        /** @description Что и куда присылать — статус брони, дегустации, новые поставки, срок ячейки, набор месяца */
+        NotificationPrefs: {
+            reservations: components["schemas"]["NotificationChannels"];
+            tastings: components["schemas"]["NotificationChannels"];
+            arrivals: components["schemas"]["NotificationChannels"];
+            cell: components["schemas"]["NotificationChannels"];
+            monthly: components["schemas"]["NotificationChannels"];
+        };
+        DeviceSession: {
+            id: string;
+            /**
+             * @description Браузер и система — по User-Agent при входе
+             * @example Chrome · Windows
+             */
+            device: string;
+            /** @description Это устройство */
+            current: boolean;
+            /** Format: date-time */
+            lastSeenAt: string;
+        };
+        Profile: {
+            id: string;
+            name: string;
+            /** @description +7XXXXXXXXXX — вход в кабинет; смена — через новый вход */
+            phone: string | null;
+            email: string | null;
+            /** Format: date */
+            birthDate: string | null;
+            cardNumber: string | null;
+            favoriteBoutiqueId: string | null;
+            /** @description Что гость любит — сомелье учтёт в подборках */
+            tastes: components["schemas"]["TasteTag"][];
+            notifications: components["schemas"]["NotificationPrefs"];
+            sessions: components["schemas"]["DeviceSession"][];
+        };
+        /** @enum {string} */
+        TasteTag: "red_dry" | "white_mineral" | "sparkling" | "sweet" | "aged" | "burgundy" | "italy" | "natural";
+        ProfileUpdate: {
+            name?: string;
+            /** Format: email */
+            email?: string | null;
+            favoriteBoutiqueId?: string | null;
+            tastes?: components["schemas"]["TasteTag"][];
+            notifications?: components["schemas"]["NotificationPrefs"];
+        };
+        MyReservations: {
+            /** @description Ждут гостя — с QR и действиями */
+            active: components["schemas"]["MyReservation"][];
+            /** @description Выданные, отменённые и истёкшие — от новых к старым */
+            history: components["schemas"]["MyReservation"][];
+        };
+        MyReservation: components["schemas"]["Reservation"] & {
+            /** @description Уже продлевали — второй раз нельзя */
+            extended: boolean;
+        };
+        MyTasting: {
+            tasting: components["schemas"]["Tasting"];
+            /**
+             * @description booking — запись, waitlist — лист ожидания
+             * @enum {string}
+             */
+            kind: "booking" | "waitlist";
+            guests: number;
+        };
+        MyTastings: components["schemas"]["MyTasting"][];
+        CellBottle: {
+            id: string;
+            name: string;
+            /**
+             * @description Регион и объём
+             * @example Сотерн · 0
+             * @example 75 л
+             */
+            meta: string;
+            image: string;
+            qty: number;
+            /**
+             * Format: date
+             * @description С какого дня в ячейке
+             */
+            since: string;
+            /** @description Фото в описи */
+            photos: number;
+            /** @description С какого года пора открывать; null — уже готово */
+            readyFrom: number | null;
+        };
+        MyCell: {
+            number: string;
+            tier: components["schemas"]["CellarTier"];
+            capacity: number;
+            /** Format: date */
+            paidUntil: string;
+            conditions: {
+                /** @example 12.8 */
+                temperature: number;
+                /** @example 71 */
+                humidity: number;
+            };
+            bottles: components["schemas"]["CellBottle"][];
+            preparation: components["schemas"]["CellPreparation"] | null;
+        };
+        MyCellResponse: {
+            cell: components["schemas"]["MyCell"] | null;
+        };
+        NewCellPreparation: {
+            bottleIds: string[];
+            /**
+             * Format: date-time
+             * @description Когда гость придёт — не раньше чем через 2 часа
+             */
+            visitAt: string;
+        };
+        CellPreparation: {
+            bottleIds: string[];
+            /** Format: date-time */
+            visitAt: string;
+        };
+        MonthlySubscription: {
+            number: string;
+            plan: components["schemas"]["MonthlyPlan"];
+            boutiqueId: string;
+            /** @enum {string} */
+            status: "active" | "paused";
+            /** @description Пропускаемый месяц «2026-11»; null — не пропускаем */
+            skipMonth: string | null;
+        };
+        MyMonthlyResponse: {
+            subscription: components["schemas"]["MonthlySubscription"] | null;
+        };
+        MonthlySubscriptionUpdate: {
+            /** @enum {string} */
+            status?: "active" | "paused";
+            /** @description Пропустить следующий месяц (false — вернуть) */
+            skipNext?: boolean;
+        };
+        MyCertificate: {
+            serial: string;
+            nominal: number;
+            /** @description Сколько осталось, ₽ */
+            balance: number;
+            /** Format: date */
+            validUntil: string;
+            from: string;
+            /** @enum {string} */
+            status: "awaiting_payment" | "active" | "redeemed" | "expired";
+        };
+        MyCertificates: components["schemas"]["MyCertificate"][];
+        CertificateClaim: {
+            /** @example WB-2026-000123 */
+            serial: string;
+        };
+        /**
+         * @description guest — гость, connoisseur — ценитель (от 6 бутылок за год), sommelier — сомелье (от 12), cellar — погреб (от 24)
+         * @enum {string}
+         */
+        LoyaltyLevel: "guest" | "connoisseur" | "sommelier" | "cellar";
+        BonusEntry: {
+            id: string;
+            /** Format: date-time */
+            at: string;
+            title: string;
+            /** @description Плюс — начислено, минус — списано */
+            amount: number;
+        };
+        Loyalty: {
+            /** @description Бонусов; 1 бонус = 1 ₽ при оплате в бутике, до 30 % чека */
+            balance: number;
+            level: components["schemas"]["LoyaltyLevel"];
+            /** @description Бутылок за последние 12 месяцев — по ним уровень */
+            bottles: number;
+            nextLevel: {
+                level: components["schemas"]["LoyaltyLevel"];
+                /** @description Сколько бутылок нужно для уровня */
+                bottles: number;
+            } | null;
+            history: components["schemas"]["BonusEntry"][];
+        };
+        MyFavorites: components["schemas"]["WineSummary"][];
         WinePage: {
             items: components["schemas"]["WineSummary"][];
             /** @description Сколько всего вин подходит под фильтр */
@@ -1048,11 +1532,73 @@ export interface components {
             /** @description Вина из этого сорта (до трёх) */
             wines: components["schemas"]["WineSummary"][];
         };
+        PhoneCodeRequest: {
+            /**
+             * @description Российский номер в формате +7XXXXXXXXXX
+             * @example +79161234567
+             */
+            phone: string;
+        };
+        PhoneCodeSent: {
+            /**
+             * @description Через сколько секунд можно попросить новый код
+             * @example 60
+             */
+            resendAfter: number;
+            /**
+             * @description Сколько секунд действует код
+             * @example 300
+             */
+            expiresIn: number;
+        };
+        PhoneCodeCheck: {
+            /**
+             * @description Российский номер в формате +7XXXXXXXXXX
+             * @example +79161234567
+             */
+            phone: string;
+            code: string;
+        };
+        PhoneVerification: {
+            /** @constant */
+            status: "signed_in";
+            user: components["schemas"]["SessionUser"];
+        } | {
+            /** @constant */
+            status: "needs_registration";
+            /** @description Подтверждённый номер — передать в /auth/register в течение 15 минут */
+            registrationToken: string;
+        };
+        GuestRegistration: {
+            registrationToken: string;
+            name: string;
+            /**
+             * Format: date
+             * @description Кабинет — с 18 лет
+             */
+            birthDate: string;
+            /** Format: email */
+            email?: string;
+            consents: {
+                /**
+                 * @description Согласие на обработку персональных данных
+                 * @constant
+                 */
+                personalData: true;
+                /** @description Анонсы поставок и дегустаций */
+                marketing: boolean;
+            };
+        };
         SessionUser: {
             id: string;
             name: string;
             /** @example АК */
             initials: string;
+            /**
+             * @description Номер карты гостя, 12 цифр; null — карты нет (пользователь без телефона)
+             * @example 004219880716
+             */
+            cardNumber: string | null;
         };
         Session: {
             user: components["schemas"]["SessionUser"] | null;
@@ -1270,6 +1816,15 @@ export interface components {
         };
         /** @description Изменяющий запрос пришёл из браузера с чужого сайта (code forbidden_origin) — защита от CSRF */
         ForeignOrigin: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Нужно войти (code unauthorized) — отвечает шлюз */
+        Unauthorized: {
             headers: {
                 [name: string]: unknown;
             };
@@ -1524,6 +2079,160 @@ export interface operations {
                     "application/json": components["schemas"]["Session"];
                 };
             };
+        };
+    };
+    requestPhoneCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Код отправлен */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneCodeSent"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Неверный номер (code invalid_phone) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Рано просить новый код или слишком много кодов (code too_many_requests, details — { retryAfter } в секундах) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    verifyPhoneCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneCodeCheck"];
+            };
+        };
+        responses: {
+            /** @description Код подошёл */
+            200: {
+                headers: {
+                    /** @description __Host-session — при входе (status signed_in) */
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneVerification"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Кода нет, он истёк или попытки кончились (code code_expired) — нужен новый */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Код не подошёл (code invalid_code, details — { attemptsLeft }) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    registerGuest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuestRegistration"];
+            };
+        };
+        responses: {
+            /** @description Карта заведена, гость вошёл */
+            201: {
+                headers: {
+                    /** @description __Host-session */
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Токен регистрации истёк — подтвердите номер заново (code registration_expired) */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description underage — младше 18 лет, invalid_registration — неверные поля */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    signOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Готово (и для гостя тоже) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["ForeignOrigin"];
         };
     };
     getLatestNewsIssue: {
@@ -2131,6 +2840,509 @@ export interface operations {
                 };
             };
             429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Профиль, настройки уведомлений и устройства */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    deleteProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Удалено, cookie стёрта */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+        };
+    };
+    updateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Обновлённый профиль */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Неверные поля (code invalid_profile) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    signOutEverywhere: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Все сессии отозваны, cookie стёрта */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+        };
+    };
+    getMyReservations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Брони гостя от новых к старым */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyReservations"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    extendMyReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Бронь с новым сроком */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Reservation"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Нет такого у этого гостя */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Бронь не активна или уже продлена (code cannot_extend) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    cancelMyReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Отменённая бронь */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Reservation"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Нет такого у этого гостя */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Бронь уже не активна (code cannot_cancel) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMyTastings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description От ближайших к прошедшим */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTastings"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getMyCell: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ячейка гостя; cell = null — ячейки нет */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyCellResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    prepareMyCell: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewCellPreparation"];
+            };
+        };
+        responses: {
+            /** @description Сомелье поднимет бутылки из погреба */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CellPreparation"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Нет такого у этого гостя */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Бутылок нет в описи или дата визита не подходит (code invalid_preparation) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMyMonthly: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Подписка; subscription = null — подписки нет */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyMonthlyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    updateMyMonthly: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MonthlySubscriptionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Подписка после изменения */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyMonthlyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Нет такого у этого гостя */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMyCertificates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Привязанные к кабинету сертификаты */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyCertificates"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    addMyCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertificateClaim"];
+            };
+        };
+        responses: {
+            /** @description Сертификат привязан */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyCertificate"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Нет такого у этого гостя */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Сертификат уже привязан к другому кабинету или не оплачен (code certificate_unavailable) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMyLoyalty: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Баланс, уровень, прогресс и история */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Loyalty"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getMyFavorites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description От недавно добавленных */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyFavorites"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    addFavorite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Добавлено (повтор — тоже 204) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Нет такого у этого гостя */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    removeFavorite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Убрано (нет в избранном — тоже 204) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["ForeignOrigin"];
         };
     };
     getReviews: {

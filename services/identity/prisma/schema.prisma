@@ -1,5 +1,4 @@
-// База сервиса identity: пользователи и серверные сессии (docs/backend-plan.md §3).
-// Вход по телефону (телефон пользователя, одноразовые коды) — с фазой 8 фронта.
+// База сервиса identity: пользователи, вход по телефону и серверные сессии (docs/backend-plan.md §3).
 
 generator client {
   provider            = "prisma-client"
@@ -14,14 +13,58 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid(7)) @db.Uuid
+  id               String    @id @default(uuid(7)) @db.Uuid
   /// Как обращаться в шапке и кабинете
-  name      String
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-  sessions  Session[]
+  name             String
+  /// +7XXXXXXXXXX — логин; у пользователей из CLI разработки его нет
+  phone            String?   @unique
+  birthDate        DateTime? @map("birth_date") @db.Date
+  email            String?
+  /// Номер карты гостя — 12 цифр, на карте группами по 4
+  cardNumber       String?   @unique @map("card_number")
+  /// Анонсы поставок и дегустаций
+  marketingConsent Boolean   @default(false) @map("marketing_consent")
+  /// id бутика из reservations — без внешнего ключа, база чужая
+  favoriteBoutiqueId String? @map("favorite_boutique_id")
+  /// Вкусы для подборок сомелье: red_dry, aged, …
+  tastes           String[]  @default([])
+  /// Что и куда присылать: { reservations: { sms, email }, … }; null — настройки по умолчанию
+  notifications    Json?
+  /// Согласие на обработку ПДн при регистрации: когда и какая версия текста (152-ФЗ)
+  consentAt        DateTime? @map("consent_at") @db.Timestamptz
+  consentVersion   String?   @map("consent_version")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  sessions         Session[]
 
   @@map("users")
+}
+
+/// Одноразовый код входа: в базе — только хеш, 5 минут и 5 попыток
+model PhoneCode {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  phone      String
+  codeHash   Bytes     @map("code_hash")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  attempts   Int       @default(0)
+  /// Код подошёл или сгорел — второй раз не принимается
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([phone, createdAt])
+  @@map("phone_codes")
+}
+
+/// Подтверждённый новый номер: токен на 15 минут, чтобы заполнить карту гостя
+model Registration {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  tokenHash Bytes     @unique @map("token_hash")
+  phone     String
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("registrations")
 }
 
 /// Серверная сессия: в cookie — случайный токен, в базе — только его SHA-256
@@ -34,6 +77,8 @@ model Session {
   /// Последнее использование — не чаще раза в час, чтобы не писать в базу на каждый запрос
   lastSeenAt DateTime  @map("last_seen_at") @db.Timestamptz
   revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+  /// Браузер и система при входе — для списка устройств в кабинете
+  userAgent  String?   @map("user_agent")
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([userId])

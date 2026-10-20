@@ -7,6 +7,8 @@ export abstract class BoutiqueRepository {
 }
 
 export interface NewReservationRecord {
+  /** Вошедший гость — бронь появится в кабинете; null — без входа */
+  userId: string | null;
   boutiqueId: string;
   pickupAt: Date;
   holdUntil: Date;
@@ -22,6 +24,12 @@ export interface NewReservationRecord {
 export abstract class ReservationRepository {
   abstract create(record: NewReservationRecord): Promise<Reservation>;
   abstract find(id: string): Promise<Reservation | null>;
+  /** Брони гостя от новых к старым */
+  abstract listForUser(userId: string): Promise<Reservation[]>;
+  /** Бронь гостя по id; чужая или нет — null */
+  abstract findForUser(id: string, userId: string): Promise<Reservation | null>;
+  abstract extend(id: string, holdUntil: Date, now: Date): Promise<Reservation>;
+  abstract cancel(id: string): Promise<Reservation>;
 }
 
 /** Вино с полки — для снимка в брони */

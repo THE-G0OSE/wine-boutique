@@ -1,8 +1,9 @@
 import { Module, type DynamicModule } from "@nestjs/common";
 import { databaseCheck, ServiceKitModule } from "@wine/service-kit";
-import { ListCells, RequestCell } from "./application/cells.js";
+import { ListCells, MyCellUseCase, RequestCell } from "./application/cells.js";
 import type { CellarConfig } from "./config.js";
 import { CellarController } from "./http/cellar.controller.js";
+import { MeCellController } from "./http/me-cell.controller.js";
 import { InfrastructureModule } from "./infrastructure/infrastructure.module.js";
 import { CellarPrisma } from "./infrastructure/prisma/cellar-prisma.js";
 
@@ -22,8 +23,8 @@ export class AppModule {
         }),
         InfrastructureModule,
       ],
-      controllers: [CellarController],
-      providers: [ListCells, RequestCell],
+      controllers: [CellarController, MeCellController],
+      providers: [ListCells, RequestCell, MyCellUseCase],
     };
   }
 }

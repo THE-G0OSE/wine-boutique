@@ -15,6 +15,7 @@ export interface NewServiceRequest extends Consent {
 }
 
 export interface NewSubscription extends Consent {
+  userId: string | null;
   phone: string;
   name: string;
   plan: "duo" | "classic" | "cellar";
@@ -33,6 +34,25 @@ export interface NewCertificate extends Consent {
   validUntil: string;
 }
 
+export interface StoredSubscription {
+  number: number;
+  plan: "duo" | "classic" | "cellar";
+  boutiqueId: string;
+  status: "active" | "paused" | "cancelled";
+  skipMonth: string | null;
+}
+
+export interface OwnedCertificate {
+  number: number;
+  year: number;
+  nominal: number;
+  balance: number;
+  validUntil: string;
+  senderName: string;
+  status: "awaiting_payment" | "active" | "redeemed" | "expired";
+  ownerId: string | null;
+}
+
 export interface StoredCertificate {
   id: string;
   number: number;
@@ -48,4 +68,11 @@ export abstract class RequestsRepository {
   abstract upsertSubscription(record: NewSubscription): Promise<{ id: string; number: number }>;
   abstract createCertificate(record: NewCertificate): Promise<StoredCertificate>;
   abstract listCrates(upToMonth: string, limit: number): Promise<MonthlyCrate[]>;
+  /** Подписка гостя (последняя, если их несколько) */
+  abstract findSubscription(userId: string): Promise<StoredSubscription | null>;
+  abstract updateSubscription(userId: string, changes: { status?: "active" | "paused"; skipMonth?: string | null }): Promise<StoredSubscription | null>;
+  abstract listCertificates(ownerId: string): Promise<OwnedCertificate[]>;
+  abstract findCertificate(year: number, number: number): Promise<OwnedCertificate | null>;
+  /** Привязать к кабинету, если ещё ни к кому не привязан; false — опередили */
+  abstract claimCertificate(year: number, number: number, ownerId: string): Promise<boolean>;
 }

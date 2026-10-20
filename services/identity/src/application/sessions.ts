@@ -26,7 +26,7 @@ export class ResolveSession {
       renewedUntil = new Date(now.getTime() + SESSION_TTL_MS);
       await this.sessions.touch(session.sessionId, now, renewedUntil);
     }
-    return { user: { id: session.userId, name: session.userName, initials: initialsOf(session.userName) }, renewedUntil };
+    return { user: { id: session.userId, name: session.userName, initials: initialsOf(session.userName), cardNumber: session.cardNumber }, renewedUntil };
   }
 }
 
@@ -38,10 +38,10 @@ export class ResolveSession {
 export class IssueSession {
   constructor(private readonly sessions: SessionRepository) {}
 
-  async issue(userId: string, now = new Date()): Promise<{ token: string; expiresAt: Date }> {
+  async issue(userId: string, now = new Date(), userAgent: string | null = null): Promise<{ token: string; expiresAt: Date }> {
     const token = newSessionToken();
     const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
-    await this.sessions.create(userId, hashSessionToken(token), expiresAt, now);
+    await this.sessions.create(userId, hashSessionToken(token), expiresAt, now, userAgent);
     return { token, expiresAt };
   }
 

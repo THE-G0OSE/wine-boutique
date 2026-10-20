@@ -8,6 +8,8 @@ import {
   zCreateHallRequestResponse,
   zCreateMonthlySubscriptionResponse,
   zGetMonthlyCratesResponse,
+  zGetMyCertificatesResponse,
+  zGetMyMonthlyResponse,
 } from "@wine/contracts/openapi/zod";
 import { certificateValidUntil, monthlyCrateFixtures, monthlyCrates } from "@wine/demo-data";
 import { loadConfig } from "@wine/service-kit";
@@ -46,8 +48,8 @@ describe("requests на настоящем Postgres", () => {
     await pg?.stop();
   });
 
-  const post = (url: string, payload: object) =>
-    app.inject({ method: "POST", url: `/api${url}`, payload, remoteAddress: `10.6.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` });
+  const post = (url: string, payload: object, headers: Record<string, string> = {}) =>
+    app.inject({ method: "POST", url: `/api${url}`, payload, headers, remoteAddress: `10.6.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` });
   const consents = { personalData: true };
   const expectInvalid = async (url: string, payload: object) => {
     const res = await post(url, payload);
@@ -139,5 +141,39 @@ describe("requests на настоящем Postgres", () => {
   it("сид можно запускать повторно — ящики не дублируются", async () => {
     await seedCrates(prisma);
     expect(await prisma.monthlyCrate.count()).toBe(monthlyCrateFixtures.length);
+  });
+
+  describe("кабинет", () => {
+    const user = "0192f0a0-0000-7000-8000-00000000d004";
+    const headers = { "x-user-id": user };
+    const get = (url: string) => app.inject({ method: "GET", url: `/api${url}`, headers });
+    const patch = (payload: object) => app.inject({ method: "PATCH", url: "/api/me/monthly", headers, payload });
+
+    it("подписка вошедшего гостя — в кабинете; пауза и пропуск следующего месяца", async () => {
+      expect(zGetMyMonthlyResponse.parse((await get("/me/monthly")).json())).toEqual({ subscription: null });
+      await post("/monthly/subscriptions", { plan: "duo", name: "Гость", phone: "+79160000050", boutiqueId: "street", consents }, headers);
+      const mine = zGetMyMonthlyResponse.parse((await get("/me/monthly")).json());
+      expect(mine.subscription).toMatchObject({ plan: "duo", boutiqueId: "street", status: "active", skipMonth: null });
+
+      const skipped = zGetMyMonthlyResponse.parse((await patch({ skipNext: true })).json());
+      expect(skipped.subscription?.skipMonth).toMatch(/^\d{4}-\d{2}$/);
+      expect(zGetMyMonthlyResponse.parse((await patch({ skipNext: false, status: "paused" })).json()).subscription).toMatchObject({ skipMonth: null, status: "paused" });
+      expect((await app.inject({ method: "PATCH", url: "/api/me/monthly", headers: { "x-user-id": "0192f0a0-0000-7000-8000-00000000e005" }, payload: { status: "paused" } })).statusCode).toBe(404);
+      expect((await app.inject({ method: "GET", url: "/api/me/monthly" })).statusCode).toBe(401);
+    });
+
+    it("сертификат: неоплаченный не привязать; оплаченный — привязать один раз, второму гостю — 409", async () => {
+      const issued = (await post("/certificates", { nominal: 7000, to: "Анне", from: "Ивана", format: "envelope", phone: "+79161234567", consents })).json() as { serial: string };
+      const claim = (serial: string, as = headers) => app.inject({ method: "POST", url: "/api/me/certificates", headers: as, payload: { serial } });
+      const unpaid = await claim(issued.serial);
+      expect(unpaid.statusCode).toBe(409);
+      expect(unpaid.json()).toMatchObject({ code: "certificate_unavailable", message: "Сертификат ещё не оплачен" });
+
+      await prisma.certificate.updateMany({ data: { status: "active" } });
+      expect((await claim(issued.serial)).json()).toMatchObject({ serial: issued.serial, nominal: 7000, balance: 7000, from: "Ивана", status: "active" });
+      expect(zGetMyCertificatesResponse.parse((await get("/me/certificates")).json()).map((item) => item.serial)).toContain(issued.serial);
+      expect((await claim(issued.serial, { "x-user-id": "0192f0a0-0000-7000-8000-00000000e005" })).statusCode).toBe(409);
+      expect((await claim("WB-2026-999999")).statusCode).toBe(404);
+    });
   });
 });

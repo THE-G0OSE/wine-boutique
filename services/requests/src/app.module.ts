@@ -1,7 +1,8 @@
 import { Module, type DynamicModule } from "@nestjs/common";
 import { databaseCheck, ServiceKitModule } from "@wine/service-kit";
-import { GetMonthlyCrates, IssueCertificate, RequestGifts, RequestHall, SubscribeMonthly } from "./application/requests.js";
+import { GetMonthlyCrates, IssueCertificate, MyCertificates, MyMonthly, RequestGifts, RequestHall, SubscribeMonthly } from "./application/requests.js";
 import type { RequestsConfig } from "./config.js";
+import { MeController } from "./http/me.controller.js";
 import { RequestsController } from "./http/requests.controller.js";
 import { InfrastructureModule } from "./infrastructure/infrastructure.module.js";
 import { RequestsPrisma } from "./infrastructure/prisma/requests-prisma.js";
@@ -22,8 +23,8 @@ export class AppModule {
         }),
         InfrastructureModule,
       ],
-      controllers: [RequestsController],
-      providers: [RequestHall, RequestGifts, GetMonthlyCrates, SubscribeMonthly, IssueCertificate],
+      controllers: [RequestsController, MeController],
+      providers: [RequestHall, RequestGifts, GetMonthlyCrates, SubscribeMonthly, IssueCertificate, MyMonthly, MyCertificates],
     };
   }
 }

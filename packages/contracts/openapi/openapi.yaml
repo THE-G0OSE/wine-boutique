@@ -30,6 +30,10 @@ tags:
     description: Личные ячейки хранения в погребе
   - name: requests
     description: Заявки на услуги — зал, корпоративные подарки, набор месяца, сертификаты
+  - name: account
+    description: Личный кабинет — только для вошедших (шлюз проверяет сессию, без неё — 401)
+  - name: loyalty
+    description: Бонусы, уровни клуба и избранное
 
 paths:
   /shelves:
@@ -215,6 +219,136 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Session"
+
+  /auth/phone/code:
+    post:
+      tags: [auth]
+      operationId: requestPhoneCode
+      summary: Прислать SMS с кодом входа
+      description: |
+        Код из 4 цифр живёт 5 минут, новый — не чаще раза в минуту и не больше 5 в час на номер.
+        Ответ одинаковый для новых и известных номеров — по нему нельзя узнать, есть ли у номера карта.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneCodeRequest"
+      responses:
+        "202":
+          description: Код отправлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneCodeSent"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "422":
+          description: Неверный номер (code invalid_phone)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Рано просить новый код или слишком много кодов (code too_many_requests, details — { retryAfter } в секундах)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/phone/verify:
+    post:
+      tags: [auth]
+      operationId: verifyPhoneCode
+      summary: Проверить код из SMS
+      description: |
+        Номер с картой — вход: ставим cookie сессии. Новый номер — токен регистрации на 15 минут.
+        На код — 5 попыток, после них код сгорает.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneCodeCheck"
+      responses:
+        "200":
+          description: Код подошёл
+          headers:
+            Set-Cookie:
+              description: __Host-session — при входе (status signed_in)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneVerification"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "410":
+          description: Кода нет, он истёк или попытки кончились (code code_expired) — нужен новый
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Код не подошёл (code invalid_code, details — { attemptsLeft })
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /auth/register:
+    post:
+      tags: [auth]
+      operationId: registerGuest
+      summary: Завести карту гостя после подтверждения номера
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestRegistration"
+      responses:
+        "201":
+          description: Карта заведена, гость вошёл
+          headers:
+            Set-Cookie:
+              description: __Host-session
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "410":
+          description: Токен регистрации истёк — подтвердите номер заново (code registration_expired)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: underage — младше 18 лет, invalid_registration — неверные поля
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: signOut
+      summary: Выйти — сессия отзывается, cookie стирается
+      responses:
+        "204":
+          description: Готово (и для гостя тоже)
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
 
   /news/issues/latest:
     get:
@@ -717,6 +851,386 @@ paths:
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
+  /me:
+    get:
+      tags: [account]
+      operationId: getProfile
+      summary: Профиль гостя
+      responses:
+        "200":
+          description: Профиль, настройки уведомлений и устройства
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [account]
+      operationId: updateProfile
+      summary: Изменить профиль
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Обновлённый профиль
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "422":
+          description: Неверные поля (code invalid_profile)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [account]
+      operationId: deleteProfile
+      summary: Удалить кабинет — карта, бонусы и сессии
+      responses:
+        "204":
+          description: Удалено, cookie стёрта
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+
+  /me/sign-out-everywhere:
+    post:
+      tags: [account]
+      operationId: signOutEverywhere
+      summary: Выйти на всех устройствах
+      responses:
+        "204":
+          description: Все сессии отозваны, cookie стёрта
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+
+  /me/reservations:
+    get:
+      tags: [account]
+      operationId: getMyReservations
+      summary: Мои брони — активные и история
+      responses:
+        "200":
+          description: Брони гостя от новых к старым
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReservations"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me/reservations/{id}/extend:
+    post:
+      tags: [account]
+      operationId: extendMyReservation
+      summary: Продлить бронь на 3 дня — один раз
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Бронь с новым сроком
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "404":
+          description: Нет такого у этого гостя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Бронь не активна или уже продлена (code cannot_extend)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/reservations/{id}/cancel:
+    post:
+      tags: [account]
+      operationId: cancelMyReservation
+      summary: Отменить бронь — бутылки вернутся на полку
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Отменённая бронь
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "404":
+          description: Нет такого у этого гостя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Бронь уже не активна (code cannot_cancel)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/tastings:
+    get:
+      tags: [account]
+      operationId: getMyTastings
+      summary: Мои дегустации — записи и лист ожидания
+      responses:
+        "200":
+          description: От ближайших к прошедшим
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyTastings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me/cell:
+    get:
+      tags: [account]
+      operationId: getMyCell
+      summary: Моя ячейка и опись
+      responses:
+        "200":
+          description: Ячейка гостя; cell = null — ячейки нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyCellResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me/cell/prepare:
+    post:
+      tags: [account]
+      operationId: prepareMyCell
+      summary: Подготовить бутылки к визиту
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCellPreparation"
+      responses:
+        "202":
+          description: Сомелье поднимет бутылки из погреба
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CellPreparation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "404":
+          description: Нет такого у этого гостя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Бутылок нет в описи или дата визита не подходит (code invalid_preparation)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/monthly:
+    get:
+      tags: [account]
+      operationId: getMyMonthly
+      summary: Моя подписка на набор месяца
+      responses:
+        "200":
+          description: Подписка; subscription = null — подписки нет
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyMonthlyResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [account]
+      operationId: updateMyMonthly
+      summary: Пауза или пропуск месяца
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonthlySubscriptionUpdate"
+      responses:
+        "200":
+          description: Подписка после изменения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyMonthlyResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "404":
+          description: Нет такого у этого гостя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/certificates:
+    get:
+      tags: [account]
+      operationId: getMyCertificates
+      summary: Мои сертификаты
+      responses:
+        "200":
+          description: Привязанные к кабинету сертификаты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyCertificates"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [account]
+      operationId: addMyCertificate
+      summary: Добавить сертификат по номеру
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificateClaim"
+      responses:
+        "201":
+          description: Сертификат привязан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyCertificate"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "404":
+          description: Нет такого у этого гостя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Сертификат уже привязан к другому кабинету или не оплачен (code certificate_unavailable)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/loyalty:
+    get:
+      tags: [loyalty]
+      operationId: getMyLoyalty
+      summary: Бонусы и уровень клуба
+      responses:
+        "200":
+          description: Баланс, уровень, прогресс и история
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loyalty"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me/favorites:
+    get:
+      tags: [loyalty]
+      operationId: getMyFavorites
+      summary: Избранные вина
+      responses:
+        "200":
+          description: От недавно добавленных
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyFavorites"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me/favorites/{wineId}:
+    put:
+      tags: [loyalty]
+      operationId: addFavorite
+      summary: Добавить вино в избранное
+      parameters:
+        - name: wineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Добавлено (повтор — тоже 204)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "404":
+          description: Нет такого у этого гостя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [loyalty]
+      operationId: removeFavorite
+      summary: Убрать вино из избранного
+      parameters:
+        - name: wineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Убрано (нет в избранном — тоже 204)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+
   /reviews:
     get:
       tags: [reviews]
@@ -860,6 +1374,12 @@ components:
             $ref: "#/components/schemas/Error"
     ForeignOrigin:
       description: Изменяющий запрос пришёл из браузера с чужого сайта (code forbidden_origin) — защита от CSRF
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Нужно войти (code unauthorized) — отвечает шлюз
       content:
         application/json:
           schema:
@@ -1754,6 +2274,370 @@ components:
           description: awaiting_payment — ждёт оплаты, active — оплачен, redeemed — потрачен, expired — срок вышел
           enum: [awaiting_payment, active, redeemed, expired]
 
+    NotificationChannels:
+      type: object
+      required: [sms, email]
+      properties:
+        sms:
+          type: boolean
+        email:
+          type: boolean
+
+    NotificationPrefs:
+      type: object
+      required: [reservations, tastings, arrivals, cell, monthly]
+      description: Что и куда присылать — статус брони, дегустации, новые поставки, срок ячейки, набор месяца
+      properties:
+        reservations:
+          $ref: "#/components/schemas/NotificationChannels"
+        tastings:
+          $ref: "#/components/schemas/NotificationChannels"
+        arrivals:
+          $ref: "#/components/schemas/NotificationChannels"
+        cell:
+          $ref: "#/components/schemas/NotificationChannels"
+        monthly:
+          $ref: "#/components/schemas/NotificationChannels"
+
+    DeviceSession:
+      type: object
+      required: [id, device, current, lastSeenAt]
+      properties:
+        id:
+          type: string
+        device:
+          type: string
+          description: Браузер и система — по User-Agent при входе
+          examples: [Chrome · Windows]
+        current:
+          type: boolean
+          description: Это устройство
+        lastSeenAt:
+          type: string
+          format: date-time
+
+    Profile:
+      type: object
+      required: [id, name, phone, email, birthDate, cardNumber, favoriteBoutiqueId, tastes, notifications, sessions]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: [string, "null"]
+          description: +7XXXXXXXXXX — вход в кабинет; смена — через новый вход
+        email:
+          type: [string, "null"]
+        birthDate:
+          type: [string, "null"]
+          format: date
+        cardNumber:
+          type: [string, "null"]
+        favoriteBoutiqueId:
+          type: [string, "null"]
+        tastes:
+          type: array
+          description: Что гость любит — сомелье учтёт в подборках
+          items:
+            $ref: "#/components/schemas/TasteTag"
+        notifications:
+          $ref: "#/components/schemas/NotificationPrefs"
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeviceSession"
+
+    TasteTag:
+      type: string
+      enum: [red_dry, white_mineral, sparkling, sweet, aged, burgundy, italy, natural]
+
+    ProfileUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        email:
+          type: [string, "null"]
+          format: email
+          maxLength: 120
+        favoriteBoutiqueId:
+          type: [string, "null"]
+          maxLength: 40
+        tastes:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/TasteTag"
+        notifications:
+          $ref: "#/components/schemas/NotificationPrefs"
+
+    MyReservations:
+      type: object
+      required: [active, history]
+      properties:
+        active:
+          type: array
+          description: Ждут гостя — с QR и действиями
+          items:
+            $ref: "#/components/schemas/MyReservation"
+        history:
+          type: array
+          description: Выданные, отменённые и истёкшие — от новых к старым
+          items:
+            $ref: "#/components/schemas/MyReservation"
+
+    MyReservation:
+      allOf:
+        - $ref: "#/components/schemas/Reservation"
+        - type: object
+          required: [extended]
+          properties:
+            extended:
+              type: boolean
+              description: Уже продлевали — второй раз нельзя
+
+    MyTasting:
+      type: object
+      required: [tasting, kind, guests]
+      properties:
+        tasting:
+          $ref: "#/components/schemas/Tasting"
+        kind:
+          type: string
+          description: booking — запись, waitlist — лист ожидания
+          enum: [booking, waitlist]
+        guests:
+          type: integer
+
+    MyTastings:
+      type: array
+      items:
+        $ref: "#/components/schemas/MyTasting"
+
+    CellBottle:
+      type: object
+      required: [id, name, meta, image, qty, since, photos, readyFrom]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        meta:
+          type: string
+          description: Регион и объём
+          examples: [Сотерн · 0,75 л]
+        image:
+          type: string
+        qty:
+          type: integer
+        since:
+          type: string
+          format: date
+          description: С какого дня в ячейке
+        photos:
+          type: integer
+          description: Фото в описи
+        readyFrom:
+          type: [integer, "null"]
+          description: С какого года пора открывать; null — уже готово
+
+    MyCell:
+      type: object
+      required: [number, tier, capacity, paidUntil, conditions, bottles, preparation]
+      properties:
+        number:
+          type: string
+        tier:
+          $ref: "#/components/schemas/CellarTier"
+        capacity:
+          type: integer
+        paidUntil:
+          type: string
+          format: date
+        conditions:
+          type: object
+          required: [temperature, humidity]
+          properties:
+            temperature:
+              type: number
+              examples: [12.8]
+            humidity:
+              type: integer
+              examples: [71]
+        bottles:
+          type: array
+          items:
+            $ref: "#/components/schemas/CellBottle"
+        preparation:
+          oneOf:
+            - $ref: "#/components/schemas/CellPreparation"
+            - type: "null"
+
+    MyCellResponse:
+      type: object
+      required: [cell]
+      properties:
+        cell:
+          oneOf:
+            - $ref: "#/components/schemas/MyCell"
+            - type: "null"
+
+    NewCellPreparation:
+      type: object
+      required: [bottleIds, visitAt]
+      properties:
+        bottleIds:
+          type: array
+          minItems: 1
+          maxItems: 48
+          uniqueItems: true
+          items:
+            type: string
+        visitAt:
+          type: string
+          format: date-time
+          description: Когда гость придёт — не раньше чем через 2 часа
+
+    CellPreparation:
+      type: object
+      required: [bottleIds, visitAt]
+      properties:
+        bottleIds:
+          type: array
+          items:
+            type: string
+        visitAt:
+          type: string
+          format: date-time
+
+    MonthlySubscription:
+      type: object
+      required: [number, plan, boutiqueId, status, skipMonth]
+      properties:
+        number:
+          type: string
+        plan:
+          $ref: "#/components/schemas/MonthlyPlan"
+        boutiqueId:
+          type: string
+        status:
+          type: string
+          enum: [active, paused]
+        skipMonth:
+          type: [string, "null"]
+          description: Пропускаемый месяц «2026-11»; null — не пропускаем
+
+    MyMonthlyResponse:
+      type: object
+      required: [subscription]
+      properties:
+        subscription:
+          oneOf:
+            - $ref: "#/components/schemas/MonthlySubscription"
+            - type: "null"
+
+    MonthlySubscriptionUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        status:
+          type: string
+          enum: [active, paused]
+        skipNext:
+          type: boolean
+          description: Пропустить следующий месяц (false — вернуть)
+
+    MyCertificate:
+      type: object
+      required: [serial, nominal, balance, validUntil, from, status]
+      properties:
+        serial:
+          type: string
+        nominal:
+          type: integer
+        balance:
+          type: integer
+          description: Сколько осталось, ₽
+        validUntil:
+          type: string
+          format: date
+        from:
+          type: string
+        status:
+          type: string
+          enum: [awaiting_payment, active, redeemed, expired]
+
+    MyCertificates:
+      type: array
+      items:
+        $ref: "#/components/schemas/MyCertificate"
+
+    CertificateClaim:
+      type: object
+      required: [serial]
+      properties:
+        serial:
+          type: string
+          pattern: "^WB-\\d{4}-\\d{6}$"
+          examples: [WB-2026-000123]
+
+    LoyaltyLevel:
+      type: string
+      description: guest — гость, connoisseur — ценитель (от 6 бутылок за год), sommelier — сомелье (от 12), cellar — погреб (от 24)
+      enum: [guest, connoisseur, sommelier, cellar]
+
+    BonusEntry:
+      type: object
+      required: [id, at, title, amount]
+      properties:
+        id:
+          type: string
+        at:
+          type: string
+          format: date-time
+        title:
+          type: string
+        amount:
+          type: integer
+          description: Плюс — начислено, минус — списано
+
+    Loyalty:
+      type: object
+      required: [balance, level, bottles, nextLevel, history]
+      properties:
+        balance:
+          type: integer
+          description: Бонусов; 1 бонус = 1 ₽ при оплате в бутике, до 30 % чека
+        level:
+          $ref: "#/components/schemas/LoyaltyLevel"
+        bottles:
+          type: integer
+          description: Бутылок за последние 12 месяцев — по ним уровень
+        nextLevel:
+          oneOf:
+            - type: object
+              required: [level, bottles]
+              properties:
+                level:
+                  $ref: "#/components/schemas/LoyaltyLevel"
+                bottles:
+                  type: integer
+                  description: Сколько бутылок нужно для уровня
+            - type: "null"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/BonusEntry"
+
+    MyFavorites:
+      type: array
+      items:
+        $ref: "#/components/schemas/WineSummary"
+
     WinePage:
       type: object
       required: [items, total]
@@ -1804,9 +2688,99 @@ components:
           items:
             $ref: "#/components/schemas/WineSummary"
 
+    PhoneCodeRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+          examples: ["+79161234567"]
+
+    PhoneCodeSent:
+      type: object
+      required: [resendAfter, expiresIn]
+      properties:
+        resendAfter:
+          type: integer
+          description: Через сколько секунд можно попросить новый код
+          examples: [60]
+        expiresIn:
+          type: integer
+          description: Сколько секунд действует код
+          examples: [300]
+
+    PhoneCodeCheck:
+      type: object
+      required: [phone, code]
+      properties:
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+          examples: ["+79161234567"]
+        code:
+          type: string
+          pattern: "^\\d{4}$"
+
+    PhoneVerification:
+      oneOf:
+        - type: object
+          required: [status, user]
+          properties:
+            status:
+              type: string
+              const: signed_in
+            user:
+              $ref: "#/components/schemas/SessionUser"
+        - type: object
+          required: [status, registrationToken]
+          properties:
+            status:
+              type: string
+              const: needs_registration
+            registrationToken:
+              type: string
+              description: Подтверждённый номер — передать в /auth/register в течение 15 минут
+      discriminator:
+        propertyName: status
+
+    GuestRegistration:
+      type: object
+      required: [registrationToken, name, birthDate, consents]
+      properties:
+        registrationToken:
+          type: string
+          minLength: 1
+          maxLength: 200
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        birthDate:
+          type: string
+          format: date
+          description: Кабинет — с 18 лет
+        email:
+          type: string
+          format: email
+          maxLength: 120
+        consents:
+          type: object
+          required: [personalData, marketing]
+          properties:
+            personalData:
+              type: boolean
+              const: true
+              description: Согласие на обработку персональных данных
+            marketing:
+              type: boolean
+              description: Анонсы поставок и дегустаций
+
     SessionUser:
       type: object
-      required: [id, name, initials]
+      required: [id, name, initials, cardNumber]
       properties:
         id:
           type: string
@@ -1815,6 +2789,10 @@ components:
         initials:
           type: string
           examples: [АК]
+        cardNumber:
+          type: [string, "null"]
+          description: Номер карты гостя, 12 цифр; null — карты нет (пользователь без телефона)
+          examples: ["004219880716"]
 
     Session:
       type: object

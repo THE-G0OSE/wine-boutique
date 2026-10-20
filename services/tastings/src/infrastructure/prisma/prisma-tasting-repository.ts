@@ -38,6 +38,17 @@ export class PrismaTastingRepository extends TastingRepository {
     });
   }
 
+  async listForUser(userId: string): Promise<{ tasting: Tasting; kind: "booking" | "waitlist"; guests: number }[]> {
+    const [bookings, waitlist] = await Promise.all([
+      this.prisma.booking.findMany({ where: { userId }, include: { tasting: true } }),
+      this.prisma.waitlistEntry.findMany({ where: { userId }, include: { tasting: true } }),
+    ]);
+    return [
+      ...bookings.map((booking) => ({ tasting: toTasting(booking.tasting), kind: "booking" as const, guests: booking.guests })),
+      ...waitlist.map((entry) => ({ tasting: toTasting(entry.tasting), kind: "waitlist" as const, guests: entry.guests })),
+    ];
+  }
+
   async wait({ tastingId, phone, ...rest }: GuestRecord): Promise<void> {
     await this.prisma.waitlistEntry.upsert({
       where: { tastingId_phone: { tastingId, phone } },

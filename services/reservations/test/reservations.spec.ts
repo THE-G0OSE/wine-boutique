@@ -5,7 +5,14 @@ import * as protoLoader from "@grpc/proto-loader";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { zCreateReservationResponse, zGetBoutiqueSlotsResponse, zGetBoutiquesResponse, zGetReservationResponse } from "@wine/contracts/openapi/zod";
+import {
+  zCreateReservationResponse,
+  zExtendMyReservationResponse,
+  zGetBoutiqueSlotsResponse,
+  zGetBoutiquesResponse,
+  zGetMyReservationsResponse,
+  zGetReservationResponse,
+} from "@wine/contracts/openapi/zod";
 import { boutiqueFixtures, holdUntilOf, pickupDays, toZonedIso } from "@wine/demo-data";
 import { loadConfig } from "@wine/service-kit";
 import { createTestApp, migrateDatabase, missingOperations } from "@wine/service-kit/testing";
@@ -79,8 +86,8 @@ describe("reservations на настоящем Postgres", () => {
   });
 
   const get = (url: string) => app.inject({ method: "GET", url: `/api${url}` });
-  const reserve = (payload: object, target = app) =>
-    target.inject({ method: "POST", url: "/api/reservations", payload, remoteAddress: `10.3.0.${Math.floor(Math.random() * 250)}` });
+  const reserve = (payload: object, target = app, headers: Record<string, string> = {}) =>
+    target.inject({ method: "POST", url: "/api/reservations", payload, headers, remoteAddress: `10.3.0.${Math.floor(Math.random() * 250)}` });
 
   /** Первое свободное время в бутике — как его выберет форма */
   const firstSlot = async (boutiqueId: string) => {
@@ -199,5 +206,54 @@ describe("reservations на настоящем Postgres", () => {
   it("неизвестная бронь — 404, не uuid — 400", async () => {
     expect((await get("/reservations/0b9a3b54-6c55-4a43-9a3e-5d6f1f1f1f1f")).statusCode).toBe(404);
     expect((await get("/reservations/WB-000001")).statusCode).toBe(400);
+  });
+
+  describe("кабинет: мои брони", () => {
+    const ANNA = "0192f0a0-0000-7000-8000-00000000a001";
+    const OLEG = "0192f0a0-0000-7000-8000-00000000b002";
+    const asUser = (userId: string) => ({ "x-user-id": userId });
+    const mine = async (userId: string) => zGetMyReservationsResponse.parse((await app.inject({ method: "GET", url: "/api/me/reservations", headers: asUser(userId) })).json());
+    const act = (id: string, action: "extend" | "cancel", userId: string) =>
+      app.inject({ method: "POST", url: `/api/me/reservations/${id}/${action}`, headers: asUser(userId) });
+
+    it("бронь вошедшего гостя попадает в кабинет; гостя без входа — нет", async () => {
+      const slot = await firstSlot("cellar");
+      const signed = zCreateReservationResponse.parse((await reserve(body(slot), app, asUser(ANNA))).json());
+      await reserve(body(slot));
+      const list = await mine(ANNA);
+      expect(list.active.map((item) => item.id)).toEqual([signed.id]);
+      expect(list.active[0]).toMatchObject({ extended: false, status: "active" });
+      expect((await mine(OLEG)).active).toEqual([]);
+      expect((await app.inject({ method: "GET", url: "/api/me/reservations" })).statusCode).toBe(401);
+    });
+
+    it("продление: +3 дня и один раз; чужую бронь не видно — 404", async () => {
+      const [reservation] = (await mine(ANNA)).active;
+      expect((await act(reservation.id, "extend", OLEG)).statusCode).toBe(404);
+      const extended = zExtendMyReservationResponse.parse((await act(reservation.id, "extend", ANNA)).json());
+      expect(new Date(extended.holdUntil).getTime() - new Date(reservation.holdUntil).getTime()).toBe(3 * 24 * 60 * 60 * 1000);
+      expect((await mine(ANNA)).active[0].extended).toBe(true);
+      const again = await act(reservation.id, "extend", ANNA);
+      expect(again.statusCode).toBe(409);
+      expect(again.json()).toMatchObject({ code: "cannot_extend" });
+    });
+
+    it("отмена: бронь уходит в историю; второй раз — 409", async () => {
+      const [reservation] = (await mine(ANNA)).active;
+      expect((await act(reservation.id, "cancel", ANNA)).json()).toMatchObject({ status: "cancelled" });
+      const list = await mine(ANNA);
+      expect(list.active).toEqual([]);
+      expect(list.history[0]).toMatchObject({ id: reservation.id, status: "cancelled" });
+      expect((await act(reservation.id, "cancel", ANNA)).json()).toMatchObject({ code: "cannot_cancel" });
+    });
+
+    it("срок вышел — в истории как expired", async () => {
+      const slot = await firstSlot("street");
+      const created = zCreateReservationResponse.parse((await reserve(body({ ...slot, boutiqueId: "street" }), app, asUser(OLEG))).json());
+      await prisma.reservation.update({ where: { id: created.id }, data: { holdUntil: new Date(Date.now() - 1000) } });
+      const list = await mine(OLEG);
+      expect(list.active).toEqual([]);
+      expect(list.history[0]).toMatchObject({ id: created.id, status: "expired" });
+    });
   });
 });

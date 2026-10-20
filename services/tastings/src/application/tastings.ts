@@ -17,6 +17,7 @@ export class ListTastings {
 }
 
 export interface GuestInput {
+  userId?: string | null;
   name: string;
   phone: string;
   guests: number;
@@ -47,7 +48,7 @@ export class BookTasting {
     if (seatsLeft(tasting) < input.guests) throw notEnoughSeats(seatsLeft(tasting));
 
     const booked = await this.tastings.book(
-      { tastingId: id, customerName, phone: input.phone, guests: input.guests, consentAt: now, consentVersion: CONSENT_VERSION },
+      { tastingId: id, userId: input.userId ?? null, customerName, phone: input.phone, guests: input.guests, consentAt: now, consentVersion: CONSENT_VERSION },
       now
     );
     if (!booked) {
@@ -69,6 +70,33 @@ export class JoinWaitlist {
     if (!customerName) throw new TastingError("invalid_booking", INVALID);
     const tasting = await upcoming(this.tastings, id, now);
     if (seatsLeft(tasting) > 0) throw new TastingError("seats_available", "Место освободилось — можно записаться");
-    await this.tastings.wait({ tastingId: id, customerName, phone: input.phone, guests: input.guests, consentAt: now, consentVersion: CONSENT_VERSION });
+    await this.tastings.wait({
+      tastingId: id,
+      userId: input.userId ?? null,
+      customerName,
+      phone: input.phone,
+      guests: input.guests,
+      consentAt: now,
+      consentVersion: CONSENT_VERSION,
+    });
+  }
+}
+
+/** Мои дегустации: GET /me/tastings — предстоящие по времени, затем прошедшие от свежих; записи на одну дегустацию складываются */
+@Injectable()
+export class ListMyTastings {
+  constructor(private readonly tastings: TastingRepository) {}
+
+  async execute(userId: string, now = new Date()) {
+    const merged = new Map<string, { tasting: Tasting; kind: "booking" | "waitlist"; guests: number }>();
+    for (const entry of await this.tastings.listForUser(userId)) {
+      const key = `${entry.tasting.id}:${entry.kind}`;
+      const known = merged.get(key);
+      merged.set(key, known ? { ...known, guests: known.guests + entry.guests } : entry);
+    }
+    const list = [...merged.values()];
+    const upcoming = list.filter(({ tasting }) => tasting.startsAt > now).sort((a, b) => a.tasting.startsAt.getTime() - b.tasting.startsAt.getTime());
+    const past = list.filter(({ tasting }) => tasting.startsAt <= now).sort((a, b) => b.tasting.startsAt.getTime() - a.tasting.startsAt.getTime());
+    return [...upcoming, ...past];
   }
 }

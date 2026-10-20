@@ -25,4 +25,19 @@ export class ForwardAuthController {
     if (resolved.renewedUntil && token) setSessionCookie(reply, token, resolved.renewedUntil);
     reply.header(USER_ID_HEADER, resolved.user.id);
   }
+
+  /**
+   * Необязательная сессия — для публичных форм (бронь, запись, подписка): вошёл — X-User-Id, и запись попадёт в кабинет;
+   * гость — тоже 200, но без заголовка, форма работает как раньше
+   */
+  @All("forward-auth-optional")
+  @HttpCode(200)
+  @Header("Cache-Control", "no-store")
+  async optional(@Req() request: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply): Promise<void> {
+    const token = sessionTokenOf(request);
+    const resolved = await this.resolveSession.execute(token);
+    if (!resolved) return;
+    if (resolved.renewedUntil && token) setSessionCookie(reply, token, resolved.renewedUntil);
+    reply.header(USER_ID_HEADER, resolved.user.id);
+  }
 }

@@ -1,4 +1,5 @@
 import { setupWorker } from "msw/browser";
+import { accountHandlers } from "@/entities/account/mocks";
 import { boutiqueHandlers } from "@/entities/boutique/mocks";
 import { cellarHandlers } from "@/entities/cellarCell/mocks";
 import { grapeHandlers } from "@/entities/grapeVariety/mocks";
@@ -10,11 +11,19 @@ import { reviewHandlers } from "@/entities/review/mocks";
 import { sessionHandlers } from "@/entities/session/mocks";
 import { tastingHandlers } from "@/entities/tasting/mocks";
 import { wineHandlers } from "@/entities/wine/mocks";
+import { authHandlers } from "@/features/auth/byPhone/mocks";
+import { signOutHandlers } from "@/features/auth/signOut/mocks";
+import { addCertificateHandlers } from "@/features/account/addCertificate/mocks";
+import { editProfileHandlers } from "@/features/account/editProfile/mocks";
+import { manageMonthlyHandlers } from "@/features/account/manageMonthly/mocks";
+import { manageReservationHandlers } from "@/features/account/manageReservation/mocks";
+import { prepareCellHandlers } from "@/features/account/prepareCell/mocks";
 import { requestCellHandlers } from "@/features/cellar/requestCell/mocks";
 import { issueCertificateHandlers } from "@/features/certificates/issueCertificate/mocks";
 import { requestGiftsHandlers } from "@/features/gifts/requestGifts/mocks";
 import { requestHallHandlers } from "@/features/hall/requestHall/mocks";
 import { subscribeMonthlyHandlers } from "@/features/monthly/subscribeMonthly/mocks";
+import { toggleFavoriteHandlers } from "@/features/wine/toggleFavorite/mocks";
 import { newsletterHandlers } from "@/features/newsletter/subscribe/mocks";
 import { createReservationHandlers } from "@/features/reservation/createReservation/mocks";
 import { writeLetterHandlers } from "@/features/reviews/writeLetter/mocks";
@@ -41,5 +50,14 @@ export const worker = setupWorker(
   ...requestGiftsHandlers,
   ...monthlyHandlers,
   ...subscribeMonthlyHandlers,
-  ...issueCertificateHandlers
+  ...issueCertificateHandlers,
+  ...authHandlers,
+  ...signOutHandlers,
+  ...accountHandlers,
+  ...manageReservationHandlers,
+  ...prepareCellHandlers,
+  ...manageMonthlyHandlers,
+  ...addCertificateHandlers,
+  ...editProfileHandlers,
+  ...toggleFavoriteHandlers
 );

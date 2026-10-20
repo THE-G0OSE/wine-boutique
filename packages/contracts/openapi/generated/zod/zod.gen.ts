@@ -470,6 +470,183 @@ export const zCertificate = z.object({
     ])
 });
 
+export const zNotificationChannels = z.object({
+    sms: z.boolean(),
+    email: z.boolean()
+});
+
+/**
+ * Что и куда присылать — статус брони, дегустации, новые поставки, срок ячейки, набор месяца
+ */
+export const zNotificationPrefs = z.object({
+    reservations: zNotificationChannels,
+    tastings: zNotificationChannels,
+    arrivals: zNotificationChannels,
+    cell: zNotificationChannels,
+    monthly: zNotificationChannels
+});
+
+export const zDeviceSession = z.object({
+    id: z.string(),
+    device: z.string(),
+    current: z.boolean(),
+    lastSeenAt: z.iso.datetime({ offset: true })
+});
+
+export const zTasteTag = z.enum([
+    'red_dry',
+    'white_mineral',
+    'sparkling',
+    'sweet',
+    'aged',
+    'burgundy',
+    'italy',
+    'natural'
+]);
+
+export const zProfile = z.object({
+    id: z.string(),
+    name: z.string(),
+    phone: z.string().nullable(),
+    email: z.string().nullable(),
+    birthDate: z.iso.date().nullable(),
+    cardNumber: z.string().nullable(),
+    favoriteBoutiqueId: z.string().nullable(),
+    tastes: z.array(zTasteTag),
+    notifications: zNotificationPrefs,
+    sessions: z.array(zDeviceSession)
+});
+
+export const zProfileUpdate = z.object({
+    name: z.string().min(1).max(80).optional(),
+    email: z.email().max(120).nullish(),
+    favoriteBoutiqueId: z.string().max(40).nullish(),
+    tastes: z.array(zTasteTag).optional(),
+    notifications: zNotificationPrefs.optional()
+});
+
+export const zMyReservation = zReservation.and(z.object({
+    extended: z.boolean()
+}));
+
+export const zMyReservations = z.object({
+    active: z.array(zMyReservation),
+    history: z.array(zMyReservation)
+});
+
+export const zMyTasting = z.object({
+    tasting: zTasting,
+    kind: z.enum(['booking', 'waitlist']),
+    guests: z.int()
+});
+
+export const zMyTastings = z.array(zMyTasting);
+
+export const zCellBottle = z.object({
+    id: z.string(),
+    name: z.string(),
+    meta: z.string(),
+    image: z.string(),
+    qty: z.int(),
+    since: z.iso.date(),
+    photos: z.int(),
+    readyFrom: z.int().nullable()
+});
+
+export const zNewCellPreparation = z.object({
+    bottleIds: z.array(z.string()).min(1).max(48),
+    visitAt: z.iso.datetime({ offset: true })
+});
+
+export const zCellPreparation = z.object({
+    bottleIds: z.array(z.string()),
+    visitAt: z.iso.datetime({ offset: true })
+});
+
+export const zMyCell = z.object({
+    number: z.string(),
+    tier: zCellarTier,
+    capacity: z.int(),
+    paidUntil: z.iso.date(),
+    conditions: z.object({
+        temperature: z.number(),
+        humidity: z.int()
+    }),
+    bottles: z.array(zCellBottle),
+    preparation: zCellPreparation.nullable()
+});
+
+export const zMyCellResponse = z.object({
+    cell: zMyCell.nullable()
+});
+
+export const zMonthlySubscription = z.object({
+    number: z.string(),
+    plan: zMonthlyPlan,
+    boutiqueId: z.string(),
+    status: z.enum(['active', 'paused']),
+    skipMonth: z.string().nullable()
+});
+
+export const zMyMonthlyResponse = z.object({
+    subscription: zMonthlySubscription.nullable()
+});
+
+export const zMonthlySubscriptionUpdate = z.object({
+    status: z.enum(['active', 'paused']).optional(),
+    skipNext: z.boolean().optional()
+});
+
+export const zMyCertificate = z.object({
+    serial: z.string(),
+    nominal: z.int(),
+    balance: z.int(),
+    validUntil: z.iso.date(),
+    from: z.string(),
+    status: z.enum([
+        'awaiting_payment',
+        'active',
+        'redeemed',
+        'expired'
+    ])
+});
+
+export const zMyCertificates = z.array(zMyCertificate);
+
+export const zCertificateClaim = z.object({
+    serial: z.string().regex(/^WB-\d{4}-\d{6}$/)
+});
+
+/**
+ * guest — гость, connoisseur — ценитель (от 6 бутылок за год), sommelier — сомелье (от 12), cellar — погреб (от 24)
+ */
+export const zLoyaltyLevel = z.enum([
+    'guest',
+    'connoisseur',
+    'sommelier',
+    'cellar'
+]);
+
+export const zBonusEntry = z.object({
+    id: z.string(),
+    at: z.iso.datetime({ offset: true }),
+    title: z.string(),
+    amount: z.int()
+});
+
+export const zLoyalty = z.object({
+    balance: z.int(),
+    level: zLoyaltyLevel,
+    bottles: z.int(),
+    nextLevel: z.object({
+        level: zLoyaltyLevel,
+        bottles: z.int()
+    }).nullable(),
+    history: z.array(zBonusEntry)
+});
+
+export const zMyFavorites = z.array(zWineSummary);
+
 export const zWinePage = z.object({
     items: z.array(zWineSummary),
     total: z.int()
@@ -489,11 +666,48 @@ export const zGrapeVariety = z.object({
     wines: z.array(zWineSummary)
 });
 
+export const zPhoneCodeRequest = z.object({
+    phone: z.string().regex(/^\+7\d{10}$/)
+});
+
+export const zPhoneCodeSent = z.object({
+    resendAfter: z.int(),
+    expiresIn: z.int()
+});
+
+export const zPhoneCodeCheck = z.object({
+    phone: z.string().regex(/^\+7\d{10}$/),
+    code: z.string().regex(/^\d{4}$/)
+});
+
+export const zGuestRegistration = z.object({
+    registrationToken: z.string().min(1).max(200),
+    name: z.string().min(1).max(80),
+    birthDate: z.iso.date(),
+    email: z.email().max(120).optional(),
+    consents: z.object({
+        personalData: z.literal(true),
+        marketing: z.boolean()
+    })
+});
+
 export const zSessionUser = z.object({
     id: z.string(),
     name: z.string(),
-    initials: z.string()
+    initials: z.string(),
+    cardNumber: z.string().nullable()
 });
+
+export const zPhoneVerification = z.union([
+    z.object({
+        status: z.literal('signed_in'),
+        user: zSessionUser
+    }),
+    z.object({
+        status: z.literal('needs_registration'),
+        registrationToken: z.string()
+    })
+]);
 
 export const zSession = z.object({
     user: zSessionUser.nullable()
@@ -806,6 +1020,32 @@ export const zGetGrapesResponse = z.array(zGrapeVariety);
  */
 export const zGetSessionResponse = zSession;
 
+export const zRequestPhoneCodeBody = zPhoneCodeRequest;
+
+/**
+ * Код отправлен
+ */
+export const zRequestPhoneCodeResponse = zPhoneCodeSent;
+
+export const zVerifyPhoneCodeBody = zPhoneCodeCheck;
+
+/**
+ * Код подошёл
+ */
+export const zVerifyPhoneCodeResponse = zPhoneVerification;
+
+export const zRegisterGuestBody = zGuestRegistration;
+
+/**
+ * Карта заведена, гость вошёл
+ */
+export const zRegisterGuestResponse = zSession;
+
+/**
+ * Готово (и для гостя тоже)
+ */
+export const zSignOutResponse = z.void();
+
 /**
  * Выпуск со всеми материалами первой и второй полосы
  */
@@ -942,6 +1182,120 @@ export const zCreateCertificateBody = zNewCertificate;
  * Заявка принята
  */
 export const zCreateCertificateResponse = zCertificate;
+
+/**
+ * Удалено, cookie стёрта
+ */
+export const zDeleteProfileResponse = z.void();
+
+/**
+ * Профиль, настройки уведомлений и устройства
+ */
+export const zGetProfileResponse = zProfile;
+
+export const zUpdateProfileBody = zProfileUpdate;
+
+/**
+ * Обновлённый профиль
+ */
+export const zUpdateProfileResponse = zProfile;
+
+/**
+ * Все сессии отозваны, cookie стёрта
+ */
+export const zSignOutEverywhereResponse = z.void();
+
+/**
+ * Брони гостя от новых к старым
+ */
+export const zGetMyReservationsResponse = zMyReservations;
+
+export const zExtendMyReservationPath = z.object({
+    id: z.uuid()
+});
+
+/**
+ * Бронь с новым сроком
+ */
+export const zExtendMyReservationResponse = zReservation;
+
+export const zCancelMyReservationPath = z.object({
+    id: z.uuid()
+});
+
+/**
+ * Отменённая бронь
+ */
+export const zCancelMyReservationResponse = zReservation;
+
+/**
+ * От ближайших к прошедшим
+ */
+export const zGetMyTastingsResponse = zMyTastings;
+
+/**
+ * Ячейка гостя; cell = null — ячейки нет
+ */
+export const zGetMyCellResponse = zMyCellResponse;
+
+export const zPrepareMyCellBody = zNewCellPreparation;
+
+/**
+ * Сомелье поднимет бутылки из погреба
+ */
+export const zPrepareMyCellResponse = zCellPreparation;
+
+/**
+ * Подписка; subscription = null — подписки нет
+ */
+export const zGetMyMonthlyResponse = zMyMonthlyResponse;
+
+export const zUpdateMyMonthlyBody = zMonthlySubscriptionUpdate;
+
+/**
+ * Подписка после изменения
+ */
+export const zUpdateMyMonthlyResponse = zMyMonthlyResponse;
+
+/**
+ * Привязанные к кабинету сертификаты
+ */
+export const zGetMyCertificatesResponse = zMyCertificates;
+
+export const zAddMyCertificateBody = zCertificateClaim;
+
+/**
+ * Сертификат привязан
+ */
+export const zAddMyCertificateResponse = zMyCertificate;
+
+/**
+ * Баланс, уровень, прогресс и история
+ */
+export const zGetMyLoyaltyResponse = zLoyalty;
+
+/**
+ * От недавно добавленных
+ */
+export const zGetMyFavoritesResponse = zMyFavorites;
+
+export const zRemoveFavoritePath = z.object({
+    wineId: z.string()
+});
+
+/**
+ * Убрано (нет в избранном — тоже 204)
+ */
+export const zRemoveFavoriteResponse = z.void();
+
+export const zAddFavoritePath = z.object({
+    wineId: z.string()
+});
+
+/**
+ * Добавлено (повтор — тоже 204)
+ */
+export const zAddFavoriteResponse = z.void();
 
 export const zGetReviewsQuery = z.object({
     limit: z.int().gte(1).lte(20).optional().default(5),

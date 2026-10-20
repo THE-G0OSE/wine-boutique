@@ -58,6 +58,7 @@ model Cell {
   priceKopecks Int?          @map("price_kopecks")
   updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
   requests     CellRequest[]
+  lease        CellLease?
 
   @@unique([row, position])
   @@map("cells")
@@ -82,4 +83,50 @@ model CellRequest {
 
   @@index([status, createdAt])
   @@map("cell_requests")
+}
+
+/// Договор хранения: ячейка гостя (id из identity, без внешнего ключа) и срок оплаты. Оформляет управляющий
+model CellLease {
+  id          String              @id @default(uuid(4)) @db.Uuid
+  cellNumber  String              @unique @map("cell_number")
+  cell        Cell                @relation(fields: [cellNumber], references: [number])
+  userId      String              @map("user_id") @db.Uuid
+  paidUntil   DateTime            @map("paid_until") @db.Date
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  bottles     CellBottle[]
+  preparation CellPreparation?
+
+  @@index([userId])
+  @@map("cell_leases")
+}
+
+/// Опись: бутылки в ячейке, сфотографированные при приёмке
+model CellBottle {
+  id        String    @id @default(uuid(4)) @db.Uuid
+  leaseId   String    @map("lease_id") @db.Uuid
+  lease     CellLease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  name      String
+  /// Регион и объём: «Сотерн · 0,75 л»
+  meta      String
+  imageUrl  String    @map("image_url")
+  qty       Int
+  since     DateTime  @db.Date
+  photos    Int
+  /// С какого года пора открывать; null — уже готово
+  readyFrom Int?      @map("ready_from")
+  position  Int
+
+  @@index([leaseId, position])
+  @@map("cell_bottles")
+}
+
+/// Подготовка к визиту: сомелье поднимет отмеченные бутылки из погреба к назначенному времени
+model CellPreparation {
+  leaseId   String    @id @map("lease_id") @db.Uuid
+  lease     CellLease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  bottleIds String[]  @map("bottle_ids")
+  visitAt   DateTime  @map("visit_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("cell_preparations")
 }

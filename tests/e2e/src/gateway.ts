@@ -10,7 +10,7 @@ export const compose = (...args: string[]): string => execFileSync("docker", ["c
 
 export const request = (path: string, init: RequestInit = {}): Promise<Response> => fetch(`${GATEWAY}${path}`, { redirect: "manual", ...init });
 
-/** Пользователь и сессия через CLI identity — входа по телефону ещё нет */
+/** Пользователь и сессия через CLI identity — быстрее входа по телефону, когда номер не важен */
 export const issueSession = (name: string): { userId: string; token: string } =>
   JSON.parse(compose("exec", "-T", "identity", "node", "dist/cli.js", "session:issue", "--name", name, "--json")) as { userId: string; token: string };
 

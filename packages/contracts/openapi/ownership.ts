@@ -1,7 +1,7 @@
 import type { operations } from "./generated/schema.js";
 
 /** Сервисы бэкенда — владельцы частей публичного API */
-export type ServiceName = "catalog" | "news" | "reviews" | "newsletter" | "identity" | "reservations" | "tastings" | "cellar" | "requests";
+export type ServiceName = "catalog" | "news" | "reviews" | "newsletter" | "identity" | "reservations" | "tastings" | "cellar" | "requests" | "loyalty";
 
 /**
  * Какой сервис реализует каждую операцию контракта. Тип требует владельца у каждого `operationId`:
@@ -15,6 +15,28 @@ export const OPERATION_OWNERS = {
   getSearchSuggestions: "catalog",
   getGrapes: "catalog",
   getSession: "identity",
+  requestPhoneCode: "identity",
+  verifyPhoneCode: "identity",
+  registerGuest: "identity",
+  signOut: "identity",
+  getProfile: "identity",
+  updateProfile: "identity",
+  deleteProfile: "identity",
+  signOutEverywhere: "identity",
+  getMyReservations: "reservations",
+  extendMyReservation: "reservations",
+  cancelMyReservation: "reservations",
+  getMyTastings: "tastings",
+  getMyCell: "cellar",
+  prepareMyCell: "cellar",
+  getMyMonthly: "requests",
+  updateMyMonthly: "requests",
+  getMyCertificates: "requests",
+  addMyCertificate: "requests",
+  getMyLoyalty: "loyalty",
+  getMyFavorites: "loyalty",
+  addFavorite: "loyalty",
+  removeFavorite: "loyalty",
   getLatestNewsIssue: "news",
   getNewsArticle: "news",
   getNewsArchive: "news",

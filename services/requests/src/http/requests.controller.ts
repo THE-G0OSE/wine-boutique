@@ -11,7 +11,7 @@ import {
   zCreateMonthlySubscriptionResponse,
   zGetMonthlyCratesResponse,
 } from "@wine/contracts/openapi/zod";
-import { ApiError, ContractResponse, RateLimit, ValidationError } from "@wine/service-kit";
+import { ApiError, ContractResponse, CurrentUser, RateLimit, ValidationError } from "@wine/service-kit";
 import type { z } from "zod";
 import { GetMonthlyCrates, IssueCertificate, RequestGifts, RequestHall, SubscribeMonthly } from "../application/requests.js";
 import { certificateSerial, InvalidRequest, requestNumber } from "../domain/requests.js";
@@ -81,8 +81,12 @@ export class RequestsController {
   @RateLimit(5, 60_000)
   @ValidationError("invalid_request", INVALID)
   @ContractResponse(zCreateMonthlySubscriptionResponse)
-  async subscribe(@Body({ schema: zCreateMonthlySubscriptionBody }) body: z.output<typeof zCreateMonthlySubscriptionBody>): Promise<Schemas["ServiceRequest"]> {
-    const { id, number } = await guard(() => this.subscribeMonthly.execute(body));
+  async subscribe(
+    @Body({ schema: zCreateMonthlySubscriptionBody }) body: z.output<typeof zCreateMonthlySubscriptionBody>,
+    @CurrentUser() userId: string | null
+  ): Promise<Schemas["ServiceRequest"]> {
+    // Вошедший гость (необязательная сессия на шлюзе) — подписка появится в кабинете
+    const { id, number } = await guard(() => this.subscribeMonthly.execute({ ...body, userId }));
     return { id, number: requestNumber("M", number) };
   }
 

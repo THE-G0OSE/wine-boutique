@@ -6,6 +6,7 @@ export {
   useGetShelfWinesInfiniteQuery,
   useGetWineFacetsQuery,
   useGetWineQuery,
+  useLazyGetWineQuery,
   useGetSearchSuggestionsQuery,
   WINES_MOBILE_PAGE_SIZE,
 } from './api/wineApi'

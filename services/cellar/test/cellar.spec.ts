@@ -2,7 +2,7 @@ import "reflect-metadata";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { zCreateCellarRequestResponse, zGetCellarCellsResponse } from "@wine/contracts/openapi/zod";
+import { zCreateCellarRequestResponse, zGetCellarCellsResponse, zGetMyCellResponse } from "@wine/contracts/openapi/zod";
 import { cellarCellFixtures } from "@wine/demo-data";
 import { loadConfig } from "@wine/service-kit";
 import { createTestApp, migrateDatabase, missingOperations } from "@wine/service-kit/testing";
@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AppModule } from "../src/app.module.js";
 import { configSchema } from "../src/config.js";
 import { PrismaClient } from "../src/infrastructure/prisma/generated/client.js";
+import { assignLease } from "../src/infrastructure/prisma/assign-lease.js";
 import { seedCells } from "../src/infrastructure/prisma/seed-cells.js";
 
 describe("cellar на настоящем Postgres", () => {
@@ -86,5 +87,30 @@ describe("cellar на настоящем Postgres", () => {
     await seedCells(prisma);
     expect(await prisma.cell.count()).toBe(32);
     expect((await prisma.cell.findUniqueOrThrow({ where: { number: "101" } })).status).toBe("busy");
+  });
+
+  it("кабинет: ячейка по договору с описью; подготовка к визиту — только бутылки из описи и не раньше чем через 2 часа", async () => {
+    const user = "0192f0a0-0000-7000-8000-00000000f006";
+    const headers = { "x-user-id": user };
+    const get = async () => zGetMyCellResponse.parse((await app.inject({ method: "GET", url: "/api/me/cell", headers })).json());
+    expect(await get()).toEqual({ cell: null });
+
+    await assignLease(prisma, { userId: user, cellNumber: "407", paidUntil: "2027-10-16", demo: true });
+    const { cell } = await get();
+    expect(cell).toMatchObject({ number: "407", tier: "large", capacity: 48, paidUntil: "2027-10-16", preparation: null });
+    expect(cell!.bottles.map((bottle) => bottle.name)).toContain("Château d’Yquem 1988");
+    expect((await prisma.cell.findUniqueOrThrow({ where: { number: "407" } })).status).toBe("busy");
+
+    const prepare = (payload: object) => app.inject({ method: "POST", url: "/api/me/cell/prepare", headers, payload });
+    const ids = cell!.bottles.slice(0, 2).map((bottle) => bottle.id);
+    const soon = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    expect((await prepare({ bottleIds: ids, visitAt: soon })).json()).toMatchObject({ code: "invalid_preparation" });
+    expect((await prepare({ bottleIds: ["0192f0a0-0000-4000-8000-000000000000"], visitAt: tomorrow })).statusCode).toBe(422);
+    expect((await prepare({ bottleIds: ids, visitAt: tomorrow })).statusCode).toBe(202);
+    expect((await get()).cell?.preparation).toEqual({ bottleIds: ids, visitAt: tomorrow });
+
+    expect((await app.inject({ method: "POST", url: "/api/me/cell/prepare", headers: { "x-user-id": "0192f0a0-0000-7000-8000-0000000000ff" }, payload: { bottleIds: ids, visitAt: tomorrow } })).statusCode).toBe(404);
+    expect((await app.inject({ method: "GET", url: "/api/me/cell" })).statusCode).toBe(401);
   });
 });

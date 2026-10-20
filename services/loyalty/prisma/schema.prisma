@@ -1,0 +1,40 @@
+// База сервиса loyalty: бонусы гостей и избранные вина (docs/backend-plan.md §3).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Проводка по бонусному счёту: плюс — начислено, минус — списано. Баланс — сумма проводок
+model BonusEntry {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  /// id гостя из identity — без внешнего ключа, база чужая
+  userId    String   @map("user_id") @db.Uuid
+  amount    Int
+  title     String
+  /// Откуда проводка: «welcome», «reservation:<id>» — одна проводка на событие (повтор события не начислит дважды)
+  reference String
+  at        DateTime @default(now()) @db.Timestamptz
+
+  @@unique([userId, reference])
+  @@index([userId, at])
+  @@map("bonus_entries")
+}
+
+/// Избранное: вино из catalog (id без внешнего ключа)
+model Favorite {
+  userId    String   @map("user_id") @db.Uuid
+  wineId    String   @map("wine_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@id([userId, wineId])
+  @@index([userId, createdAt])
+  @@map("favorites")
+}

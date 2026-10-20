@@ -1,4 +1,4 @@
-import type { Cell, CellRequest, StorageTerm } from "../domain/cell.js";
+import type { Cell, CellRequest, MyCell, StorageTerm } from "../domain/cell.js";
 
 export interface NewCellRequestRecord {
   cellNumber: string;
@@ -16,4 +16,8 @@ export abstract class CellRepository {
   abstract list(): Promise<Cell[]>;
   abstract find(number: string): Promise<Cell | null>;
   abstract createRequest(record: NewCellRequestRecord): Promise<CellRequest>;
+  /** Ячейка гостя по договору хранения; нет договора — null */
+  abstract findLease(userId: string): Promise<(MyCell & { leaseId: string }) | null>;
+  /** Отметить бутылки к визиту (новая подготовка заменяет прошлую) */
+  abstract savePreparation(leaseId: string, bottleIds: string[], visitAt: Date): Promise<void>;
 }

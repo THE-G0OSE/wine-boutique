@@ -2,7 +2,7 @@ import "reflect-metadata";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { zCreateTastingBookingResponse, zGetTastingsResponse } from "@wine/contracts/openapi/zod";
+import { zCreateTastingBookingResponse, zGetMyTastingsResponse, zGetTastingsResponse } from "@wine/contracts/openapi/zod";
 import { addMonths, listTastings, tastingMonths } from "@wine/demo-data";
 import { loadConfig } from "@wine/service-kit";
 import { createTestApp, migrateDatabase, missingOperations } from "@wine/service-kit/testing";
@@ -57,8 +57,8 @@ describe("tastings на настоящем Postgres", () => {
   });
 
   const get = (url: string) => app.inject({ method: "GET", url: `/api${url}` });
-  const post = (url: string, payload: object) =>
-    app.inject({ method: "POST", url: `/api${url}`, payload, remoteAddress: `10.4.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` });
+  const post = (url: string, payload: object, headers: Record<string, string> = {}) =>
+    app.inject({ method: "POST", url: `/api${url}`, payload, headers, remoteAddress: `10.4.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` });
   const guest = (overrides: object = {}) => ({ name: " Анна ", phone: "+79161234567", guests: 2, consents: { personalData: true }, ...overrides });
 
   it("реализует все свои операции контракта", async () => {
@@ -151,5 +151,23 @@ describe("tastings на настоящем Postgres", () => {
     await seedTastings(prisma);
     expect(await prisma.tasting.count()).toBe(before);
     expect((await prisma.tasting.findUniqueOrThrow({ where: { id: first.id } })).seatsTaken).toBe(first.capacity);
+  });
+
+  it("кабинет: записи и лист ожидания вошедшего гостя — ближайшие первыми, записи на одну дегустацию складываются", async () => {
+    const user = "0192f0a0-0000-7000-8000-00000000c003";
+    const headers = { "x-user-id": user };
+    await prisma.tasting.createMany({ data: [testTasting("2099-02-05-1930", 2), testTasting("2099-02-06-1930", 12), testTasting("2099-02-01-1930", 0)] });
+    expect((await post("/tastings/2099-02-05-1930/bookings", guest({ guests: 1 }), headers)).statusCode).toBe(201);
+    expect((await post("/tastings/2099-02-05-1930/bookings", guest({ guests: 2, phone: "+79160000099" }), headers)).statusCode).toBe(201);
+    expect((await post("/tastings/2099-02-06-1930/waitlist", guest(), headers)).statusCode).toBe(204);
+    expect((await post("/tastings/2099-02-01-1930/bookings", guest({ guests: 1 }))).statusCode).toBe(201);
+
+    const res = await app.inject({ method: "GET", url: "/api/me/tastings", headers });
+    expect(res.headers["cache-control"]).toBe("private, no-store");
+    expect(zGetMyTastingsResponse.parse(res.json()).map(({ tasting, kind, guests }) => [tasting.id, kind, guests])).toEqual([
+      ["2099-02-05-1930", "booking", 3],
+      ["2099-02-06-1930", "waitlist", 2],
+    ]);
+    expect((await app.inject({ method: "GET", url: "/api/me/tastings" })).statusCode).toBe(401);
   });
 });

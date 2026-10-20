@@ -52,7 +52,7 @@ describe("identity на настоящем Postgres", () => {
   it("с cookie сессии — пользователь с инициалами; в базе только хеш токена", async () => {
     const { userId, token } = await sessions.issueForNewUser(" Анна Кузнецова ");
     const res = await getSession(cookie(token));
-    expect(zGetSessionResponse.parse(res.json())).toEqual({ user: { id: userId, name: "Анна Кузнецова", initials: "АК" } });
+    expect(zGetSessionResponse.parse(res.json())).toEqual({ user: { id: userId, name: "Анна Кузнецова", initials: "АК", cardNumber: null } });
     // Только что выданную сессию продлевать рано — cookie не переписываем
     expect(res.headers["set-cookie"]).toBeUndefined();
     const stored = await prisma.session.findFirstOrThrow({ where: { userId } });

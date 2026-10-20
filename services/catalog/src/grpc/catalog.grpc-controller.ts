@@ -8,6 +8,7 @@ import {
   type ResolveWineSlugsResponse,
 } from "@wine/contracts/proto/catalog";
 import { WineLookup } from "../application/wine-lookup.js";
+import { cellarYears } from "../domain/wine.js";
 
 /** Внутренний API для других сервисов (wine.catalog.v1.CatalogService) */
 @Controller()
@@ -17,6 +18,7 @@ export class CatalogGrpcController implements CatalogServiceController {
 
   async getWineSummaries({ ids }: GetWineSummariesRequest): Promise<GetWineSummariesResponse> {
     const wines = await this.lookup.summaries(ids ?? []);
+    const today = new Date();
     return {
       wines: wines.map((wine) => ({
         id: wine.id,
@@ -25,6 +27,13 @@ export class CatalogGrpcController implements CatalogServiceController {
         vintage: wine.vintage ?? undefined,
         priceKopecks: wine.priceKopecks ?? undefined,
         imageUrl: wine.imageUrl,
+        categories: wine.categories,
+        region: wine.region,
+        country: wine.country ?? undefined,
+        grapes: wine.grapes,
+        volumeMl: wine.volumeMl,
+        cellarYears: cellarYears(wine.cellaredAt, today) ?? undefined,
+        bottle: wine.bottle,
       })),
     };
   }

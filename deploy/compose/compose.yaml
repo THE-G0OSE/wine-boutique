@@ -80,7 +80,7 @@ services:
       PGHOST: postgres
       PGUSER: postgres
       PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      SERVICE_DATABASES: catalog news reviews newsletter identity reservations tastings cellar requests
+      SERVICE_DATABASES: catalog news reviews newsletter identity reservations tastings cellar requests loyalty
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD:-dev}
       # Для prisma migrate dev (теневая база); на VPS — false
       ROLE_CREATEDB: "true"
@@ -414,6 +414,41 @@ services:
       postgres: { condition: service_healthy }
       nats: { condition: service_healthy }
       requests-migrate: { condition: service_completed_successfully }
+
+  # Миграции; сида нет — приветственные бонусы начисляются при первом входе в кабинет
+  loyalty-migrate:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      target: migrate
+      args: { SERVICE: loyalty }
+    image: wine-boutique/loyalty-migrate:dev
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://loyalty:${DEV_DB_PASSWORD:-dev}@postgres:5432/loyalty
+      SEED: "false"
+    depends_on:
+      postgres: { condition: service_healthy }
+      postgres-init: { condition: service_completed_successfully }
+
+  # Бонусы, уровни и избранное; карточки избранных вин — у catalog по gRPC
+  loyalty:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args: { SERVICE: loyalty }
+    image: wine-boutique/loyalty:dev
+    environment:
+      <<: *service-env
+      SERVICE_NAME: loyalty
+      OTEL_SERVICE_NAME: loyalty
+      DATABASE_URL: postgresql://loyalty:${DEV_DB_PASSWORD:-dev}@postgres:5432/loyalty
+      CATALOG_GRPC_URL: catalog:50051
+    depends_on:
+      postgres: { condition: service_healthy }
+      nats: { condition: service_healthy }
+      loyalty-migrate: { condition: service_completed_successfully }
 
   # Трейсы, метрики и логи в одном контейнере: OTel Collector + Tempo + Prometheus + Loki + Grafana
   otel-lgtm:

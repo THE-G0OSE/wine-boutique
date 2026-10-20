@@ -51,7 +51,7 @@ describe("край: шлюз и сессия", () => {
 
   it("GET /api/auth/session по cookie — пользователь с инициалами", async () => {
     const res = await request("/api/auth/session", { headers: sessionCookie(user.token) });
-    expect(zGetSessionResponse.parse(await res.json())).toEqual({ user: { id: user.userId, name: "Анна Кузнецова (e2e)", initials: "АК" } });
+    expect(zGetSessionResponse.parse(await res.json())).toEqual({ user: { id: user.userId, name: "Анна Кузнецова (e2e)", initials: "АК", cardNumber: null } });
     expect(res.headers.get("cache-control")).toBe("no-store");
   });
 

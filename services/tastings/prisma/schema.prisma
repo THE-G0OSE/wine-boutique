@@ -51,6 +51,8 @@ model Booking {
   id             String   @id @default(uuid(4)) @db.Uuid
   tastingId      String   @map("tasting_id")
   tasting        Tasting  @relation(fields: [tastingId], references: [id])
+  /// Вошедший гость (id из identity, без внешнего ключа); без входа — null
+  userId         String?  @map("user_id") @db.Uuid
   customerName   String   @map("customer_name")
   /// +7XXXXXXXXXX — наружу не отдаётся
   phone          String
@@ -60,6 +62,7 @@ model Booking {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([tastingId])
+  @@index([userId])
   @@map("bookings")
 }
 
@@ -68,6 +71,7 @@ model WaitlistEntry {
   id             String   @id @default(uuid(4)) @db.Uuid
   tastingId      String   @map("tasting_id")
   tasting        Tasting  @relation(fields: [tastingId], references: [id])
+  userId         String?  @map("user_id") @db.Uuid
   customerName   String   @map("customer_name")
   phone          String
   guests         Int
@@ -77,5 +81,6 @@ model WaitlistEntry {
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([tastingId, phone])
+  @@index([userId])
   @@map("waitlist_entries")
 }

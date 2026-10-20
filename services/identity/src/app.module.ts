@@ -1,7 +1,11 @@
 import { Module, type DynamicModule } from "@nestjs/common";
 import { databaseCheck, ServiceKitModule } from "@wine/service-kit";
+import { RegisterGuest, RequestPhoneCode, VerifyPhoneCode } from "./application/phone-auth.js";
+import { CloseAccount, GetProfile, UpdateProfile } from "./application/profile.js";
 import { IssueSession, ResolveSession } from "./application/sessions.js";
 import type { IdentityConfig } from "./config.js";
+import { AuthController } from "./http/auth.controller.js";
+import { MeController } from "./http/me.controller.js";
 import { ForwardAuthController } from "./http/forward-auth.controller.js";
 import { SessionController } from "./http/session.controller.js";
 import { DatabaseModule } from "./infrastructure/prisma/database.module.js";
@@ -23,8 +27,8 @@ export class AppModule {
         }),
         DatabaseModule,
       ],
-      controllers: [SessionController, ForwardAuthController],
-      providers: [ResolveSession, IssueSession],
+      controllers: [SessionController, AuthController, MeController, ForwardAuthController],
+      providers: [ResolveSession, IssueSession, RequestPhoneCode, VerifyPhoneCode, RegisterGuest, GetProfile, UpdateProfile, CloseAccount],
     };
   }
 }

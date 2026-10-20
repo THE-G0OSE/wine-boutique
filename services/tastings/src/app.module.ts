@@ -1,7 +1,8 @@
 import { Module, type DynamicModule } from "@nestjs/common";
 import { databaseCheck, ServiceKitModule } from "@wine/service-kit";
-import { BookTasting, JoinWaitlist, ListTastings } from "./application/tastings.js";
+import { BookTasting, JoinWaitlist, ListMyTastings, ListTastings } from "./application/tastings.js";
 import type { TastingsConfig } from "./config.js";
+import { MeTastingsController } from "./http/me-tastings.controller.js";
 import { TastingsController } from "./http/tastings.controller.js";
 import { InfrastructureModule } from "./infrastructure/infrastructure.module.js";
 import { TastingsPrisma } from "./infrastructure/prisma/tastings-prisma.js";
@@ -22,8 +23,8 @@ export class AppModule {
         }),
         InfrastructureModule,
       ],
-      controllers: [TastingsController],
-      providers: [ListTastings, BookTasting, JoinWaitlist],
+      controllers: [TastingsController, MeTastingsController],
+      providers: [ListTastings, BookTasting, JoinWaitlist, ListMyTastings],
     };
   }
 }

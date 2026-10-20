@@ -13,17 +13,17 @@ export class PrismaSessionRepository extends SessionRepository {
     return this.prisma.user.create({ data: { name }, select: { id: true } });
   }
 
-  async create(userId: string, tokenHash: Buffer, expiresAt: Date, now: Date): Promise<void> {
-    await this.prisma.session.create({ data: { userId, tokenHash: new Uint8Array(tokenHash), expiresAt, lastSeenAt: now } });
+  async create(userId: string, tokenHash: Buffer, expiresAt: Date, now: Date, userAgent: string | null = null): Promise<void> {
+    await this.prisma.session.create({ data: { userId, tokenHash: new Uint8Array(tokenHash), expiresAt, lastSeenAt: now, userAgent: userAgent?.slice(0, 300) ?? null } });
   }
 
   async findActive(tokenHash: Buffer, now: Date): Promise<ActiveSession | null> {
     const session = await this.prisma.session.findFirst({
       where: { tokenHash: new Uint8Array(tokenHash), revokedAt: null, expiresAt: { gt: now } },
-      select: { id: true, userId: true, expiresAt: true, lastSeenAt: true, user: { select: { name: true } } },
+      select: { id: true, userId: true, expiresAt: true, lastSeenAt: true, user: { select: { name: true, cardNumber: true } } },
     });
     return session
-      ? { sessionId: session.id, userId: session.userId, userName: session.user.name, expiresAt: session.expiresAt, lastSeenAt: session.lastSeenAt }
+      ? { sessionId: session.id, userId: session.userId, userName: session.user.name, cardNumber: session.user.cardNumber, expiresAt: session.expiresAt, lastSeenAt: session.lastSeenAt }
       : null;
   }
 

@@ -21,6 +21,7 @@ const toReservation = (row: ReservationRow): Reservation => ({
   holdUntil: row.holdUntil,
   customerName: row.customerName,
   createdAt: row.createdAt,
+  extended: row.extendedAt !== null,
   items: [...row.items]
     .sort((a, b) => a.position - b.position)
     .map(({ wineId, slug, name, imageUrl, qty, priceKopecks }) => ({ wineId, slug, name, imageUrl, qty, priceKopecks })),
@@ -62,5 +63,24 @@ export class PrismaReservationRepository extends ReservationRepository {
     if (!UUID.test(id)) return null;
     const row = await this.prisma.reservation.findUnique({ where: { id }, include: { items: true } });
     return row ? toReservation(row) : null;
+  }
+
+  async listForUser(userId: string): Promise<Reservation[]> {
+    const rows = await this.prisma.reservation.findMany({ where: { userId }, include: { items: true }, orderBy: { createdAt: "desc" }, take: 100 });
+    return rows.map(toReservation);
+  }
+
+  async findForUser(id: string, userId: string): Promise<Reservation | null> {
+    if (!UUID.test(id)) return null;
+    const row = await this.prisma.reservation.findFirst({ where: { id, userId }, include: { items: true } });
+    return row ? toReservation(row) : null;
+  }
+
+  async extend(id: string, holdUntil: Date, now: Date): Promise<Reservation> {
+    return toReservation(await this.prisma.reservation.update({ where: { id }, data: { holdUntil, extendedAt: now }, include: { items: true } }));
+  }
+
+  async cancel(id: string): Promise<Reservation> {
+    return toReservation(await this.prisma.reservation.update({ where: { id }, data: { status: "cancelled" }, include: { items: true } }));
   }
 }

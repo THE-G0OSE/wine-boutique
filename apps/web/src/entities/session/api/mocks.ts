@@ -1,6 +1,5 @@
 import { mockHttp } from "@/shared/api/mockHttp";
+import { mockSession } from "./mockStore";
 
-/** Вход появится в фазе «Личный кабинет»; пока посетитель всегда гость */
-export const sessionHandlers = [
-  mockHttp.get("/auth/session", ({ response }) => response(200).json({ user: null })),
-];
+/** Кто вошёл: «cookie» мока — в sessionStorage (вход — features/auth/byPhone) */
+export const sessionHandlers = [mockHttp.get("/auth/session", ({ response }) => response(200).json({ user: mockSession.user() }))];

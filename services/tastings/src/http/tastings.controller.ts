@@ -9,7 +9,7 @@ import {
   zJoinTastingWaitlistBody,
   zJoinTastingWaitlistPath,
 } from "@wine/contracts/openapi/zod";
-import { ApiError, ContractResponse, RateLimit, ValidationError } from "@wine/service-kit";
+import { ApiError, ContractResponse, CurrentUser, RateLimit, ValidationError } from "@wine/service-kit";
 import type { z } from "zod";
 import { BookTasting, JoinWaitlist, ListTastings } from "../application/tastings.js";
 import { TastingError } from "../domain/tasting.js";
@@ -48,11 +48,13 @@ export class TastingsController {
   @ContractResponse(zCreateTastingBookingResponse)
   async book(
     @Param({ schema: zCreateTastingBookingPath }) { id }: z.output<typeof zCreateTastingBookingPath>,
-    @Body({ schema: zCreateTastingBookingBody }) body: z.output<typeof zCreateTastingBookingBody>
+    @Body({ schema: zCreateTastingBookingBody }) body: z.output<typeof zCreateTastingBookingBody>,
+    @CurrentUser() userId: string | null
   ): Promise<components["schemas"]["TastingBooking"]> {
     try {
       const now = new Date();
-      const booked = await this.bookTasting.execute(id, body, now);
+      // Вошедший гость (необязательная сессия на шлюзе) — запись попадёт в кабинет
+      const booked = await this.bookTasting.execute(id, { ...body, userId }, now);
       return { id: booked.bookingId, tasting: toTastingContract(booked.tasting, now), guests: booked.guests, customerName: booked.customerName };
     } catch (error) {
       throw toApiError(error);
@@ -67,10 +69,11 @@ export class TastingsController {
   @ValidationError("invalid_booking", INVALID)
   async wait(
     @Param({ schema: zJoinTastingWaitlistPath }) { id }: z.output<typeof zJoinTastingWaitlistPath>,
-    @Body({ schema: zJoinTastingWaitlistBody }) body: z.output<typeof zJoinTastingWaitlistBody>
+    @Body({ schema: zJoinTastingWaitlistBody }) body: z.output<typeof zJoinTastingWaitlistBody>,
+    @CurrentUser() userId: string | null
   ): Promise<void> {
     try {
-      await this.joinWaitlist.execute(id, body);
+      await this.joinWaitlist.execute(id, { ...body, userId });
     } catch (error) {
       throw toApiError(error);
     }

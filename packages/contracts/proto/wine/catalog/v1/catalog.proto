@@ -24,6 +24,16 @@ message WineSummary {
   // Цена в копейках; нет — цена не назначена
   optional int64 price_kopecks = 5;
   string image_url = 6;
+  // Поля списка вин публичного API — для избранного и подборок в других сервисах
+  repeated string categories = 7;
+  string region = 8;
+  optional string country = 9;
+  repeated string grapes = 10;
+  int32 volume_ml = 11;
+  // Лет в погребе бутика на сегодня; нет — срок не указан
+  optional int32 cellar_years = 12;
+  // Силуэт бутылки на полке: red, white, sparkling…
+  string bottle = 13;
 }
 
 message GetWineSummariesResponse {

@@ -26,3 +26,9 @@ export const toReservationContract = (reservation: Reservation, boutique: Boutiq
   })),
   total: totalRubles(reservation.items),
 });
+
+/** Бронь в кабинете — то же, что квитанция, и отметка о продлении */
+export const toMyReservationContract = (reservation: Reservation, boutique: Boutique): Schemas["MyReservation"] => ({
+  ...toReservationContract(reservation, boutique),
+  extended: reservation.extended,
+});

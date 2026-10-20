@@ -45,6 +45,10 @@ model Reservation {
   /// Номер для SMS и бутика: WB-000123
   number         Int               @unique @default(autoincrement())
   status         ReservationStatus @default(active)
+  /// Вошедший гость (id из identity, без внешнего ключа); гость без входа — null
+  userId         String?           @map("user_id") @db.Uuid
+  /// Продлевали ли — продлить можно один раз
+  extendedAt     DateTime?         @map("extended_at") @db.Timestamptz
   boutiqueId     String            @map("boutique_id")
   boutique       Boutique          @relation(fields: [boutiqueId], references: [id])
   pickupAt       DateTime          @map("pickup_at") @db.Timestamptz
@@ -63,6 +67,7 @@ model Reservation {
 
   @@index([boutiqueId, pickupAt])
   @@index([status, holdUntil])
+  @@index([userId, createdAt])
   @@map("reservations")
 }
 

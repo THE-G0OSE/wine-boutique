@@ -49,5 +49,6 @@ export const {
   useGetShelfWinesInfiniteQuery,
   useGetWineFacetsQuery,
   useGetWineQuery,
+  useLazyGetWineQuery,
   useGetSearchSuggestionsQuery,
 } = wineApi;
