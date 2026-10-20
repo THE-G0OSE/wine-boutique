@@ -81,10 +81,22 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import("@/pages/certificates")).CertificatesPage }),
       },
       {
+        path: ROUTES.storage,
+        lazy: async () => ({ Component: (await import("@/pages/storage")).StoragePage }),
+      },
+      {
+        path: ROUTES.faq,
+        lazy: async () => ({ Component: (await import("@/pages/faq")).FaqPage }),
+      },
+      {
+        path: ROUTES.privacy,
+        lazy: async () => ({ Component: (await import("@/pages/privacy")).PrivacyPage }),
+      },
+      {
         path: ROUTES.reviews,
         lazy: async () => ({ Component: (await import("@/pages/reviews")).ReviewsPage }),
       },
-      { path: "*", element: null },
+      { path: "*", lazy: async () => ({ Component: (await import("@/pages/notFound")).NotFoundPage }) },
     ],
   },
 ],

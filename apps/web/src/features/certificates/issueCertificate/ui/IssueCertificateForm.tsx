@@ -194,7 +194,7 @@ const IssueCertificateForm: FC<IProps> = ({ draft, onDraftChange, onIssued, vari
           № {data.serial}. Ссылку на оплату пришлём SMS — после оплаты сертификат станет действующим.
         </Text>
       ) : null}
-      <span className={cn("text-center leading-normal text-cellar-400", { "text-micro": isDesktop, "text-xs": !isDesktop })}>
+      <span className={cn("text-center text-cellar-400", { "text-micro leading-normal": isDesktop, "text-xs leading-normal": !isDesktop })}>
         {isDesktop ? "Алкоголь по сертификату выдаём только в бутике, по паспорту. " : "Алкоголь по сертификату — только в бутике, по паспорту. "}
         Оформляя, вы соглашаетесь с{" "}
         <Link to={ROUTES.privacy} className="text-amber-200 hover:text-paper">

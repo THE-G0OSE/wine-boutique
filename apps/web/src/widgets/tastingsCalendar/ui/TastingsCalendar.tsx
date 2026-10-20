@@ -69,7 +69,7 @@ const DayPanel: FC<IDayPanelProps> = ({ variant, label, tastings, isLoading, wai
               Смотрим афишу…
             </Text>
           ) : tastings.length === 0 ? (
-            <Text COLOR="MUTED" className={cn("leading-[1.55]", { "text-[19px]": isDesktop, "text-sm": !isDesktop })}>
+            <Text COLOR="MUTED" className={cn({ "text-[19px] leading-[1.55]": isDesktop, "text-sm leading-[1.55]": !isDesktop })}>
               В этот день дегустаций нет.{" "}
               {isDesktop ? (
                 <>

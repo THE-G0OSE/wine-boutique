@@ -202,7 +202,7 @@ const GiftBuilder: FC = () => {
         <Text as="h2" id="gift-request" FONT="FIRM" className={cn({ "text-display-sm leading-19": isDesktop, "text-[32px] leading-11.5": !isDesktop })}>
           Обсудим подарки
         </Text>
-        <Text COLOR="MUTED" className={cn("leading-[1.55]", { "text-caption": isDesktop, "text-micro": !isDesktop })}>
+        <Text COLOR="MUTED" className={cn({ "text-caption leading-[1.55]": isDesktop, "text-micro leading-[1.55]": !isDesktop })}>
           {isDesktop
             ? "Пришлём макет бирки и смету за день. Готовые подарки забираете в бутике в удобный день — соберём и упакуем заранее."
             : "Пришлём макет бирки и смету за день. Готовые подарки забираете в бутике."}

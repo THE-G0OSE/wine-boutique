@@ -92,6 +92,19 @@
     --color-kraft-inner: #7A5A3A;
     --color-chocolate: #3B2216;
     --color-chocolate-dark: #2A160D;
+    /* Пробковая доска FAQ: рама, пробка, записки и кнопки-булавки */
+    --color-cork-frame: #5A3A22;
+    --color-cork-frame-inner: #3B2414;
+    --color-cork: #B88654;
+    --color-cork-mid: #B07D4B;
+    --color-cork-dark: #A0703F;
+    --color-note-mint: #CFE3D4;
+    --color-note-lilac: #E6D3F0;
+    --color-pin-blue: #3B7DD8;
+    --color-pin-green: #2F9E5B;
+    /* Документы: бумага политики, «да» в справочнике хранения */
+    --color-document: #EEE3CC;
+    --color-ink-green: #2F6B3A;
     --color-success: #13E101;
     --color-error: #FD2F20;
 

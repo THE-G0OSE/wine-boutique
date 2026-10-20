@@ -98,7 +98,7 @@ const GiftPreview: FC<IProps> = ({ gift, variant }) => {
       >
         <span className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-cellar-900" style={{ left: px(isDesktop ? 22 : 14) }} />
         {isDesktop ? <div className="text-[13px] tracking-[0.2em] text-primary-500 uppercase">гравировка</div> : null}
-        <div className={cn("leading-[1.25] italic", { "mt-1.5 text-lg": isDesktop, "text-sm": !isDesktop })}>{engraving}</div>
+        <div className={cn("italic", { "mt-1.5 text-lg leading-[1.25]": isDesktop, "text-sm leading-[1.25]": !isDesktop })}>{engraving}</div>
         {isDesktop ? <div className="mt-2.5 text-micro text-paper-ink">[логотип компании]</div> : null}
       </div>
       {isDesktop ? <figcaption className="absolute bottom-0 left-0 text-sm text-neutral-350">{caption}</figcaption> : null}

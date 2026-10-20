@@ -153,7 +153,7 @@ const MonthlyCrateShowcase: FC = () => {
                 }
               )}
             >
-              <span className={cn("font-paper-display leading-none font-bold text-amber-200", { "text-display": isDesktop, "text-3xl": !isDesktop })}>{item.count}</span>
+              <span className={cn("font-paper-display font-bold text-amber-200", { "text-display leading-none": isDesktop, "text-3xl leading-none": !isDesktop })}>{item.count}</span>
               {isDesktop ? (
                 <>
                   <span className="font-firm text-[32px] leading-11">{item.title}</span>
@@ -193,8 +193,8 @@ const MonthlyCrateShowcase: FC = () => {
       <div className={cn("text-primary-500", { "text-[22px]": isDesktop, "text-lg": !isDesktop })}>
         {crateStencil(selected.month, selected.wines.length).month} {selected.month.slice(0, 4)}
       </div>
-      <div className={cn("leading-[1.1]", { "text-[38px]": isDesktop, "text-[28px]": !isDesktop })}>«{selected.theme}»</div>
-      <ol className={cn("m-0 leading-[1.35]", { "mt-4 pl-6.5 text-[28px]": isDesktop, "mt-2 pl-5 text-[22px]": !isDesktop })}>
+      <div className={cn({ "text-[38px] leading-[1.1]": isDesktop, "text-[28px] leading-[1.1]": !isDesktop })}>«{selected.theme}»</div>
+      <ol className={cn("m-0", { "mt-4 pl-6.5 text-[28px] leading-[1.35]": isDesktop, "mt-2 pl-5 text-[22px] leading-[1.35]": !isDesktop })}>
         {selected.wines.map((wine) => (
           <li key={wine}>{wine}</li>
         ))}

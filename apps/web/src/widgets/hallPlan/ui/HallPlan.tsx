@@ -102,7 +102,7 @@ const HallPlan: FC = () => {
           {meta.title} · до {meta.capacity} гостей
         </Text>
       ) : null}
-      <Text COLOR="MUTED" className={cn("leading-[1.55]", { "text-[17px]": isDesktop, "text-sm": !isDesktop })}>
+      <Text COLOR="MUTED" className={cn({ "text-[17px] leading-[1.55]": isDesktop, "text-sm leading-[1.55]": !isDesktop })}>
         {isDesktop ? meta.text.desktop : meta.text.mobile}
       </Text>
       <ul className={cn("m-0 flex list-none flex-col p-0", { "gap-2.5 text-[17px]": isDesktop, "gap-1.5 text-[15px]": !isDesktop })}>
