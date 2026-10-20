@@ -17,7 +17,7 @@ pnpm build           # все пакеты; должен проходить пе
 pnpm lint
 pnpm typecheck
 pnpm contracts:gen   # после правки packages/contracts/openapi/openapi.yaml — типы и zod-схемы; результат коммитится
-node apps/web/scripts/optimize-image.mjs <вход> apps/web/public/images/<путь>.webp [ширина] [качество]  # новые картинки — только WebP
+node apps/web/scripts/optimize-image.mjs <вход> apps/web/public/images/<путь>.webp [ширина] [качество]  # новые картинки — только WebP; уменьшенная копия — <имя>-<ширина>w.webp, подключать через srcSet() из shared/lib/srcSet
 ```
 
 На каждый push GitHub Actions (`.github/workflows/ci.yml`) проверяет, что сгенерированное из контракта актуально, гоняет линтер, типы и сборку; из `main` фронт выкладывается на GitHub Pages (`/wine-boutique/`). Бэкенд в CI пока не участвует — будет на VPS.

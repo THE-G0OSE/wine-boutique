@@ -1,6 +1,7 @@
 import type { imageObj } from "@/entities/heroPageImages";
 import { AnimatePresence, motion } from "motion/react";
 import type { FC } from "react";
+import { srcSet } from "@/shared/lib/srcSet";
 import type { HeroCarousel } from "../../../model/types";
 import ProgressBar from "../carouselControls/ui/ProgressBar";
 import SlideCounter from "../carouselControls/ui/SlideCounter";
@@ -22,6 +23,7 @@ const HeroMobile: FC<IProps> = ({ carousel, items }) => {
           key={active.id}
           src={active.path}
           alt=""
+          fetchPriority="high"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -47,7 +49,15 @@ const HeroMobile: FC<IProps> = ({ carousel, items }) => {
             aria-label={`Показать слайд: ${slide.title.replace("\n", "")}`}
             className="relative h-59 w-44 shrink-0 cursor-pointer snap-start overflow-hidden rounded-[10px] border-0 p-0 text-left"
           >
-            <img src={slide.path} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
+            {/* Карточка 176×236 режет кадр 16:9 по высоте — нужна ширина ~420 px */}
+            <img
+              src={slide.path}
+              srcSet={srcSet(slide.path, [640, 960], 1920)}
+              sizes="420px"
+              alt=""
+              loading="lazy"
+              className="absolute inset-0 size-full object-cover"
+            />
             <span aria-hidden="true" className="absolute inset-0 shadow-[inset_0_-50px_30px_0_rgba(0,0,0,0.75)]" />
             <span className="absolute right-3 bottom-4 left-4 flex flex-col gap-1">
               <span className="text-[11px] text-neutral-350">{slide.additional}</span>

@@ -43,11 +43,13 @@ jobs:
       # Сборка сразу под GitHub Pages. Без переменных репозитория — подпапка /<имя репозитория>/ и моки MSW.
       # С бэкендом на VPS (Settings → Secrets and variables → Actions → Variables):
       #   API_URL=https://api.<домен>/api — фронт ходит в настоящий API (его origin попадёт в CSP);
-      #   PAGES_BASE_PATH=/ — если у Pages свой домен (без него cookie сессии не будут «своими»)
+      #   PAGES_BASE_PATH=/ — если у Pages свой домен (без него cookie сессии не будут «своими»);
+      #   SITE_URL=https://<домен>/ — адрес сайта для превью ссылок (Open Graph), по умолчанию — адрес Pages
       - name: Сборка
         run: pnpm turbo run build --filter "@wine/web..."
         env:
           BASE_PATH: ${{ vars.PAGES_BASE_PATH || format('/{0}/', github.event.repository.name) }}
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
           VITE_API_URL: ${{ vars.API_URL || '/api' }}
           VITE_API_MOCKS: ${{ vars.API_URL && 'false' || 'true' }}
 

@@ -16,13 +16,30 @@ const serializeParams = (params: Record<string, unknown>) => {
   return search.toString();
 };
 
+let apiReady: Promise<unknown> = Promise.resolve();
+
+/**
+ * Запросы к API ждут этого обещания. Так приложение рисуется сразу, а не после запуска мок-сервера:
+ * MSW в демо-сборке — сотни килобайт, и первый экран без данных лучше пустой страницы.
+ */
+export const holdApiUntil = (promise: Promise<unknown>) => {
+  apiReady = promise;
+};
+
+const rawBaseQuery = fetchBaseQuery({ baseUrl: env.apiUrl, credentials: "include", paramsSerializer: serializeParams });
+
+const baseQuery: typeof rawBaseQuery = async (args, api, extraOptions) => {
+  await apiReady;
+  return rawBaseQuery(args, api, extraOptions);
+};
+
 /**
  * Единый RTK Query API. Эндпоинты добавляют слайсы через `baseApi.injectEndpoints`
  * в своём сегменте `api/`. Контракт — api/openapi.yaml.
  */
 export const baseApi = createApi({
   reducerPath: "api",
-  baseQuery: fetchBaseQuery({ baseUrl: env.apiUrl, credentials: "include", paramsSerializer: serializeParams }),
+  baseQuery,
   tagTypes: ["Wine", "Shelf", "Grape", "Session", "NewsIssue", "NewsArticle", "Tasting", "Profile", "MyReservations", "MyTastings", "MyCell", "MyMonthly", "MyCertificates", "Loyalty", "Favorites"],
   endpoints: () => ({}),
 });

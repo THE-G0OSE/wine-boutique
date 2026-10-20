@@ -10,6 +10,7 @@ import GrapeCluster from "./components/grapeCluster/GrapeCluster";
 import GrapeModal from "./components/grapeModal/GrapeModal";
 import GrapeSheet from "./components/grapeSheet/GrapeSheet";
 import { asset } from "@/shared/lib/asset";
+import { srcSet } from "@/shared/lib/srcSet";
 
 interface ISectionProps {
   grapes: GrapeVariety[];
@@ -89,6 +90,8 @@ const VineyardsStrip: FC<ISectionProps> = ({ grapes, titleId, onOpen }) => (
           <span aria-hidden="true" className="absolute top-0 left-1/2 h-10 w-0.5 bg-amber-650" />
           <img
             src={grape.image}
+            srcSet={srcSet(grape.image, [360], 700)}
+            sizes="145px"
             alt=""
             loading="lazy"
             className="absolute inset-x-0 top-7.5 mx-auto h-52.5 w-auto origin-top animate-sway brightness-80 contrast-92 saturate-80 sepia-15 drop-shadow-[0_12px_14px_rgba(0,0,0,0.6)]"

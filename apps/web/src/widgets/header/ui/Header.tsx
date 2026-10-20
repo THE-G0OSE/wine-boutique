@@ -56,19 +56,19 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Десктопная шапка */}
-      <div className="relative hidden h-full items-center justify-between gap-6 px-10 lg:flex 2xl:px-30">
+      {/* Десктопная шапка; на 1024–1279 всё чуть мельче — иначе логотип, меню и кнопки не помещаются в строку */}
+      <div className="relative hidden h-full items-center justify-between gap-4 px-6 lg:flex xl:gap-6 xl:px-10 2xl:px-30">
         <Link
           to={ROUTES.home}
           aria-label="Premium Wine Boutique — на главную"
           className={cn(
-            "font-firm text-[24px] leading-[1.45] whitespace-nowrap text-white no-underline transition-opacity duration-300 2xl:text-xl",
+            "font-firm text-md xl:text-[24px] leading-[1.45] whitespace-nowrap text-white no-underline transition-opacity duration-300 2xl:text-xl",
             isHome && !isSolid && "invisible opacity-0"
           )}
         >
           Premium Wine Boutique
         </Link>
-        <nav aria-label="Основная навигация" className="flex items-center gap-5 xl:gap-6 2xl:gap-9">
+        <nav aria-label="Основная навигация" className="flex items-center gap-4 xl:gap-6 2xl:gap-9">
           {MAIN_NAV.map((link) => (
             <NavLink
               key={link.to}
@@ -76,7 +76,7 @@ const Header = () => {
               end={link.to === ROUTES.home}
               className={({ isActive }) =>
                 cn(
-                  "border-b-2 pt-2.5 pb-1.5 text-sm font-semibold no-underline transition-colors xl:text-caption 2xl:text-md",
+                  "border-b-2 pt-2.5 pb-1.5 text-micro font-semibold no-underline transition-colors xl:text-caption 2xl:text-md",
                   isActive ? "border-amber-200 text-amber-200" : "border-transparent text-white hover:text-amber-200"
                 )
               }

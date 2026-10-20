@@ -5,6 +5,7 @@ import type { FC } from "react";
 import { useLastDefined } from "@/shared/lib/hooks/useLastDefined";
 import { ButtonLink, Drawer } from "uikit;/";
 import { GRAPE_TONE } from "../../../model/layout";
+import { srcSet } from "@/shared/lib/srcSet";
 
 interface IProps {
   grape: GrapeVariety | null;
@@ -26,7 +27,7 @@ const GrapeSheet: FC<IProps> = ({ grape: openedGrape, onClose }) => {
         <>
           <span aria-hidden="true" className="mx-auto block h-1.25 w-11 shrink-0 rounded-full bg-neutral-350" />
           <div className="mt-3.5 grid grid-cols-[90px_1fr] items-center gap-3.5">
-            <img src={grape.image} alt="" className="h-32.5 w-auto justify-self-center" />
+            <img src={grape.image} srcSet={srcSet(grape.image, [360], 700)} sizes="90px" alt="" className="h-32.5 w-auto justify-self-center" />
             <div className="flex flex-col gap-1">
               <span className={cn("text-[13px]", GRAPE_TONE[grape.type].onPaper)}>{GRAPE_TYPE_LABELS[grape.type].short}</span>
               <span className="font-firm text-xl leading-10">{grape.name}</span>

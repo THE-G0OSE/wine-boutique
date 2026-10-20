@@ -4,7 +4,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
-      "env": ["BASE_PATH", "VITE_*"]
+      "env": ["BASE_PATH", "SITE_URL", "VITE_*"]
     },
     "typecheck": { "dependsOn": ["^build"] },
     "lint": { "dependsOn": ["^build"] },

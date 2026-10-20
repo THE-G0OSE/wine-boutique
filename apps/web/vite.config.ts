@@ -34,13 +34,43 @@ const securityMeta = (apiUrl: string): Plugin => {
   }
 }
 
+/**
+ * Превью ссылки в мессенджерах и соцсетях (Open Graph): им нужен абсолютный адрес картинки,
+ * поэтому теги появляются, только когда сборке известен адрес сайта (SITE_URL, задаёт CI)
+ */
+const socialMeta = (siteUrl: string | undefined): Plugin => {
+  const site = siteUrl ? new URL(siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`) : null
+  const meta = (property: string, content: string) => ({ tag: 'meta', attrs: { property, content }, injectTo: 'head' as const })
+  return {
+    name: 'social-meta',
+    apply: 'build',
+    transformIndexHtml: (html) => {
+      if (!site) return []
+      const title = /<title>(.*?)<\/title>/.exec(html)?.[1] ?? ''
+      const description = /<meta name="description" content="(.*?)"/.exec(html)?.[1] ?? ''
+      return [
+        meta('og:type', 'website'),
+        meta('og:locale', 'ru_RU'),
+        meta('og:site_name', 'Premium Wine Boutique'),
+        meta('og:title', title),
+        meta('og:description', description),
+        meta('og:url', site.href),
+        meta('og:image', new URL('og-image.jpg', site).href),
+        meta('og:image:width', '1200'),
+        meta('og:image:height', '630'),
+        { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' }, injectTo: 'head' },
+      ]
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname)
   return {
     // Путь, с которого раздаётся сайт: «/» локально и на своём домене, «/wine-boutique/» на GitHub Pages (задаёт CI)
     base: process.env.BASE_PATH || "/",
-    plugins: [react(), tailwindcss(), securityMeta(env.VITE_API_URL || "/api")],
+    plugins: [react(), tailwindcss(), securityMeta(env.VITE_API_URL || "/api"), socialMeta(process.env.SITE_URL)],
     // С VITE_API_MOCKS=false запросы /api идут в бэкенд из deploy/compose (Traefik на :18080)
     server: {
       proxy: { "/api": { target: process.env.API_PROXY_TARGET || "http://localhost:18080", changeOrigin: true } },

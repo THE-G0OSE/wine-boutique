@@ -35,6 +35,8 @@ const HeroPageImage: FC<IProps> = ({ image, index, initial, animate, exit, scale
       <motion.img
         src={image.path}
         alt=""
+        // Фон слайдера — первый крупный кадр страницы (LCP): грузим раньше остальных картинок
+        fetchPriority={isBackground ? "high" : "auto"}
         draggable={false}
         initial={false}
         animate={{ filter: isBackground ? "brightness(0.72)" : "brightness(1)" }}
