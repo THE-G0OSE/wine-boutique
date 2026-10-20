@@ -21,24 +21,32 @@ RUN pnpm turbo run build --filter "@wine/${SERVICE}..."
 # Только прод-зависимости сервиса; пакеты workspace (service-kit, contracts) копируются внутрь вместе с dist
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store     pnpm --filter "@wine/${SERVICE}" deploy --prod --legacy --store-dir "$PNPM_STORE" /out
 
-# Миграции и сид — отдельный одноразовый контейнер перед запуском сервиса: Prisma CLI — dev-зависимость
-# и в прод-образ не попадает. docker build --target migrate …; SEED=true — ещё и демо-данные
-FROM build AS migrate
-ARG SERVICE
-WORKDIR /repo/services/${SERVICE}
-# Без баннера «обновитесь до prisma@latest»: latest — это 8.0 RC, мы на 7.10 намеренно
-ENV NODE_ENV=production \
-    PRISMA_HIDE_UPDATE_MESSAGE=true
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy && if [ \"$SEED\" = true ]; then node dist/seed.js; fi"]
-
-FROM ${NODE_IMAGE}
-ENV NODE_ENV=production \
-    HTTP_PORT=3000
+# Общая основа образов сервиса и миграций: Node и Prisma CLI. CLI нужен только миграциям, но лежит здесь, под слоем сервиса:
+# слой с ним одинаков у всех 20 образов и хранится на диске один раз (~300 МБ), а над слоем /out он повторился бы 10 раз.
+# На VPS с диском 20 ГБ это разница между «помещается» и «нет»
+FROM ${NODE_IMAGE} AS base
+ARG PRISMA_VERSION=7.10.1
+RUN npm install --prefix /opt/prisma --omit=dev --no-audit --no-fund --loglevel=error "prisma@${PRISMA_VERSION}"  && npm cache clean --force
+ENV NODE_ENV=production     HTTP_PORT=3000     PRISMA_HIDE_UPDATE_MESSAGE=true
 WORKDIR /app
+
+FROM base AS runtime
 COPY --from=build --chown=node:node /out ./
 USER node
 EXPOSE 3000
-HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
-  CMD wget -qO /dev/null http://127.0.0.1:3000/health/ready || exit 1
+
+# Миграции и сид — одноразовый контейнер перед запуском сервиса: docker build --target migrate …; SEED=true — ещё и демо-данные.
+# Поверх образа сервиса: сид — dist/seed.js с прод-зависимостями; добавляются схема, миграции и prisma.config.ts
+# (он импортирует prisma/config — ссылка на CLI в node_modules). Раньше здесь был весь этап build — 2,4 ГБ на сервис
+FROM runtime AS migrate
+ARG SERVICE
+RUN ln -s /opt/prisma/node_modules/prisma /app/node_modules/prisma
+COPY --from=build /repo/services/${SERVICE}/prisma ./prisma
+COPY --from=build /repo/services/${SERVICE}/prisma.config.ts ./
+CMD ["sh", "-c", "/opt/prisma/node_modules/.bin/prisma migrate deploy && if [ \"$SEED\" = true ]; then node dist/seed.js; fi"]
+
+# Образ сервиса — последний этап (сборка без --target)
+FROM runtime
+HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3   CMD wget -qO /dev/null http://127.0.0.1:3000/health/ready || exit 1
 # OpenTelemetry (@wine/service-kit/telemetry): настраивается переменными OTEL_*, OTEL_SDK_DISABLED=true — выключено
 CMD ["node", "--enable-source-maps", "--import", "@wine/service-kit/telemetry", "dist/main.js"]
