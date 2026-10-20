@@ -54,7 +54,7 @@ node apps/web/scripts/optimize-image.mjs <исходник> apps/web/public/imag
 
 ## Деплой — GitHub Pages
 
-Фронт выкладывается на GitHub Pages из `main` ([ci.yml](.github/workflows/ci.yml), job «Деплой на GitHub Pages»): адрес — `https://the-g0ose.github.io/wine-boutique/`. Пока в репозитории не задана переменная `API_URL`, данные — моки MSW прямо в браузере.
+Фронт выкладывается на GitHub Pages из `main` ([ci.yml](.github/workflows/ci.yml), job «Деплой на GitHub Pages»): адрес — `https://the-g0ose.github.io/wine-boutique/`. Пока в репозитории не задана переменная `API_URL`, данные — моки MSW прямо в браузере. Полная версия с настоящим API и входом — на VPS (ниже).
 
 - Один раз включить: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 - Сайт живёт в подпапке, поэтому сборка для Pages идёт с `BASE_PATH=/wine-boutique/`: Vite подставляет base в ассеты, роутер — в адреса, картинки из `public/` берутся через `asset()` из `shared/lib`. Локально `BASE_PATH` не задаётся — сайт на `/`.
@@ -85,16 +85,18 @@ docker compose exec reviews node dist/cli.js publish <id> --topic tasting --gree
 docker compose exec identity node dist/cli.js session:issue --name "Анна Кузнецова"  # сессия для разработки
 ```
 
-## Выкатка бэкенда на VPS
+## Выкатка на VPS
 
-Docker Compose на VPS у российского провайдера (от 4 vCPU, 8 ГБ RAM): Traefik с TLS от Let's Encrypt, сервисы, Postgres, NATS. Конфигурация — [compose.yaml](deploy/compose/compose.yaml) + [compose.prod.yaml](deploy/compose/compose.prod.yaml).
+Весь сайт на одном адресе: Traefik с TLS от Let's Encrypt отдаёт `/api` сервисам, остальное — фронту (nginx со сборкой Vite, [apps/web/Dockerfile](apps/web/Dockerfile)). Cookie сессии — свои, CORS не нужен. Конфигурация — [compose.yaml](deploy/compose/compose.yaml) + [compose.prod.yaml](deploy/compose/compose.prod.yaml).
+
+Сейчас: **https://194-226-99-185.sslip.io** — VPS 2 vCPU / 2 ГБ RAM + 2 ГБ swap / 20 ГБ, Ubuntu 26.04, без Grafana. Своего домена нет: `sslip.io` превращает `194-226-99-185.sslip.io` в IP, Let's Encrypt такой адрес принимает. Появится домен — A-запись на IP и `API_DOMAIN` / `FRONT_ORIGIN` в `.env`.
 
 Один раз на VPS:
 
-1. Docker Engine с плагином Compose; зеркало Docker Hub провайдера в `/etc/docker/daemon.json` (`registry-mirrors`) — Docker Hub из России нестабилен.
-2. DNS: A-запись `api.<домен>` на IP VPS; открыть порты 80 и 443.
+1. `apt install docker.io docker-compose-v2 docker-buildx git`; swap 2 ГБ (`/swapfile`) — иначе сборка образов упрётся в память. Docker Hub с этого VPS доступен напрямую; если нет — зеркало провайдера в `/etc/docker/daemon.json` (`registry-mirrors`).
+2. Наружу открыты только 22, 80 и 443 (Postgres и NATS в проде портов не публикуют).
 3. `git clone https://github.com/THE-G0OSE/wine-boutique.git /opt/wine-boutique/app`
-4. `/opt/wine-boutique/.env` по образцу [deploy/vps/.env.example](deploy/vps/.env.example), `chmod 600`. Первая выкатка — с `SEED=true` (демо-данные), потом `false`.
+4. `/opt/wine-boutique/.env` по образцу [deploy/vps/.env.example](deploy/vps/.env.example), `chmod 600`, пароли — `openssl rand` прямо на сервере. Первая выкатка — с `SEED=true` (демо-данные), потом `false`.
 
 Выкатка и откат — с машины разработчика по SSH:
 
