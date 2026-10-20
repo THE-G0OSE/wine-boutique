@@ -67,9 +67,14 @@ services:
       - postgres-data:/var/lib/postgresql
       - ./postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      # По TCP: при первом запуске init-скрипты работают на временном сервере, который слушает только сокет, —
+      # проверка через сокет сказала бы «готов» раньше, и миграции сервисов не достучались бы до базы
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres"]
       interval: 5s
       retries: 10
+      # Первый запуск (init-скрипты, контрольная точка при перезапуске) на медленном диске дольше 50 с
+      start_period: 2m
+      start_interval: 2s
 
   nats:
     image: nats:2.15.1-alpine

@@ -1,0 +1,121 @@
+# VPS: поверх compose.yaml — docker compose -f compose.yaml -f compose.prod.yaml --env-file /opt/wine-boutique/.env up -d
+# Выкатка и откат — deploy/vps/deploy.sh; переменные — deploy/vps/.env.example.
+# Отличия от разработки: только 80/443 наружу, TLS от Let's Encrypt, CORS и общий лимит на шлюзе,
+# свой пароль у роли каждого сервиса, образы с тегом коммита, без тестовых маршрутов края.
+
+x-prod-service-env: &prod-service-env
+  ALLOWED_ORIGINS: ${FRONT_ORIGIN:?адрес фронта, например https://example.ru}
+
+services:
+  traefik:
+    command: !override
+      # Маршруты из dynamic.yml привязаны ко входу web — на VPS это HTTPS; :80 только перенаправляет
+      - --entrypoints.http.address=:80
+      - --entrypoints.http.http.redirections.entrypoint.to=web
+      - --entrypoints.http.http.redirections.entrypoint.scheme=https
+      # 308: POST после перенаправления остаётся POST
+      - --entrypoints.http.http.redirections.entrypoint.permanent=true
+      - --entrypoints.web.address=:443
+      - --entrypoints.web.http.middlewares=strip-internal-headers@file,cors@file,gateway-rate-limit@file
+      - --entrypoints.web.http.tls.certresolver=letsencrypt
+      - --entrypoints.web.http.tls.domains[0].main=${API_DOMAIN:?домен API, например api.example.ru}
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?почта для Let's Encrypt}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.caserver=${ACME_CA_SERVER:-https://acme-v02.api.letsencrypt.org/directory}
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --ping=true
+      - --accesslog=true
+      - --accesslog.format=json
+      - --tracing.otlp=${TRAEFIK_TRACING:-false}
+      - --tracing.otlp.http.endpoint=http://otel-lgtm:4318/v1/traces
+      - --tracing.serviceName=traefik
+    environment:
+      FRONT_ORIGIN: ${FRONT_ORIGIN}
+    ports: !override
+      - "${PUBLIC_HTTP_PORT:-80}:80"
+      - "${PUBLIC_HTTPS_PORT:-443}:443"
+    volumes: !override
+      - ../traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+      - ../traefik/prod/edge.yml:/etc/traefik/dynamic/edge.yml:ro
+      - letsencrypt:/letsencrypt
+
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      ROLE_CREATEDB: "false"
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD:?}
+      NEWS_DB_PASSWORD: ${NEWS_DB_PASSWORD:?}
+      REVIEWS_DB_PASSWORD: ${REVIEWS_DB_PASSWORD:?}
+      NEWSLETTER_DB_PASSWORD: ${NEWSLETTER_DB_PASSWORD:?}
+      IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD:?}
+    ports: !reset []
+
+  nats:
+    ports: !reset []
+
+  whoami:
+    # Эхо для тестов края — только в разработке
+    profiles: [dev-only]
+
+  identity-migrate:
+    image: wine-boutique/identity-migrate:${TAG:?}
+    environment:
+      DATABASE_URL: postgresql://identity:${IDENTITY_DB_PASSWORD}@postgres:5432/identity
+  identity:
+    image: wine-boutique/identity:${TAG:?}
+    environment:
+      <<: *prod-service-env
+      DATABASE_URL: postgresql://identity:${IDENTITY_DB_PASSWORD}@postgres:5432/identity
+
+  catalog-migrate:
+    image: wine-boutique/catalog-migrate:${TAG:?}
+    environment:
+      DATABASE_URL: postgresql://catalog:${CATALOG_DB_PASSWORD}@postgres:5432/catalog
+      SEED: ${SEED:-false}
+  catalog:
+    image: wine-boutique/catalog:${TAG:?}
+    environment:
+      <<: *prod-service-env
+      DATABASE_URL: postgresql://catalog:${CATALOG_DB_PASSWORD}@postgres:5432/catalog
+
+  news-migrate:
+    image: wine-boutique/news-migrate:${TAG:?}
+    environment:
+      DATABASE_URL: postgresql://news:${NEWS_DB_PASSWORD}@postgres:5432/news
+      SEED: ${SEED:-false}
+  news:
+    image: wine-boutique/news:${TAG:?}
+    environment:
+      <<: *prod-service-env
+      DATABASE_URL: postgresql://news:${NEWS_DB_PASSWORD}@postgres:5432/news
+
+  reviews-migrate:
+    image: wine-boutique/reviews-migrate:${TAG:?}
+    environment:
+      DATABASE_URL: postgresql://reviews:${REVIEWS_DB_PASSWORD}@postgres:5432/reviews
+      SEED: ${SEED:-false}
+  reviews:
+    image: wine-boutique/reviews:${TAG:?}
+    environment:
+      <<: *prod-service-env
+      DATABASE_URL: postgresql://reviews:${REVIEWS_DB_PASSWORD}@postgres:5432/reviews
+
+  newsletter-migrate:
+    image: wine-boutique/newsletter-migrate:${TAG:?}
+    environment:
+      DATABASE_URL: postgresql://newsletter:${NEWSLETTER_DB_PASSWORD}@postgres:5432/newsletter
+  newsletter:
+    image: wine-boutique/newsletter:${TAG:?}
+    environment:
+      <<: *prod-service-env
+      DATABASE_URL: postgresql://newsletter:${NEWSLETTER_DB_PASSWORD}@postgres:5432/newsletter
+
+  otel-lgtm:
+    # Grafana — только через SSH-туннель: ssh -L 3001:127.0.0.1:3001 <vps>
+    ports: !override
+      - "127.0.0.1:3001:3000"
+
+volumes:
+  letsencrypt:

@@ -40,11 +40,16 @@ jobs:
 
       - run: pnpm turbo run lint typecheck --filter "@wine/web..."
 
-      # Сборка сразу под GitHub Pages: сайт живёт в подпапке /<имя репозитория>/, API — моки MSW
+      # Сборка сразу под GitHub Pages. Без переменных репозитория — подпапка /<имя репозитория>/ и моки MSW.
+      # С бэкендом на VPS (Settings → Secrets and variables → Actions → Variables):
+      #   API_URL=https://api.<домен>/api — фронт ходит в настоящий API (его origin попадёт в CSP);
+      #   PAGES_BASE_PATH=/ — если у Pages свой домен (без него cookie сессии не будут «своими»)
       - name: Сборка
         run: pnpm turbo run build --filter "@wine/web..."
         env:
-          BASE_PATH: /${{ github.event.repository.name }}/
+          BASE_PATH: ${{ vars.PAGES_BASE_PATH || format('/{0}/', github.event.repository.name) }}
+          VITE_API_URL: ${{ vars.API_URL || '/api' }}
+          VITE_API_MOCKS: ${{ vars.API_URL && 'false' || 'true' }}
 
       # У Pages нет SPA-фолбэка: прямой заход на /news/archive отдаёт 404.html — пусть это будет само приложение
       - name: SPA-фолбэк для Pages

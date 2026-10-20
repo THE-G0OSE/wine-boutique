@@ -1,0 +1,22 @@
+# Только для VPS (compose.prod.yaml): то, чего нет в разработке, где фронт ходит в API через прокси Vite.
+# Шаблон Go: значения — из окружения контейнера Traefik.
+http:
+  middlewares:
+    # Фронт на Pages и API на своём поддомене — разные origin: браузеру нужен CORS с cookie
+    cors:
+      headers:
+        accessControlAllowOriginList: ['{{ env "FRONT_ORIGIN" }}']
+        accessControlAllowMethods: [GET, POST, OPTIONS]
+        accessControlAllowHeaders: [Content-Type]
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 600
+        addVaryHeader: true
+
+    # Грубый лимит с одного адреса против потока запросов; точные лимиты форм — в сервисах (@RateLimit).
+    # С запасом: за одним адресом мобильного оператора (CGNAT) бывают сотни посетителей.
+    # Ответ сверх лимита — 429 от Traefik простым текстом, не в формате контракта
+    gateway-rate-limit:
+      rateLimit:
+        average: 100
+        period: 1s
+        burst: 200
