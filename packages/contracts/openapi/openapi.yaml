@@ -26,6 +26,8 @@ tags:
     description: Бутики, бронь бутылок и самовывоз
   - name: tastings
     description: Дегустации в погребе — афиша, запись и лист ожидания
+  - name: cellar
+    description: Личные ячейки хранения в погребе
 
 paths:
   /shelves:
@@ -516,6 +518,58 @@ paths:
                 $ref: "#/components/schemas/Error"
         "422":
           description: Неверные имя или телефон, нет согласия (code invalid_booking)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cellar/cells:
+    get:
+      tags: [cellar]
+      operationId: getCellarCells
+      summary: Стена ячеек погреба — какие свободны
+      description: Четыре ряда по восемь — сверху малые, ниже средние, внизу большие. Занятость меняется с договорами — ответ не кэшируется
+      responses:
+        "200":
+          description: Ячейки по рядам слева направо
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CellarCell"
+
+  /cellar/requests:
+    post:
+      tags: [cellar]
+      operationId: createCellarRequest
+      summary: Заявка на ячейку — перезвоним и договоримся о бутылках
+      description: Ячейка не бронируется до договора в бутике — заявка только предупреждает управляющего
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCellarRequest"
+      responses:
+        "201":
+          description: Заявка принята
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CellarRequest"
+        "403":
+          $ref: "#/components/responses/ForeignOrigin"
+        "409":
+          description: Ячейку уже заняли (code cell_busy) — выберите другую
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Неверные имя, телефон или ячейка (code invalid_request)
           content:
             application/json:
               schema:
@@ -1242,6 +1296,89 @@ components:
           type: integer
         customerName:
           type: string
+
+    CellarTier:
+      type: string
+      description: small — до 12 бутылок, medium — до 24, large — до 48
+      enum: [small, medium, large]
+
+    CellarTerm:
+      type: string
+      description: Срок хранения — 3 месяца (пробно), год (−10 %), три года (−20 %)
+      enum: [3m, 1y, 3y]
+
+    CellarCell:
+      type: object
+      required: [number, row, tier, capacity, status, pricePerMonth]
+      properties:
+        number:
+          type: string
+          description: Номер на латунной табличке
+          examples: ["205"]
+        row:
+          type: integer
+          description: Ряд сверху вниз, 1–4
+        tier:
+          $ref: "#/components/schemas/CellarTier"
+        capacity:
+          type: integer
+          description: Бутылок
+          examples: [24]
+        status:
+          type: string
+          enum: [free, busy]
+        pricePerMonth:
+          type: [integer, "null"]
+          description: Рублей в месяц без скидки за срок; null — цена ещё не назначена
+
+    NewCellarRequest:
+      type: object
+      required: [cellNumber, term, name, phone, consents]
+      properties:
+        cellNumber:
+          type: string
+        term:
+          $ref: "#/components/schemas/CellarTerm"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          description: Российский номер в формате +7XXXXXXXXXX
+          pattern: "^\\+7\\d{10}$"
+        bottles:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: Сколько бутылок примерно
+        email:
+          type: string
+          format: email
+          maxLength: 120
+        consents:
+          type: object
+          required: [personalData]
+          properties:
+            personalData:
+              type: boolean
+              const: true
+              description: Согласие с политикой конфиденциальности — отправка заявки
+
+    CellarRequest:
+      type: object
+      required: [id, cellNumber, tier, term]
+      description: Принятая заявка — телефон и почта в ответ не попадают
+      properties:
+        id:
+          type: string
+          format: uuid
+        cellNumber:
+          type: string
+        tier:
+          $ref: "#/components/schemas/CellarTier"
+        term:
+          $ref: "#/components/schemas/CellarTerm"
 
     WinePage:
       type: object

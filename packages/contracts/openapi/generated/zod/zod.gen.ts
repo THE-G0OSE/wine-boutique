@@ -290,6 +290,55 @@ export const zTastingBooking = z.object({
     customerName: z.string()
 });
 
+/**
+ * small — до 12 бутылок, medium — до 24, large — до 48
+ */
+export const zCellarTier = z.enum([
+    'small',
+    'medium',
+    'large'
+]);
+
+/**
+ * Срок хранения — 3 месяца (пробно), год (−10 %), три года (−20 %)
+ */
+export const zCellarTerm = z.enum([
+    '3m',
+    '1y',
+    '3y'
+]);
+
+export const zCellarCell = z.object({
+    number: z.string(),
+    row: z.int(),
+    tier: zCellarTier,
+    capacity: z.int(),
+    status: z.enum(['free', 'busy']),
+    pricePerMonth: z.int().nullable()
+});
+
+export const zNewCellarRequest = z.object({
+    cellNumber: z.string(),
+    term: zCellarTerm,
+    name: z.string().min(1).max(80),
+    phone: z.string().regex(/^\+7\d{10}$/),
+    bottles: z.int().gte(1).lte(500).optional(),
+    email: z.email().max(120).optional(),
+    consents: z.object({
+        personalData: z.literal(true)
+    })
+});
+
+/**
+ * Принятая заявка — телефон и почта в ответ не попадают
+ */
+export const zCellarRequest = z.object({
+    id: z.uuid(),
+    cellNumber: z.string(),
+    tier: zCellarTier,
+    term: zCellarTerm
+});
+
 export const zWinePage = z.object({
     items: z.array(zWineSummary),
     total: z.int()
@@ -717,6 +766,18 @@ export const zJoinTastingWaitlistPath = z.object({
  * Гость в листе ожидания
  */
 export const zJoinTastingWaitlistResponse = z.void();
+
+/**
+ * Ячейки по рядам слева направо
+ */
+export const zGetCellarCellsResponse = z.array(zCellarCell);
+
+export const zCreateCellarRequestBody = zNewCellarRequest;
+
+/**
+ * Заявка принята
+ */
+export const zCreateCellarRequestResponse = zCellarRequest;
 
 export const zGetReviewsQuery = z.object({
     limit: z.int().gte(1).lte(20).optional().default(5),

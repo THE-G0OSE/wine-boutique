@@ -74,6 +74,11 @@
     --color-airmail: #2B4C8C;
     /* Дегустации: метка мастер-класса (вертикаль — amber-350, слепая — secondary-200, гастроужин — primary-200) */
     --color-sage: #8FB3A3;
+    /* Стеллаж ячеек погреба: рама, дерево сверху вниз, горлышки бутылок в занятых */
+    --color-rack-600: #4A3020;
+    --color-rack-700: #3A2618;
+    --color-rack-800: #2A1B11;
+    --color-rack-neck: #3A2A20;
     --color-success: #13E101;
     --color-error: #FD2F20;
 

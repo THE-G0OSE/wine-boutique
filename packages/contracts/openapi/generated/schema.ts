@@ -331,6 +331,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cellar/cells": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Стена ячеек погреба — какие свободны
+         * @description Четыре ряда по восемь — сверху малые, ниже средние, внизу большие. Занятость меняется с договорами — ответ не кэшируется
+         */
+        get: operations["getCellarCells"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cellar/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Заявка на ячейку — перезвоним и договоримся о бутылках
+         * @description Ячейка не бронируется до договора в бутике — заявка только предупреждает управляющего
+         */
+        post: operations["createCellarRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reviews": {
         parameters: {
             query?: never;
@@ -687,6 +727,61 @@ export interface components {
             tasting: components["schemas"]["Tasting"];
             guests: number;
             customerName: string;
+        };
+        /**
+         * @description small — до 12 бутылок, medium — до 24, large — до 48
+         * @enum {string}
+         */
+        CellarTier: "small" | "medium" | "large";
+        /**
+         * @description Срок хранения — 3 месяца (пробно), год (−10 %), три года (−20 %)
+         * @enum {string}
+         */
+        CellarTerm: "3m" | "1y" | "3y";
+        CellarCell: {
+            /**
+             * @description Номер на латунной табличке
+             * @example 205
+             */
+            number: string;
+            /** @description Ряд сверху вниз, 1–4 */
+            row: number;
+            tier: components["schemas"]["CellarTier"];
+            /**
+             * @description Бутылок
+             * @example 24
+             */
+            capacity: number;
+            /** @enum {string} */
+            status: "free" | "busy";
+            /** @description Рублей в месяц без скидки за срок; null — цена ещё не назначена */
+            pricePerMonth: number | null;
+        };
+        NewCellarRequest: {
+            cellNumber: string;
+            term: components["schemas"]["CellarTerm"];
+            name: string;
+            /** @description Российский номер в формате +7XXXXXXXXXX */
+            phone: string;
+            /** @description Сколько бутылок примерно */
+            bottles?: number;
+            /** Format: email */
+            email?: string;
+            consents: {
+                /**
+                 * @description Согласие с политикой конфиденциальности — отправка заявки
+                 * @constant
+                 */
+                personalData: true;
+            };
+        };
+        /** @description Принятая заявка — телефон и почта в ответ не попадают */
+        CellarRequest: {
+            /** Format: uuid */
+            id: string;
+            cellNumber: string;
+            tier: components["schemas"]["CellarTier"];
+            term: components["schemas"]["CellarTerm"];
         };
         WinePage: {
             items: components["schemas"]["WineSummary"][];
@@ -1556,6 +1651,70 @@ export interface operations {
                 };
             };
             /** @description Неверные имя или телефон, нет согласия (code invalid_booking) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCellarCells: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ячейки по рядам слева направо */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CellarCell"][];
+                };
+            };
+        };
+    };
+    createCellarRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewCellarRequest"];
+            };
+        };
+        responses: {
+            /** @description Заявка принята */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CellarRequest"];
+                };
+            };
+            403: components["responses"]["ForeignOrigin"];
+            /** @description Ячейку уже заняли (code cell_busy) — выберите другую */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Неверные имя, телефон или ячейка (code invalid_request) */
             422: {
                 headers: {
                     [name: string]: unknown;

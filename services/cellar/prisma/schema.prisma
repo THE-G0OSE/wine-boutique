@@ -1,0 +1,85 @@
+// База сервиса cellar: ячейки хранения в погребе и заявки на них (docs/backend-plan.md §3).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CellTier {
+  small
+  medium
+  large
+
+  @@map("cell_tier")
+}
+
+enum CellStatus {
+  free
+  busy
+
+  @@map("cell_status")
+}
+
+/// Срок хранения: идентификатор Prisma не может начинаться с цифры — в базе и API «3m», «1y», «3y»
+enum StorageTerm {
+  m3 @map("3m")
+  y1 @map("1y")
+  y3 @map("3y")
+
+  @@map("storage_term")
+}
+
+enum RequestStatus {
+  new
+  contacted
+  closed
+
+  @@map("request_status")
+}
+
+/// Ячейка на стене: номер на табличке — «ряд + место» (101 … 408)
+model Cell {
+  number       String        @id
+  row          Int
+  /// Место в ряду слева направо, 1–8
+  position     Int
+  tier         CellTier
+  capacity     Int
+  /// Занята — по договору хранения; меняет управляющий
+  status       CellStatus    @default(free)
+  /// Копейки в месяц без скидки за срок; null — цена не назначена
+  priceKopecks Int?          @map("price_kopecks")
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  requests     CellRequest[]
+
+  @@unique([row, position])
+  @@map("cells")
+}
+
+/// Заявка на ячейку: управляющий перезванивает, договор — в бутике
+model CellRequest {
+  id             String        @id @default(uuid(4)) @db.Uuid
+  cellNumber     String        @map("cell_number")
+  cell           Cell          @relation(fields: [cellNumber], references: [number])
+  term           StorageTerm
+  status         RequestStatus @default(new)
+  customerName   String        @map("customer_name")
+  /// +7XXXXXXXXXX — наружу не отдаётся
+  phone          String
+  email          String?
+  bottles        Int?
+  consentAt      DateTime      @map("consent_at") @db.Timestamptz
+  consentVersion String        @map("consent_version")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([status, createdAt])
+  @@map("cell_requests")
+}

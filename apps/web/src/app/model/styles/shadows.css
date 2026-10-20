@@ -6,6 +6,10 @@
     --shadow-tag: 0 10px 20px rgba(0, 0, 0, .5);
     /* Билет-приглашение на дегустацию (мобильные) */
     --shadow-ticket: 0 16px 30px rgba(0, 0, 0, .5);
+    /* Стеллаж ячеек: рама, тень внутри и под ним; выбранная ячейка светится */
+    --shadow-rack: inset 0 0 0 6px var(--color-rack-600), inset 0 0 40px rgba(0, 0, 0, .6), 0 30px 60px rgba(0, 0, 0, .6);
+    --shadow-rack-sm: inset 0 0 0 5px var(--color-rack-600), 0 20px 40px rgba(0, 0, 0, .6);
+    --shadow-cell-glow: 0 0 24px rgba(232, 184, 120, .5);
     --shadow-plaque: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(0, 0, 0, .25), 0 6px 14px rgba(0, 0, 0, .5);
     --shadow-popover: 0 24px 50px rgba(0, 0, 0, .6);
     /* Липкая панель покупки внизу экрана (MProduct) */
@@ -21,6 +25,8 @@
     --inset-shadow-card-bottom: inset 0 -61px 37px 0 rgba(0, 0, 0, .73);
     /* Потемневшие края старой карты (самовывоз) */
     --inset-shadow-map: inset 0 0 160px 0 rgba(80, 45, 15, .45);
+    /* Глубина ячейки погреба */
+    --inset-shadow-cell: inset 0 6px 14px rgba(0, 0, 0, .7);
 
     --text-shadow-2xl: 18px 22px 5px rgba(0, 0, 0, .4);
     --text-shadow-xl: 21px 19px 3px rgba(0, 0, 0, .4);

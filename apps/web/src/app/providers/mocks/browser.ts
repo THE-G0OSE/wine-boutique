@@ -1,5 +1,6 @@
 import { setupWorker } from "msw/browser";
 import { boutiqueHandlers } from "@/entities/boutique/mocks";
+import { cellarHandlers } from "@/entities/cellarCell/mocks";
 import { grapeHandlers } from "@/entities/grapeVariety/mocks";
 import { articleHandlers } from "@/entities/newsArticle/mocks";
 import { newsHandlers } from "@/entities/newsIssue/mocks";
@@ -8,6 +9,7 @@ import { reviewHandlers } from "@/entities/review/mocks";
 import { sessionHandlers } from "@/entities/session/mocks";
 import { tastingHandlers } from "@/entities/tasting/mocks";
 import { wineHandlers } from "@/entities/wine/mocks";
+import { requestCellHandlers } from "@/features/cellar/requestCell/mocks";
 import { newsletterHandlers } from "@/features/newsletter/subscribe/mocks";
 import { createReservationHandlers } from "@/features/reservation/createReservation/mocks";
 import { writeLetterHandlers } from "@/features/reviews/writeLetter/mocks";
@@ -27,5 +29,7 @@ export const worker = setupWorker(
   ...reservationHandlers,
   ...createReservationHandlers,
   ...tastingHandlers,
-  ...bookTastingHandlers
+  ...bookTastingHandlers,
+  ...cellarHandlers,
+  ...requestCellHandlers
 );

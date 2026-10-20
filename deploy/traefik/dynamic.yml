@@ -56,6 +56,11 @@ http:
       entryPoints: [web]
       service: tastings
 
+    cellar:
+      rule: PathRegexp(`^/api/cellar(/|$)`)
+      entryPoints: [web]
+      service: cellar
+
   services:
     reservations:
       loadBalancer:
@@ -70,6 +75,15 @@ http:
       loadBalancer:
         servers:
           - url: http://tastings:3000
+        healthCheck:
+          path: /health/ready
+          interval: 10s
+          timeout: 3s
+
+    cellar:
+      loadBalancer:
+        servers:
+          - url: http://cellar:3000
         healthCheck:
           path: /health/ready
           interval: 10s

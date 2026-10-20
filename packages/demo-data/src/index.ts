@@ -59,3 +59,4 @@ export {
   toTasting,
   type TastingFixture,
 } from "./tastings.js";
+export { CELLAR_CAPACITY, CELLAR_COLUMNS, CELLAR_ROWS, cellarCellFixtures } from "./cellar.js";
