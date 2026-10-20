@@ -19,7 +19,7 @@ services:
       - --entrypoints.web.http.middlewares=strip-internal-headers@file,cors@file,gateway-rate-limit@file
       - --entrypoints.web.http.tls.certresolver=letsencrypt
       - --entrypoints.web.http.tls.domains[0].main=${API_DOMAIN:?домен API, например api.example.ru}
-      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?почта для Let's Encrypt}
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
       - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
       - --certificatesresolvers.letsencrypt.acme.caserver=${ACME_CA_SERVER:-https://acme-v02.api.letsencrypt.org/directory}
