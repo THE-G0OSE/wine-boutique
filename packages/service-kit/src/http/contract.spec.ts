@@ -6,6 +6,7 @@ import { z } from "zod";
 import { loadConfig, baseConfigSchema } from "../config/config.js";
 import { ServiceKitModule } from "../service-kit.module.js";
 import { ContractResponse } from "./contract-response.decorator.js";
+import { CurrentUser } from "./current-user.js";
 import { RateLimit } from "./rate-limit.js";
 import { ValidationError } from "./validation-error.js";
 import { createTestApp } from "../testing.js";
@@ -37,6 +38,11 @@ class ItemsController {
   @RateLimit(2, 60_000)
   subscribe(@Body({ schema: z.object({ email: z.email() }) }) _body: { email: string }) {}
 
+  @Get("me")
+  me(@CurrentUser() userId: string | null) {
+    return { userId };
+  }
+
   @Get("broken")
   @ContractResponse(Item)
   broken() {
@@ -44,14 +50,22 @@ class ItemsController {
   }
 }
 
-@Module({ controllers: [ItemsController] })
+@Controller("internal")
+class InternalController {
+  @Get("ping")
+  ping() {
+    return { ok: true };
+  }
+}
+
+@Module({ controllers: [ItemsController, InternalController] })
 class ItemsModule {}
 
 describe("service-kit: контракт на входе и выходе", () => {
   let app: NestFastifyApplication;
 
   beforeAll(async () => {
-    const config = loadConfig(baseConfigSchema, { SERVICE_NAME: "test", NODE_ENV: "test", LOG_LEVEL: "silent" });
+    const config = loadConfig(baseConfigSchema, { SERVICE_NAME: "test", NODE_ENV: "test", LOG_LEVEL: "silent", ALLOWED_ORIGINS: "https://wine.example, http://localhost:5173" });
     app = await createTestApp({
       module: class TestApp {},
       imports: [ServiceKitModule.forRoot({ config }), ItemsModule],
@@ -104,6 +118,32 @@ describe("service-kit: контракт на входе и выходе", () => 
     const limited = await send();
     expect(limited.statusCode).toBe(429);
     expect(limited.json()).toEqual({ code: "too_many_requests", message: "Слишком много запросов — попробуйте чуть позже" });
+  });
+
+  it("Origin: изменяющий запрос с чужого сайта — 403, со своего и не из браузера — проходит", async () => {
+    const post = (headers: Record<string, string>) => app.inject({ method: "POST", url: "/api/items", payload: { name: "Шабли" }, headers });
+    const evil = await post({ origin: "https://evil.example" });
+    expect(evil.statusCode).toBe(403);
+    expect(evil.json()).toEqual({ code: "forbidden_origin", message: "Запрос пришёл с чужого сайта" });
+    expect((await post({ origin: "null" })).statusCode).toBe(403);
+    expect((await post({ "sec-fetch-site": "cross-site" })).statusCode).toBe(403);
+    expect((await post({ origin: "https://wine.example" })).statusCode).toBe(202);
+    expect((await post({ origin: "http://localhost:5173", "sec-fetch-site": "same-origin" })).statusCode).toBe(202);
+    expect((await post({})).statusCode).toBe(202);
+    // Чтение с любого сайта — не CSRF
+    expect((await app.inject({ method: "GET", url: "/api/items", headers: { origin: "https://evil.example" } })).statusCode).toBe(200);
+  });
+
+  it("@CurrentUser: id из заголовка шлюза, без заголовка или с мусором — гость", async () => {
+    const me = async (headers: Record<string, string> = {}) => (await app.inject({ method: "GET", url: "/api/items/me", headers })).json();
+    expect(await me({ "x-user-id": "0199A1B2-C3D4-7E5F-8A9B-0C1D2E3F4A5B" })).toEqual({ userId: "0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b" });
+    expect(await me({ "x-user-id": "admin" })).toEqual({ userId: null });
+    expect(await me()).toEqual({ userId: null });
+  });
+
+  it("внутренние пути — без префикса /api", async () => {
+    expect((await app.inject({ method: "GET", url: "/internal/ping" })).statusCode).toBe(200);
+    expect((await app.inject({ method: "GET", url: "/api/internal/ping" })).statusCode).toBe(404);
   });
 
   it("ответ не по схеме — 500 без подробностей наружу", async () => {

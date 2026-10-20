@@ -2,6 +2,7 @@ packages:
   - apps/*
   - packages/*
   - services/*
+  - tests/*
 
 # Точные версии при pnpm add: обновления — осознанно (Renovate), а не по ^
 saveExact: true

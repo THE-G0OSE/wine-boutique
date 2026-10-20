@@ -7,9 +7,17 @@ export const baseConfigSchema = z.object({
   HTTP_HOST: z.string().default("0.0.0.0"),
   HTTP_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  /**
+   * Сайты, с которых браузер может слать изменяющие запросы (защита от CSRF по Origin), через запятую:
+   * "https://example.ru,http://localhost:5173". Пусто — изменяющие запросы из браузера с любого сайта отклоняются
+   */
+  ALLOWED_ORIGINS: z
+    .string()
+    .default("")
+    .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean)),
 });
 
-export type BaseConfig = z.infer<typeof baseConfigSchema>;
+export type BaseConfig = z.output<typeof baseConfigSchema>;
 
 /**
  * Читает и проверяет окружение при старте. Нет обязательной переменной или значение неверно —

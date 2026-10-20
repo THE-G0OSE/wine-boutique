@@ -1,0 +1,20 @@
+# Только для разработки: маршруты для сквозных тестов края (pnpm test:e2e). На VPS этот файл не подключается.
+# whoami возвращает заголовки, которые дошли до сервиса.
+http:
+  routers:
+    edge-echo:
+      rule: Path(`/api/_dev/echo`)
+      entryPoints: [web]
+      service: whoami
+
+    edge-protected:
+      rule: Path(`/api/_dev/protected`)
+      entryPoints: [web]
+      middlewares: [require-session]
+      service: whoami
+
+  services:
+    whoami:
+      loadBalancer:
+        servers:
+          - url: http://whoami:80

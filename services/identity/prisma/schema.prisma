@@ -1,0 +1,41 @@
+// База сервиса identity: пользователи и серверные сессии (docs/backend-plan.md §3).
+// Вход по телефону (телефон пользователя, одноразовые коды) — с фазой 8 фронта.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  /// Как обращаться в шапке и кабинете
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  sessions  Session[]
+
+  @@map("users")
+}
+
+/// Серверная сессия: в cookie — случайный токен, в базе — только его SHA-256
+model Session {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  tokenHash  Bytes     @unique @map("token_hash")
+  userId     String    @map("user_id") @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  /// Последнее использование — не чаще раза в час, чтобы не писать в базу на каждый запрос
+  lastSeenAt DateTime  @map("last_seen_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@map("sessions")
+}

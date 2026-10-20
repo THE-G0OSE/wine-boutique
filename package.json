@@ -13,6 +13,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:e2e": "pnpm --filter @wine/e2e e2e",
     "contracts:gen": "pnpm --filter @wine/contracts contracts:gen",
     "backend:up": "docker compose -f deploy/compose/compose.yaml up -d --build",
     "backend:up:observability": "cross-env OTEL_SDK_DISABLED=false TRAEFIK_TRACING=true docker compose -f deploy/compose/compose.yaml --profile observability up -d --build",

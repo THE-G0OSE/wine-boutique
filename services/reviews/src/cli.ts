@@ -7,8 +7,7 @@
  */
 import "reflect-metadata";
 import { parseArgs } from "node:util";
-import { NestFactory } from "@nestjs/core";
-import { loadConfig } from "@wine/service-kit";
+import { createCliContext, loadConfig } from "@wine/service-kit";
 import { AppModule } from "./app.module.js";
 import { Moderation } from "./application/letters.js";
 import { configSchema } from "./config.js";
@@ -28,7 +27,7 @@ const { positionals, values } = parseArgs({
 const [command, id] = positionals;
 
 const config = loadConfig(configSchema, { SERVICE_NAME: "reviews-cli", ...process.env, LOG_LEVEL: "warn" });
-const app = await NestFactory.createApplicationContext(AppModule.forRoot(config), { logger: ["error", "warn"] });
+const app = await createCliContext(AppModule.forRoot(config));
 const moderation = app.get(Moderation);
 
 try {

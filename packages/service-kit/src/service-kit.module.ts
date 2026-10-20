@@ -1,6 +1,6 @@
 import { Module, type DynamicModule, type InjectionToken, type ModuleMetadata, type Provider } from "@nestjs/common";
 import { StandardSchemaSerializerInterceptor } from "@nestjs/common";
-import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, Reflector } from "@nestjs/core";
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE, Reflector } from "@nestjs/core";
 import { TerminusModule, type HealthIndicatorFunction } from "@nestjs/terminus";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { LoggerModule } from "nestjs-pino";
@@ -8,6 +8,7 @@ import { SERVICE_CONFIG, type BaseConfig } from "./config/config.js";
 import { HealthController, READINESS_CHECKS } from "./health/health.controller.js";
 import { ApiExceptionFilter } from "./http/api-exception.filter.js";
 import { ContractValidationPipe } from "./http/contract-validation.pipe.js";
+import { OriginGuard } from "./http/origin.guard.js";
 import { ValidationErrorInterceptor } from "./http/validation-error.js";
 import { loggerOptions } from "./logging/logger.options.js";
 
@@ -29,7 +30,7 @@ export interface ServiceKitOptions<C extends BaseConfig> {
 
 /**
  * Подключается первым в AppModule сервиса. Даёт: конфиг в DI, логи pino, пробы /health/*,
- * ошибки в формате контракта, проверку входа (`@Body({ schema })`) и выхода (`@SerializeOptions({ schema })`).
+ * ошибки в формате контракта, проверку Origin у изменяющих запросов, проверку входа (`@Body({ schema })`) и выхода (`@SerializeOptions({ schema })`).
  */
 @Module({})
 export class ServiceKitModule {
@@ -40,6 +41,7 @@ export class ServiceKitModule {
         ? { provide: READINESS_CHECKS, inject: readiness.inject ?? [], useFactory: readiness.useFactory as (...deps: unknown[]) => HealthIndicatorFunction[] }
         : { provide: READINESS_CHECKS, useValue: [] },
       { provide: APP_FILTER, useClass: ApiExceptionFilter },
+      { provide: APP_GUARD, useClass: OriginGuard },
       { provide: APP_PIPE, useClass: ContractValidationPipe },
       {
         provide: APP_INTERCEPTOR,

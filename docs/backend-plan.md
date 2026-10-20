@@ -13,7 +13,7 @@
 | `GET /news/issues/latest`, `GET /news/articles/{slug}`, `GET /news/archive?month&rubric` | `news` |
 | `GET /reviews?limit&offset`, `POST /reviews` (202 — на модерацию) | `reviews` |
 | `POST /newsletter` (204, повтор — тоже 204) | `newsletter` |
-| `GET /auth/session` (пока всегда гость) | `identity` |
+| `GET /auth/session` (по cookie сессии; входа ещё нет — сессии для разработки выдаёт CLI) | `identity` |
 
 Плюс инфраструктура, без которой микросервисы не выкатить: монорепозиторий, пакет контрактов, общий `service-kit`, шлюз, брокер, наблюдаемость, CI, деплой.
 
@@ -29,7 +29,7 @@
 | `news` | `news` | `/api/news` | — | `catalog` (вино для стикера) | — |
 | `reviews` | `reviews` | `/api/reviews` | — | — | `reviews.letter-received.v1` — с уведомлениями сомелье |
 | `newsletter` | `newsletter` | `/api/newsletter` | — | — | `newsletter.subscribed.v1` — с рассылкой |
-| `identity` | `identity` | `/api/auth` | `wine.identity.v1.IdentityService`: `ResolveSession(token)` (для forward-auth) | — | — |
+| `identity` | `identity` | `/api/auth` | — (шлюзу — HTTP `GET /internal/forward-auth`: Traefik forwardAuth умеет только HTTP) | — | — |
 
 Вина и сорта винограда — в одном сервисе: это одна предметная область (паспорт вина ссылается на сорта, сорт показывает свои вина), и они меняются вместе. Отдельный сервис для сортов дал бы лишний сетевой вызов на каждый `GET /grapes`.
 
@@ -74,7 +74,8 @@
 
 ### `identity`
 
-- Таблиц пока нет: `GET /auth/session` отвечает «гость». `User`, `Session` (хеш токена, срок, ротация), `PhoneCode` — с фазой 8 фронта.
+- **User:** `name` (для шапки; инициалы считаются). Телефон и `PhoneCode` — с фазой 8 фронта.
+- **Session:** `tokenHash` (SHA-256 токена из cookie, уник.), `userId`, `expiresAt` (30 дней с последнего продления), `lastSeenAt` (пишется не чаще раза в час — тогда же продлевается срок и cookie), `revokedAt?`. Ротация токена — при входе (фаза 8).
 
 ## 4. Этапы
 
@@ -142,6 +143,10 @@
 **Готово, когда:** письмо попадает в БД как pending и после `reviews:publish` появляется в ленте; повторная подписка не создаёт дубль; частые запросы получают 429 от шлюза.
 
 ### B5 · Край: сессия и защита
+
+**Сделано и проверено в Docker 20.10.2026.** identity: пользователи и серверные сессии в своей базе (токен 256 бит в cookie `__Host-session`, в базе — SHA-256; 30 дней с продлением не чаще раза в час), `GET /auth/session` по cookie, `/internal/forward-auth` для Traefik, CLI `session:issue` / `session:revoke` для разработки. Traefik: на входе `strip-internal-headers` вырезает `X-User-Id` у всех запросов, middleware `require-session` (forwardAuth к identity) — для защищённых путей. `service-kit`: глобальная проверка `Origin` у изменяющих запросов (`ALLOWED_ORIGINS`, 403 `forbidden_origin`) и `@CurrentUser()`; в контракте у форм — ответы 403 и 429. Сквозные тесты `tests/e2e` через настоящий шлюз (9): поддельный `X-User-Id` снаружи до сервиса не доходит ни в каком регистре; защищённый путь без сессии — 401 от identity, с сессией (GET и POST) сервис получает настоящий id пользователя, после отзыва — снова 401; `/internal/*` снаружи недоступен; форма с чужого `Origin` — 403; подмена `X-Forwarded-For` не обходит лимит; маршруты — по целым сегментам. Фронт с `VITE_API_MOCKS=false` и cookie сессии показывает инициалы в шапке. identity — 9 тестов на Testcontainers.
+
+Отступления: проверка `Origin` — в сервисах, а не на шлюзе (у Traefik её нет, а forward-auth на каждую форму сделал бы identity точкой отказа всех форм); identity для шлюза — HTTP, а не gRPC `ResolveSession` (Traefik forwardAuth умеет только HTTP).
 
 1. Traefik: forward-auth к `identity` для защищённых путей (пока их нет — проверка на тестовом маршруте), вырезание внутренних заголовков снаружи, проверка `Origin` для мутирующих запросов.
 2. В `identity` — инфраструктура cookie `__Host-` сессии, готовая к фазе 8.

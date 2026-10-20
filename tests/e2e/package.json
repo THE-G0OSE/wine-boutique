@@ -1,0 +1,19 @@
+{
+  "name": "@wine/e2e",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Сквозные тесты через шлюз: нужен поднятый бэкенд (pnpm backend:up), запуск — pnpm test:e2e",
+  "scripts": {
+    "e2e": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@wine/contracts": "workspace:*",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5",
+    "zod": "4.6.7"
+  }
+}

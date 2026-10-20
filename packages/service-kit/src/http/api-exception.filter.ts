@@ -5,6 +5,8 @@ import type { ApiErrorBody } from "./api-error.js";
 /** Сообщения для статусов, которые ставит фреймворк, а не наш код */
 const FALLBACK: Record<number, ApiErrorBody> = {
   400: { code: "bad_request", message: "Некорректный запрос" },
+  401: { code: "unauthorized", message: "Войдите, чтобы продолжить" },
+  403: { code: "forbidden", message: "Доступ запрещён" },
   404: { code: "not_found", message: "Такого адреса нет" },
   405: { code: "method_not_allowed", message: "Метод не поддерживается" },
   413: { code: "payload_too_large", message: "Слишком большой запрос" },

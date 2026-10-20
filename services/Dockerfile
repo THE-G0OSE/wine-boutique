@@ -8,15 +8,18 @@ WORKDIR /repo
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
-# Зависимости по lockfile — слой кэшируется, пока lockfile не меняется
+# Хранилище pnpm — в кэше BuildKit, а не в слое образа: при смене lockfile докачивается только новое,
+# а пакеты копируются из кэша, а не жёсткими ссылками из нижних слоёв (на медленном диске это минуты на пакет)
+ENV PNPM_STORE=/pnpm/store
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm fetch
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch --store-dir "$PNPM_STORE"
 
 COPY . .
-RUN pnpm install --offline --frozen-lockfile --filter wine-boutique --filter "@wine/${SERVICE}..."
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store     pnpm install --offline --frozen-lockfile --store-dir "$PNPM_STORE" --filter wine-boutique --filter "@wine/${SERVICE}..."
 RUN pnpm turbo run build --filter "@wine/${SERVICE}..."
 # Только прод-зависимости сервиса; пакеты workspace (service-kit, contracts) копируются внутрь вместе с dist
-RUN pnpm --filter "@wine/${SERVICE}" deploy --prod --legacy /out
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store     pnpm --filter "@wine/${SERVICE}" deploy --prod --legacy --store-dir "$PNPM_STORE" /out
 
 # Миграции и сид — отдельный одноразовый контейнер перед запуском сервиса: Prisma CLI — dev-зависимость
 # и в прод-образ не попадает. docker build --target migrate …; SEED=true — ещё и демо-данные

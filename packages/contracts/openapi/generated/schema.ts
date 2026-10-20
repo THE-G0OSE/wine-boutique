@@ -435,6 +435,24 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
+        /** @description Изменяющий запрос пришёл из браузера с чужого сайта (code forbidden_origin) — защита от CSRF */
+        ForeignOrigin: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Слишком частые запросы с одного адреса (code too_many_requests) */
+        TooManyRequests: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
     };
     parameters: never;
     requestBodies: never;
@@ -606,6 +624,7 @@ export interface operations {
                 };
                 content?: never;
             };
+            403: components["responses"]["ForeignOrigin"];
             /** @description Некорректный email */
             422: {
                 headers: {
@@ -615,6 +634,7 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            429: components["responses"]["TooManyRequests"];
         };
     };
     getReviews: {
@@ -661,6 +681,7 @@ export interface operations {
                 };
                 content?: never;
             };
+            403: components["responses"]["ForeignOrigin"];
             /** @description Не заполнено имя или текст письма */
             422: {
                 headers: {
@@ -670,6 +691,7 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            429: components["responses"]["TooManyRequests"];
         };
     };
 }

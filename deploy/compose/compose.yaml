@@ -14,6 +14,8 @@ x-service: &service
     OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     OTEL_METRICS_EXPORTER: otlp
     OTEL_LOGS_EXPORTER: none
+    # Сайты, с которых браузер может слать формы (проверка Origin): Vite dev-сервер
+    ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:5174}
   depends_on:
     postgres: { condition: service_healthy }
     nats: { condition: service_healthy }
@@ -24,8 +26,10 @@ services:
     restart: unless-stopped
     command:
       - --entrypoints.web.address=:80
-      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --providers.file.directory=/etc/traefik/dynamic
       - --providers.file.watch=true
+      # Для всех маршрутов: вырезать заголовок пользователя, пришедший снаружи
+      - --entrypoints.web.http.middlewares=strip-internal-headers@file
       - --ping=true
       - --api.dashboard=true
       - --api.insecure=true # дашборд только локально, на :18081
@@ -39,7 +43,9 @@ services:
       - "${GATEWAY_PORT:-18080}:80"
       - "${TRAEFIK_DASHBOARD_PORT:-18081}:8080"
     volumes:
-      - ../traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ../traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+      # Только в разработке: тестовые маршруты края для pnpm test:e2e
+      - ../traefik/dev/edge-check.yml:/etc/traefik/dynamic/edge-check.yml:ro
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 10s
@@ -52,6 +58,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       SERVICE_DATABASES: catalog news reviews newsletter identity
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD:-dev}
+      # Для prisma migrate dev (теневая база); на VPS — false
+      ROLE_CREATEDB: "true"
     ports:
       # 5432 на машине разработки часто занят локальным Postgres — свой порт, чтобы не перепутать базы
       - "55432:5432"
@@ -77,6 +85,21 @@ services:
       interval: 5s
       retries: 10
 
+  # Миграции identity: пользователей и сессий в сиде нет — сессии для разработки выдаёт CLI
+  identity-migrate:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      target: migrate
+      args: { SERVICE: identity }
+    image: wine-boutique/identity-migrate:dev
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://identity:${DEV_DB_PASSWORD:-dev}@postgres:5432/identity
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # Сессия для разработки: docker compose exec identity node dist/cli.js session:issue --name "Анна Кузнецова"
   identity:
     <<: *service
     build:
@@ -88,6 +111,16 @@ services:
       <<: *service-env
       SERVICE_NAME: identity
       OTEL_SERVICE_NAME: identity
+      DATABASE_URL: postgresql://identity:${DEV_DB_PASSWORD:-dev}@postgres:5432/identity
+    depends_on:
+      postgres: { condition: service_healthy }
+      nats: { condition: service_healthy }
+      identity-migrate: { condition: service_completed_successfully }
+
+  # Эхо-сервис для проверки края (маршруты из traefik/dev/edge-check.yml): показывает, какие заголовки дошли до сервиса
+  whoami:
+    image: traefik/whoami:v1.11.0
+    restart: unless-stopped
 
   # Миграции и демо-данные catalog — до старта сервиса
   catalog-migrate:

@@ -1,7 +1,7 @@
 import type { IncomingMessage } from "node:http";
 import helmet from "@fastify/helmet";
 import type { FastifyInstance } from "fastify";
-import type { DynamicModule, INestApplication, Type } from "@nestjs/common";
+import type { DynamicModule, INestApplication, INestApplicationContext, Type } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
 import { Logger } from "nestjs-pino";
@@ -21,7 +21,8 @@ export const createFastifyAdapter = (): FastifyAdapter =>
 
 /** Настройки приложения, общие для запуска и тестов */
 export const configureApp = async (app: INestApplication & NestFastifyApplication): Promise<void> => {
-  app.setGlobalPrefix(API_PREFIX, { exclude: ["health/live", "health/ready"] });
+  // Вне /api — пробы и внутренние пути (/internal/*): Traefik наружу маршрутизирует только /api
+  app.setGlobalPrefix(API_PREFIX, { exclude: ["health/live", "health/ready", "internal/*path"] });
   await app.register(helmet);
   // Request id — в каждом ответе, чтобы по нему найти запрос в логах
   const fastify: FastifyInstance = app.getHttpAdapter().getInstance();
@@ -50,3 +51,11 @@ export const startService = async (
   await app.listen({ host: config.HTTP_HOST, port: config.HTTP_PORT });
   return app;
 };
+
+/**
+ * Контекст сервиса без HTTP — для CLI-команд (модерация, сессии для разработки): те же модули и сценарии.
+ * NestFactory — из service-kit, а не из сервиса: у сервиса может оказаться своя копия @nestjs/core
+ * (другой набор peer-зависимостей), и тогда модули service-kit не найдут её провайдеры.
+ */
+export const createCliContext = (module: Type | DynamicModule): Promise<INestApplicationContext> =>
+  NestFactory.createApplicationContext(module, { logger: ["error", "warn"] });

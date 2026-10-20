@@ -3,6 +3,23 @@
 # Правила — по целым сегментам пути (PathRegexp …(/|$)): простой PathPrefix(`/api/news`) поймал бы и /api/newsletter.
 # На Windows изменения этого файла Traefik может не заметить — после правки: docker compose restart traefik
 http:
+  middlewares:
+    # На входе для всех маршрутов (entrypoint web): заголовок пользователя ставит только шлюз, присланный снаружи — вырезается
+    strip-internal-headers:
+      headers:
+        customRequestHeaders:
+          X-User-Id: ""
+
+    # Для путей, где нужен вошедший пользователь: middlewares: [require-session].
+    # identity проверяет cookie сессии: вошёл — X-User-Id уходит в сервис, гость — клиенту 401 в формате контракта
+    require-session:
+      forwardAuth:
+        address: http://identity:3000/internal/forward-auth
+        authRequestHeaders: [Cookie]
+        authResponseHeaders: [X-User-Id]
+        # Продлённая сессия — cookie с новым сроком в ответ клиенту
+        addAuthCookiesToResponse: [__Host-session]
+
   routers:
     identity:
       rule: PathRegexp(`^/api/auth(/|$)`)
