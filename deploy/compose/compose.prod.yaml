@@ -18,7 +18,9 @@ services:
       - --entrypoints.web.address=:443
       - --entrypoints.web.http.middlewares=strip-internal-headers@file,cors@file,gateway-rate-limit@file
       - --entrypoints.web.http.tls.certresolver=letsencrypt
-      - --entrypoints.web.http.tls.domains[0].main=${API_DOMAIN:?домен API, например api.example.ru}
+      - --entrypoints.web.http.tls.domains[0].main=${API_DOMAIN:?домен сайта, например example.ru}
+      # www — отдельным сертификатом: если у www нет A-записи на VPS, основной домен всё равно получит свой
+      - --entrypoints.web.http.tls.domains[1].main=www.${API_DOMAIN}
       - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
       - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
@@ -33,6 +35,7 @@ services:
       - --tracing.serviceName=traefik
     environment:
       FRONT_ORIGIN: ${FRONT_ORIGIN}
+      API_DOMAIN: ${API_DOMAIN}
     ports: !override
       - "${PUBLIC_HTTP_PORT:-80}:80"
       - "${PUBLIC_HTTPS_PORT:-443}:443"

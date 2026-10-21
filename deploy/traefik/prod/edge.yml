@@ -16,6 +16,12 @@ http:
     # Грубый лимит с одного адреса против потока запросов; точные лимиты форм — в сервисах (@RateLimit).
     # С запасом: за одним адресом мобильного оператора (CGNAT) бывают сотни посетителей.
     # Ответ сверх лимита — 429 от Traefik простым текстом, не в формате контракта
+    to-canonical-host:
+      redirectRegex:
+        regex: "^https?://[^/]+(.*)"
+        replacement: 'https://{{ env "API_DOMAIN" }}${1}'
+        permanent: true
+
     gateway-rate-limit:
       rateLimit:
         average: 100
@@ -23,6 +29,14 @@ http:
         burst: 200
 
   routers:
+    # Один адрес сайта: www, старый адрес на sslip.io и заход по IP — 301 на основной домен с тем же путём
+    canonical-host:
+      rule: '!Host(`{{ env "API_DOMAIN" }}`)'
+      priority: 1000
+      entryPoints: [web]
+      middlewares: [to-canonical-host]
+      service: noop@internal
+
     # Фронт (apps/web/Dockerfile) — всё, что не /api: маршруты API из dynamic.yml сюда не попадают
     web:
       rule: "!PathPrefix(`/api`)"
