@@ -31,6 +31,8 @@ const PhoneAuthCard: FC<IProps> = ({ variant }) => {
   const [step, setStep] = useState<Step>("phone");
   const [digits, setDigits] = useState("");
   const [resendAt, setResendAt] = useState(0);
+  // Демо-версия без SMS-провайдера: сервер возвращает сам код — показываем его на шаге ввода
+  const [demoCode, setDemoCode] = useState<string | null>(null);
   const [registrationToken, setRegistrationToken] = useState("");
   const [result, setResult] = useState<{ user: ApiSchemas["SessionUser"]; returning: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +49,7 @@ const PhoneAuthCard: FC<IProps> = ({ variant }) => {
     const response = await requestCode({ phone });
     if ("data" in response && response.data) {
       setResendAt(Date.now() + response.data.resendAfter * 1000);
+      setDemoCode(response.data.demoCode ?? null);
       setStep("code");
     } else {
       const retryAfter = isApiError(response.error) ? (response.error.data.details as { retryAfter?: number } | undefined)?.retryAfter : undefined;
@@ -186,6 +189,12 @@ const PhoneAuthCard: FC<IProps> = ({ variant }) => {
             setStep("phone");
           }}
         />
+        {demoCode ? (
+          <Text role="status" SIZE="SYSTEM" className={cn("text-cellar-400", { "text-[15px]": isDesktop, "text-micro": !isDesktop })}>
+            Демо-версия сайта — SMS не отправляем. Ваш код:{" "}
+            <span className="font-semibold tracking-[0.2em] text-amber-200">{demoCode}</span>
+          </Text>
+        ) : null}
         {env.apiMocks ? (
           <span className={cn("text-cellar-400", { "text-[13px]": isDesktop, "text-xs": !isDesktop })}>
             Для превью: код 1988 — новый гость, 2015 — уже зарегистрирован.

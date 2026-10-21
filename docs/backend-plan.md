@@ -113,7 +113,7 @@
 - **Session:** `tokenHash` (SHA-256 токена из cookie, уник.), `userId`, `expiresAt` (30 дней с последнего продления), `lastSeenAt` (пишется не чаще раза в час — тогда же продлевается срок и cookie), `revokedAt?`, `userAgent?` (для списка устройств). Каждый вход — новая сессия и новый токен.
 - **PhoneCode:** `phone`, `codeHash` (SHA-256 «телефон:код»), `expiresAt` (5 минут), `attempts` (до 5, потом код сгорает), `consumedAt?`. Новый код — не раньше чем через минуту и не больше 5 в час на номер; проверяется только последний. Ответ на запрос кода одинаков для новых и известных номеров.
 - **Registration:** `tokenHash`, `phone`, `expiresAt` (15 минут), `usedAt?` — подтверждённый новый номер до заполнения карты гостя; карта — с 18 лет.
-- Доставка кода — `CodeSender`: пока в лог сервиса (`docker compose logs identity`), SMS — с сервисом notifications.
+- Доставка кода — `CodeSender`: пока в лог сервиса (`docker compose logs identity`), SMS — с сервисом notifications. Демо-режим `DEMO_CODES=true` (на VPS — портфолио без SMS): код ещё и возвращается в ответе `POST /auth/phone/code` (`demoCode`, необязательное поле контракта) и показывается на экране входа; хранение хеша, срок, попытки и лимиты — те же.
 
 ### `loyalty`
 

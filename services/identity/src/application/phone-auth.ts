@@ -29,7 +29,7 @@ export class RequestPhoneCode {
     private readonly sender: CodeSender
   ) {}
 
-  async execute(phone: string, now = new Date()): Promise<{ resendAfter: number; expiresIn: number }> {
+  async execute(phone: string, now = new Date()): Promise<{ resendAfter: number; expiresIn: number; demoCode?: string }> {
     const recent = await this.auth.codesSince(phone, new Date(now.getTime() - HOUR_MS));
     const last = recent[0];
     if (last && now.getTime() - last.createdAt.getTime() < CODE_RESEND_MS) {
@@ -43,7 +43,8 @@ export class RequestPhoneCode {
     const code = newCode();
     await this.auth.createCode(phone, hashCode(phone, code), new Date(now.getTime() + CODE_TTL_MS), now);
     await this.sender.send(phone, code);
-    return { resendAfter: CODE_RESEND_MS / 1000, expiresIn: CODE_TTL_MS / 1000 };
+    const sent = { resendAfter: CODE_RESEND_MS / 1000, expiresIn: CODE_TTL_MS / 1000 };
+    return this.sender.revealsCode ? { ...sent, demoCode: code } : sent;
   }
 }
 

@@ -2710,6 +2710,13 @@ components:
           type: integer
           description: Сколько секунд действует код
           examples: [300]
+        demoCode:
+          type: string
+          description: |
+            Только в демо-режиме (портфолио без SMS-провайдера, `DEMO_CODES=true` у identity): сам код,
+            чтобы показать его на экране входа. В обычном режиме поля нет — код приходит по SMS.
+          pattern: "^\\d{4}$"
+          examples: ["4821"]
 
     PhoneCodeCheck:
       type: object

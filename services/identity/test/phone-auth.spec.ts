@@ -136,4 +136,19 @@ describe("вход по телефону на настоящем Postgres", () =
     expect((await app.inject({ method: "GET", url: "/api/auth/session", headers: { cookie } })).json()).toEqual({ user: null });
     expect((await post("/logout", {})).statusCode).toBe(204);
   });
+
+  it("демо-режим (DEMO_CODES=true): код — в ответе, и он проходит проверку", async () => {
+    const config = loadConfig(configSchema, { SERVICE_NAME: "identity", NODE_ENV: "test", LOG_LEVEL: "silent", DATABASE_URL: pg.getConnectionUri(), DEMO_CODES: "true" });
+    const demo = await createTestApp(AppModule.forRoot(config));
+    try {
+      const res = await demo.inject({ method: "POST", url: "/api/auth/phone/code", payload: { phone: "+79160000099" }, remoteAddress: "10.9.0.1" });
+      expect(res.statusCode).toBe(202);
+      const body = zRequestPhoneCodeResponse.parse(res.json());
+      expect(body.demoCode).toBe(sent.get("+79160000099"));
+      const verified = await demo.inject({ method: "POST", url: "/api/auth/phone/verify", payload: { phone: "+79160000099", code: body.demoCode }, remoteAddress: "10.9.0.1" });
+      expect(zVerifyPhoneCodeResponse.parse(verified.json()).status).toBe("needs_registration");
+    } finally {
+      await demo.close();
+    }
+  });
 });

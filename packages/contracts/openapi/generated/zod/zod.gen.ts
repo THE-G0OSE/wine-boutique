@@ -672,7 +672,8 @@ export const zPhoneCodeRequest = z.object({
 
 export const zPhoneCodeSent = z.object({
     resendAfter: z.int(),
-    expiresIn: z.int()
+    expiresIn: z.int(),
+    demoCode: z.string().regex(/^\d{4}$/).optional()
 });
 
 export const zPhoneCodeCheck = z.object({

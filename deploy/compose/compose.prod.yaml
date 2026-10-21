@@ -76,6 +76,8 @@ services:
     image: wine-boutique/identity:${TAG:?}
     environment:
       <<: *prod-service-env
+      # Портфолио без SMS-провайдера: код входа показывается на экране (docs/backend-plan.md, identity)
+      DEMO_CODES: ${DEMO_CODES:-false}
       DATABASE_URL: postgresql://identity:${IDENTITY_DB_PASSWORD}@postgres:5432/identity
 
   catalog-migrate:

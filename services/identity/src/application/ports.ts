@@ -57,6 +57,8 @@ export abstract class PhoneAuthRepository {
 /** Доставка кода гостю. Сейчас — в лог сервиса (SMS-провайдер — с сервисом notifications) */
 export abstract class CodeSender {
   abstract send(phone: string, code: string): Promise<void>;
+  /** Доставки нет (демо): код можно вернуть клиенту, чтобы показать на экране */
+  abstract readonly revealsCode: boolean;
 }
 
 export interface StoredProfile {

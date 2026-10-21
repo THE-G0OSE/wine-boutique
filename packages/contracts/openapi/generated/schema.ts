@@ -1550,6 +1550,12 @@ export interface components {
              * @example 300
              */
             expiresIn: number;
+            /**
+             * @description Только в демо-режиме (портфолио без SMS-провайдера, `DEMO_CODES=true` у identity): сам код,
+             *     чтобы показать его на экране входа. В обычном режиме поля нет — код приходит по SMS.
+             * @example 4821
+             */
+            demoCode?: string;
         };
         PhoneCodeCheck: {
             /**
