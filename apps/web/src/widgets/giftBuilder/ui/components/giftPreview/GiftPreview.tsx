@@ -14,10 +14,11 @@ const FIGURE = { desktop: 1032, mobile: 358 };
 /** Бутылки в ящике — как в макете: красное, белое, игристое */
 const BOTTLES = ["/images/bottles/red.webp", "/images/bottles/white.webp", "/images/bottles/sparkling.webp"];
 
-const PACK_CLASS = {
-  wooden: { box: "bg-linear-to-b from-rack-600 to-rack-800", texture: "opacity-90", inner: "bg-crate-inner" },
-  tube: { box: "bg-linear-to-b from-tube to-tube-950", texture: "opacity-8", inner: "bg-tube-inner" },
-  kraft: { box: "bg-linear-to-b from-kraft to-kraft-600", texture: "opacity-15", inner: "bg-kraft-inner" },
+/** Упаковка: фото-фактура (Kling) поверх цвета из токенов — цвет виден, пока картинка грузится */
+const PACK = {
+  wooden: { box: "bg-rack-600", texture: "/images/gifts/oak.webp" },
+  tube: { box: "bg-tube-950", texture: "/images/gifts/tube.webp" },
+  kraft: { box: "bg-kraft", texture: "/images/gifts/kraft.webp" },
 };
 
 /**
@@ -29,7 +30,7 @@ const GiftPreview: FC<IProps> = ({ gift, variant }) => {
   const px = (value: number) => `${(value / FIGURE[variant]) * 100}cqw`;
   const glasses = gift.extras.includes("glasses");
   const chocolate = gift.extras.includes("chocolate");
-  const width = isDesktop ? Math.min(260 + gift.bottles * 150 + (glasses ? 110 : 0) + (chocolate ? 100 : 0), 960) : 130 + gift.bottles * 70;
+  const width = isDesktop ? Math.min(260 + gift.bottles * 150 + (glasses ? 270 : 0) + (chocolate ? 140 : 0), 960) : 130 + gift.bottles * 70;
   const engraving = gift.engraving.trim() || GIFT_DEFAULT_ENGRAVING;
   const caption = [
     GIFT_PACKS[gift.pack].title,
@@ -47,35 +48,26 @@ const GiftPreview: FC<IProps> = ({ gift, variant }) => {
     >
       <div aria-hidden="true" className="absolute inset-x-[4%] inset-y-[8%] rounded-[50%] bg-[radial-gradient(ellipse,rgb(232_184_120/0.25),transparent_65%)]" />
       <div
-        className={cn("relative overflow-hidden shadow-panel transition-[width] duration-400 ease-[cubic-bezier(.2,.7,.2,1)]", PACK_CLASS[gift.pack].box)}
+        className={cn("relative overflow-hidden shadow-panel transition-[width] duration-400 ease-[cubic-bezier(.2,.7,.2,1)]", PACK[gift.pack].box)}
         style={{ width: px(width), height: px(isDesktop ? 520 : 280), borderRadius: px(isDesktop ? 14 : 10) }}
       >
-        <img src={asset("/images/textures/shelf.webp")} alt="" className={cn("absolute inset-0 size-full object-cover", PACK_CLASS[gift.pack].texture)} />
+        <img src={asset(PACK[gift.pack].texture)} alt="" className="absolute inset-0 size-full object-cover" />
         <div
-          className={cn("absolute flex items-center justify-center rounded-lg inset-shadow-cell", PACK_CLASS[gift.pack].inner)}
+          className="absolute flex items-center justify-center overflow-hidden rounded-lg inset-shadow-cell"
           style={{ inset: px(isDesktop ? 22 : 12), gap: px(isDesktop ? 22 : 10), padding: `0 ${px(isDesktop ? 30 : 12)}` }}
         >
-          {/* Стружка на дне ящика */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 rounded-[inherit] bg-[repeating-linear-gradient(115deg,rgb(232_200_140/0.18)_0_2px,transparent_2px_7px),repeating-linear-gradient(65deg,rgb(232_200_140/0.12)_0_2px,transparent_2px_9px)]"
-          />
+          {/* Стружка на дне ящика; к краям темнее — глубина */}
+          <img src={asset("/images/gifts/shavings.webp")} alt="" className="absolute inset-0 size-full object-cover brightness-90" />
+          <div aria-hidden="true" className="absolute inset-0 shadow-[inset_0_0_40px_rgb(0_0_0/0.55)]" />
           {BOTTLES.slice(0, gift.bottles).map((src) => (
             <img key={src} src={asset(src)} alt="" className="relative w-auto drop-shadow-bottle" style={{ height: px(isDesktop ? 430 : 220) }} />
           ))}
+          {/* Бокалы — фото на чёрном, переведённое в прозрачность (яркость → альфа); тень обводит стекло на светлой стружке */}
           {isDesktop && glasses ? (
-            <span
-              aria-hidden="true"
-              className="relative shrink-0 rounded-full border-3 border-white/50 shadow-[0_0_0_10px_rgb(255_255_255/0.08),inset_0_0_12px_rgb(255_255_255/0.3)]"
-              style={{ width: px(70), height: px(70) }}
-            />
+            <img src={asset("/images/gifts/glasses.webp")} alt="" className="relative w-auto shrink-0 drop-shadow-[0_0_1.5px_rgb(0_0_0/0.85)]" style={{ height: px(330) }} />
           ) : null}
           {isDesktop && chocolate ? (
-            <span
-              aria-hidden="true"
-              className="relative shrink-0 rounded-md bg-[repeating-linear-gradient(180deg,var(--color-chocolate)_0_24px,var(--color-chocolate-dark)_24px_27px)] shadow-tag"
-              style={{ width: px(64), height: px(110) }}
-            />
+            <img src={asset("/images/gifts/chocolate.webp")} alt="" className="relative w-auto shrink-0 rounded-sm shadow-tag" style={{ height: px(200) }} />
           ) : null}
         </div>
         {/* Лента */}
