@@ -89,7 +89,7 @@ docker compose exec identity node dist/cli.js session:issue --name "Анна К�
 
 Весь сайт на одном адресе: Traefik с TLS от Let's Encrypt отдаёт `/api` сервисам, остальное — фронту (nginx со сборкой Vite, [apps/web/Dockerfile](apps/web/Dockerfile)). Cookie сессии — свои, CORS не нужен. Конфигурация — [compose.yaml](deploy/compose/compose.yaml) + [compose.prod.yaml](deploy/compose/compose.prod.yaml).
 
-Сейчас: **https://194-226-99-185.sslip.io** — VPS 2 vCPU / 2 ГБ RAM + 2 ГБ swap / 20 ГБ, Ubuntu 26.04, без Grafana. Своего домена нет: `sslip.io` превращает `194-226-99-185.sslip.io` в IP, Let's Encrypt такой адрес принимает. Появится домен — A-запись на IP и `API_DOMAIN` / `FRONT_ORIGIN` в `.env`.
+Сейчас: **https://thegoosedev.ru** — VPS 2 vCPU / 2 ГБ RAM + 2 ГБ swap / 20 ГБ, Ubuntu 26.04, без Grafana. DNS — у Beget: A-записи `thegoosedev.ru` и `www` на IP VPS. Домен задают `API_DOMAIN` / `FRONT_ORIGIN` в `.env`; любой другой адрес (www, IP, старый `194-226-99-185.sslip.io`) — 301 на основной. Сменили домен — пересобрать фронт (`docker compose … build web`: адрес сайта вшит в превью ссылок) и `up -d`.
 
 Один раз на VPS:
 
