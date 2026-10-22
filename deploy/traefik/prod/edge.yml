@@ -27,11 +27,6 @@ http:
       stripPrefix:
         prefixes: [/grafana]
 
-    grafana-auth:
-      basicAuth:
-        usersFile: /etc/traefik/grafana.htpasswd
-        realm: Grafana
-
     gateway-rate-limit:
       rateLimit:
         average: 100
@@ -47,18 +42,11 @@ http:
       middlewares: [to-canonical-host]
       service: noop@internal
 
-    # Публичные дашборды Grafana — без пароля, только чтение: страница, её API и статика.
-    # Остальная Grafana (Explore, настройки, источники данных) — за паролем
-    grafana-public:
-      rule: PathRegexp(`^/grafana/(public-dashboards|api/public|public)(/|$)`)
-      entryPoints: [web]
-      middlewares: [grafana-strip]
-      service: grafana
-
+    # Grafana: публичные дашборды — без входа и только чтение, остальное (Explore, настройки) — после входа в Grafana
     grafana:
       rule: PathPrefix(`/grafana`)
       entryPoints: [web]
-      middlewares: [grafana-auth, grafana-strip]
+      middlewares: [grafana-strip]
       service: grafana
 
     # Фронт (apps/web/Dockerfile) — всё, что не /api: маршруты API из dynamic.yml сюда не попадают

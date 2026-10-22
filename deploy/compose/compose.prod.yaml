@@ -47,8 +47,6 @@ services:
       - ../traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
       - ../traefik/prod/edge.yml:/etc/traefik/dynamic/edge.yml:ro
       - letsencrypt:/letsencrypt
-      # Пароль к полной Grafana (/grafana/): htpasswd вне репозитория, создаётся на сервере (README, «Мониторинг»)
-      - ${GRAFANA_HTPASSWD_FILE:-/opt/wine-boutique/grafana.htpasswd}:/etc/traefik/grafana.htpasswd:ro
 
   postgres:
     environment:
@@ -197,7 +195,7 @@ services:
     restart: unless-stopped
 
   otel-lgtm:
-    # Снаружи — через Traefik (/grafana/ с паролем, публичные дашборды — без); порт 3001 — только на localhost VPS
+    # Снаружи — https://<домен>/grafana/ через Traefik (вход Grafana; публичные дашборды — без входа); порт 3001 — только на localhost VPS
     ports: !override
       - "127.0.0.1:3001:3000"
     restart: unless-stopped
@@ -210,6 +208,9 @@ services:
       # Grafana отдаётся с https://<домен>/grafana/: Traefik срезает префикс, ссылки Grafana строит с ним.
       # serve_from_sub_path не включаем — проверка здоровья образа ходит в корень (/api/health)
       GF_SERVER_ROOT_URL: https://${API_DOMAIN}/grafana/
+      # Наружу Grafana открыта: анонимного входа нет (в образе по умолчанию он с правами админа), вход — admin
+      # с паролем из /opt/wine-boutique/grafana-password.txt; публичные дашборды открываются без входа
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
     # Метрики, логи и трейсы (Prometheus, Loki, Tempo) и настройки Grafana переживают перезапуск
     volumes:
       - lgtm-data:/data
