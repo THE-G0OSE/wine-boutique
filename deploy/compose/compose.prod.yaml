@@ -195,9 +195,33 @@ services:
     ports: !override
       - "127.0.0.1:3001:3000"
     restart: unless-stopped
+    # node-exporter слушает адрес docker0 на хосте — host-gateway
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      # Главная страница Grafana — нагрузка на сервер
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /otel-lgtm/dashboards/server/node-exporter-full.json
     # Метрики, логи и трейсы (Prometheus, Loki, Tempo) и настройки Grafana переживают перезапуск
     volumes:
       - lgtm-data:/data
+      - ../observability/prometheus.yaml:/otel-lgtm/prometheus.yaml:ro
+      - ../observability/dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/server.yaml:ro
+      - ../observability/dashboards:/otel-lgtm/dashboards/server:ro
+
+  # Метрики VPS для Grafana (дашборд «Node Exporter Full»): сеть и процессы хоста, ФС — только на чтение.
+  # Слушает 172.17.0.1 (docker0): Prometheus достаёт через host-gateway, из интернета порта не видно
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    profiles: [observability]
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=172.17.0.1:9100
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run|var/lib/docker/.+)($$|/)
+    volumes:
+      - /:/host:ro,rslave
 
 volumes:
   letsencrypt:

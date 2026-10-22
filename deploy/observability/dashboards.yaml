@@ -1,0 +1,9 @@
+# Дополнительные дашборды Grafana (поверх встроенных в otel-lgtm): папка «Сервер»
+apiVersion: 1
+providers:
+  - name: server
+    folder: Сервер
+    type: file
+    allowUiUpdates: true
+    options:
+      path: /otel-lgtm/dashboards/server
