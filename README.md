@@ -89,7 +89,11 @@ docker compose exec identity node dist/cli.js session:issue --name "Анна К�
 
 Весь сайт на одном адресе: Traefik с TLS от Let's Encrypt отдаёт `/api` сервисам, остальное — фронту (nginx со сборкой Vite, [apps/web/Dockerfile](apps/web/Dockerfile)). Cookie сессии — свои, CORS не нужен. Конфигурация — [compose.yaml](deploy/compose/compose.yaml) + [compose.prod.yaml](deploy/compose/compose.prod.yaml).
 
-Сейчас: **https://thegoosedev.ru** — VPS 2 vCPU / 4 ГБ RAM + 1 ГБ swap / 20 ГБ, Ubuntu 26.04, с Grafana-стеком (`COMPOSE_PROFILES=observability` в `.env`): `ssh -L 3001:127.0.0.1:3001 <ssh-хост>` → http://localhost:3001 — на главной дашборд нагрузки на сервер (CPU, память, диск, сеть — node-exporter, папка «Сервер»), в Explore — метрики всех сервисов и трейсы от Traefik. Конфиги стека — [deploy/observability](deploy/observability). DNS — у Beget: A-записи `thegoosedev.ru` и `www` на IP VPS. Домен задают `API_DOMAIN` / `FRONT_ORIGIN` в `.env`; любой другой адрес (www, IP, старый `194-226-99-185.sslip.io`) — 301 на основной. Сменили домен — пересобрать фронт (`docker compose … build web`: адрес сайта вшит в превью ссылок) и `up -d`.
+Сейчас: **https://thegoosedev.ru** — VPS 2 vCPU / 4 ГБ RAM + 1 ГБ swap / 20 ГБ, Ubuntu 26.04, с Grafana-стеком (`COMPOSE_PROFILES=observability` в `.env`):
+- **публичная витрина** (без входа, только просмотр): https://thegoosedev.ru/grafana/public-dashboards/02fb9db7f53d40f486101d59b9d9e1fb — нагрузка на сервер, запросы и время ответа по сервисам, база, event loop; ссылку выдаёт `deploy/observability/publish-showcase.sh` (на VPS);
+- **вся Grafana** — https://thegoosedev.ru/grafana/, вход `admin`, пароль — в `/opt/wine-boutique/grafana-password.txt` на VPS. Дашборды: «Сервер / Node Exporter Full» (главная), «Wine Boutique — живой мониторинг»; в Explore — метрики сервисов и Traefik, трейсы.
+
+Конфиги стека — [deploy/observability](deploy/observability): Prometheus с node-exporter, дашборды (витрина собрана без переменных — публичные дашборды их не поддерживают). DNS — у Beget: A-записи `thegoosedev.ru` и `www` на IP VPS. Домен задают `API_DOMAIN` / `FRONT_ORIGIN` в `.env`; любой другой адрес (www, IP, старый `194-226-99-185.sslip.io`) — 301 на основной. Сменили домен — пересобрать фронт (`docker compose … build web`: адрес сайта вшит в превью ссылок) и `up -d`.
 
 Один раз на VPS:
 
