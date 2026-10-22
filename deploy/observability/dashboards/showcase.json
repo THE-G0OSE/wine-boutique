@@ -279,7 +279,8 @@
           },
           "color": {
             "mode": "thresholds"
-          }
+          },
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -302,7 +303,7 @@
     },
     {
       "type": "stat",
-      "title": "Запросов в минуту",
+      "title": "Запросов за час",
       "description": "Внешние запросы к сайту и API через шлюз",
       "gridPos": {
         "h": 6,
@@ -316,7 +317,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(traefik_service_requests_total{service!~\"(grafana|noop).*\"}[5m])) * 60",
+          "expr": "sum(increase(traefik_service_requests_total{service!~\"(grafana|noop).*\"}[1h]))",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -338,7 +339,8 @@
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 1
+          "noValue": "0",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -362,7 +364,7 @@
     {
       "type": "stat",
       "title": "Ответ API, p95",
-      "description": "95% запросов к API отвечают быстрее этого времени",
+      "description": "95% запросов к API за последний час отвечают быстрее этого времени",
       "gridPos": {
         "h": 6,
         "w": 4,
@@ -375,7 +377,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(traefik_service_request_duration_seconds_bucket{service!~\"(grafana|web|noop).*\"}[15m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traefik_service_request_duration_seconds_bucket{service!~\"(grafana|web|noop).*\"}[1h])))",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -396,7 +398,8 @@
           },
           "color": {
             "mode": "thresholds"
-          }
+          },
+          "noValue": "—"
         },
         "overrides": []
       },
@@ -838,6 +841,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "noValue": "0",
           "decimals": 2
         },
         "overrides": []
@@ -896,7 +900,8 @@
           },
           "color": {
             "mode": "thresholds"
-          }
+          },
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -955,6 +960,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "noValue": "0",
           "decimals": 0
         },
         "overrides": []
@@ -1013,7 +1019,8 @@
           },
           "color": {
             "mode": "thresholds"
-          }
+          },
+          "noValue": "0"
         },
         "overrides": []
       },
