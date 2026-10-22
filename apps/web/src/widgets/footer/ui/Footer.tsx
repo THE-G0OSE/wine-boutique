@@ -3,6 +3,7 @@ import { SubscribeForm } from "@/features/newsletter/subscribe";
 import { CONTACTS } from "@/shared/config/contacts";
 import { ROUTES } from "@/shared/config/routes";
 import { FOOTER_COLUMNS } from "../model/links";
+import { env } from "@/shared/config/env";
 
 const columnTitle = "font-system text-[13px] font-semibold tracking-[0.08em] text-amber-200 uppercase";
 const footerLink = "text-sm text-neutral-350 no-underline transition-colors hover:text-amber-200 lg:text-caption";
@@ -94,6 +95,11 @@ const Footer = () => {
           <Link to={ROUTES.privacy} className="text-neutral-350 hover:text-amber-200">
             Политика конфиденциальности
           </Link>
+          {env.monitoringUrl ? (
+            <a href={env.monitoringUrl} target="_blank" rel="noopener" aria-label="Мониторинг сервера (откроется в новой вкладке)" className="text-neutral-350 hover:text-amber-200">
+              Мониторинг
+            </a>
+          ) : null}
         </div>
       </div>
     </footer>
