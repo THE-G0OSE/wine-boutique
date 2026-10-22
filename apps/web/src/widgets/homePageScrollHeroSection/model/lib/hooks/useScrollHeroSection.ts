@@ -1,4 +1,4 @@
-import { useMotionValueEvent, useScroll, useSpring, useTransform, useVelocity } from "motion/react";
+import { clamp, useMotionValueEvent, useScroll, useSpring, useTransform, useVelocity } from "motion/react";
 import { useRef, useState } from "react";
 
 /**
@@ -7,8 +7,9 @@ import { useRef, useState } from "react";
  *
  * @param count сколько историй — на каждую приходится один экран прокрутки
  * @param offsetCoef во сколько раз ослабить «покачивание» от скорости скролла
+ * @param maxFloat предел «покачивания», px — рывок колеса не уносит бумагу далеко
  */
-export const useScrollHeroSection = (count: number, offsetCoef: number) => {
+export const useScrollHeroSection = (count: number, offsetCoef: number, maxFloat = 24) => {
   const ref = useRef<HTMLElement>(null);
   const { scrollY } = useScroll();
   // 0 — верх секции у верха окна, 1 — низ секции у низа окна (липкий экран отпускается)
@@ -28,7 +29,10 @@ export const useScrollHeroSection = (count: number, offsetCoef: number) => {
   useMotionValueEvent(scrollYProgress, "change", update);
   useMotionValueEvent(enterProgress, "change", update);
 
-  const floatY = useTransform(useVelocity(useSpring(scrollY)), (velocity) => velocity / offsetCoef);
+  // Скорость колеса — ступеньками: каждый щелчок даёт пик в тысячи px/с. Поэтому сначала предел, потом пружина
+  // на самом смещении — бумага плавно отстаёт и возвращается, а не прыгает на десятки пикселей за кадр
+  const rawFloat = useTransform(useVelocity(scrollY), (velocity) => clamp(-maxFloat, maxFloat, velocity / offsetCoef));
+  const floatY = useSpring(rawFloat, { stiffness: 120, damping: 24, mass: 0.8 });
 
   return { ref, activeIndex, isPinned, floatY, progress: scrollYProgress };
 };

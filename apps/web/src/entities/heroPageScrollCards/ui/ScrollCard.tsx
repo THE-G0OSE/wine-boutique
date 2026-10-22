@@ -38,14 +38,15 @@ const ScrollCardElement: FC<IProps> = ({ card, isActive, floatY }) => {
 
   return (
     <div className={cn("absolute inset-0", !isActive && "pointer-events-none")}>
-      <motion.div aria-hidden="true" className="absolute inset-0" style={{ y: floatY }}>
+      {/* will-change: слои с крупными drop-shadow — на GPU, тень не перерисовывается на каждом кадре сдвига */}
+      <motion.div aria-hidden="true" className="absolute inset-0 will-change-transform" style={{ y: floatY }}>
         <motion.img
           src={asset("/images/textures/ripped-paper.webp")}
           alt=""
           variants={paperVariants(card.side)}
           initial="hide"
           animate={state}
-          className="absolute max-w-none object-fill drop-shadow-[73px_35px_50px_rgba(0,0,0,0.3)]"
+          className="absolute max-w-none object-fill drop-shadow-[73px_35px_50px_rgba(0,0,0,0.3)] will-change-transform"
           style={box(layout.paper.x, layout.paper.dy, layout.paper.width, layout.paper.height)}
         />
         <motion.img
@@ -54,7 +55,7 @@ const ScrollCardElement: FC<IProps> = ({ card, isActive, floatY }) => {
           variants={bottleVariants(card.side)}
           initial="hide"
           animate={state}
-          className="absolute max-w-none object-contain drop-shadow-[8px_32px_26px_rgba(0,0,0,0.3)]"
+          className="absolute max-w-none object-contain drop-shadow-[8px_32px_26px_rgba(0,0,0,0.3)] will-change-transform"
           style={box(layout.bottle.x, layout.bottle.dy, layout.bottle.width, layout.bottle.height)}
         />
       </motion.div>
