@@ -33,6 +33,10 @@ services:
       - --tracing.otlp=${TRAEFIK_TRACING:-false}
       - --tracing.otlp.http.endpoint=http://otel-lgtm:4318/v1/traces
       - --tracing.serviceName=traefik
+      # Метрики шлюза (запросы и время ответа по сервисам — только внешний трафик) — в Grafana-стек вместе с трейсами
+      - --metrics.otlp=${TRAEFIK_TRACING:-false}
+      - --metrics.otlp.http.endpoint=http://otel-lgtm:4318/v1/metrics
+      - --metrics.otlp.addRoutersLabels=true
     environment:
       FRONT_ORIGIN: ${FRONT_ORIGIN}
       API_DOMAIN: ${API_DOMAIN}
@@ -43,6 +47,8 @@ services:
       - ../traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
       - ../traefik/prod/edge.yml:/etc/traefik/dynamic/edge.yml:ro
       - letsencrypt:/letsencrypt
+      # Пароль к полной Grafana (/grafana/): htpasswd вне репозитория, создаётся на сервере (README, «Мониторинг»)
+      - ${GRAFANA_HTPASSWD_FILE:-/opt/wine-boutique/grafana.htpasswd}:/etc/traefik/grafana.htpasswd:ro
 
   postgres:
     environment:
@@ -191,7 +197,7 @@ services:
     restart: unless-stopped
 
   otel-lgtm:
-    # Grafana — только через SSH-туннель: ssh -L 3001:127.0.0.1:3001 <vps>
+    # Снаружи — через Traefik (/grafana/ с паролем, публичные дашборды — без); порт 3001 — только на localhost VPS
     ports: !override
       - "127.0.0.1:3001:3000"
     restart: unless-stopped
@@ -201,6 +207,9 @@ services:
     environment:
       # Главная страница Grafana — нагрузка на сервер
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /otel-lgtm/dashboards/server/node-exporter-full.json
+      # Grafana отдаётся с https://<домен>/grafana/: Traefik срезает префикс, ссылки Grafana строит с ним.
+      # serve_from_sub_path не включаем — проверка здоровья образа ходит в корень (/api/health)
+      GF_SERVER_ROOT_URL: https://${API_DOMAIN}/grafana/
     # Метрики, логи и трейсы (Prometheus, Loki, Tempo) и настройки Grafana переживают перезапуск
     volumes:
       - lgtm-data:/data
