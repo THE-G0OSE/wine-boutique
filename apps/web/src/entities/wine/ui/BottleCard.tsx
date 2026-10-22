@@ -33,7 +33,7 @@ const BottleCard: FC<IProps> = ({ wine, variant, meta, action, tilt = "left", cl
     <article
       className={cn(
         "group relative shrink-0",
-        { "h-130 w-47.5": isShelf, "h-95 w-33 snap-start": variant === "rail", "h-82.5": variant === "grid" },
+        { "h-130 w-47.5": isShelf, "h-104 w-33 snap-start": variant === "rail", "h-82.5": variant === "grid" },
         className
       )}
     >
@@ -92,10 +92,11 @@ const BottleCard: FC<IProps> = ({ wine, variant, meta, action, tilt = "left", cl
           </>
         ) : (
           <>
-            <span className={cn("font-semibold text-white", { "text-sm leading-[1.25]": isShelf, "text-micro leading-[1.2]": !isShelf })}>
+            {/* На ленте (телефон) — не больше двух строк имени и одной строки описания: табличка не вылезает за полку */}
+            <span className={cn("font-semibold text-white", { "text-sm leading-[1.25]": isShelf, "line-clamp-2 text-micro leading-[1.2]": !isShelf })}>
               {wine.name}
             </span>
-            {meta ? <span className="text-xs leading-[1.35] text-neutral-350">{meta}</span> : null}
+            {meta ? <span className={cn("text-xs leading-[1.35] text-neutral-350", { truncate: !isShelf })}>{meta}</span> : null}
             <span className={cn("flex items-center justify-between", { "mt-1": isShelf, "mt-0.5": !isShelf })}>
               <span className={cn("font-system font-semibold text-amber-200", { "text-sm": isShelf, "text-micro": !isShelf })}>
                 {formatWinePrice(wine.price)}

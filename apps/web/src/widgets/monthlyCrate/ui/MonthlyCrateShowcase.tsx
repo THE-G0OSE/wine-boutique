@@ -218,7 +218,7 @@ const MonthlyCrateShowcase: FC = () => {
         <div
           role="radiogroup"
           aria-label="Архив наборов"
-          className={cn({ "grid grid-cols-3 gap-x-6 gap-y-7": isDesktop, "-mx-4 flex gap-3 overflow-x-auto px-4 pt-2 pb-3 [scrollbar-width:none]": !isDesktop })}
+          className={cn({ "grid grid-cols-3 gap-x-6 gap-y-7": isDesktop, "-mx-4 flex gap-3 overflow-x-auto overflow-y-hidden px-4 pt-2 pb-3 [scrollbar-width:none]": !isDesktop })}
         >
           {data.archive.map((crate) => {
             const checked = crate.month === selected?.month;

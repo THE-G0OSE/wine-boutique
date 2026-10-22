@@ -13,7 +13,7 @@ const TastingFormats: FC = () => {
       <Text as="h2" id="tasting-formats" FONT="FIRM" className="mx-5 text-[32px] leading-11.5 lg:mx-0 lg:text-display-sm lg:leading-19">
         Форматы
       </Text>
-      <ul className="m-0 mt-3 flex list-none gap-3 overflow-x-auto px-5 [scrollbar-width:none] lg:mt-7 lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-0">
+      <ul className="m-0 mt-3 flex list-none gap-3 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none] lg:mt-7 lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-0">
         {TASTING_FORMATS.map((format) => (
           <li
             key={format.kind}

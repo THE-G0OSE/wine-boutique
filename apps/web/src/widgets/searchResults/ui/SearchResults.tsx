@@ -137,9 +137,9 @@ const SearchResults: FC = () => {
         {empty ? emptyState : null}
         {filteredOut ? filteredOutState : null}
         {chunk(wines, RAIL_SIZE).map((rail, index) => (
-          <div key={index} className={cn("relative h-95", { "mt-3.5": index === 0, "mt-2": index > 0 })}>
+          <div key={index} className={cn("relative h-104", { "mt-3.5": index === 0, "mt-2": index > 0 })}>
             <ShelfBoard className="inset-x-0 top-59 h-7.5 rounded-none" />
-            <div className="absolute inset-0 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto px-5 [scrollbar-width:none]">
+            <div className="absolute inset-0 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none]">
               {rail.map((wine) => (
                 <BottleCard key={wine.id} wine={wine} variant="rail" meta={formatShelfMeta(wine, { compact: true })} action={renderAction(wine, "mobile")} />
               ))}

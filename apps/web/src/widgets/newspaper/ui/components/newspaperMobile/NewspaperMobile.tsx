@@ -24,13 +24,14 @@ const NewspaperMobile: FC<{ issue: NewsIssue }> = ({ issue }) => {
   const stories = [issue.lead, ...issue.stories].filter((story) => matches(story.rubric));
 
   return (
-    <PaperSheet className="mx-2.5 px-4.5 pt-5.5 pb-6.5 shadow-[0_30px_60px_rgba(0,0,0,0.6)]">
+    // Отступ от края и лёгкий наклон: лист газеты лежит на столе, а не заменяет экран
+    <PaperSheet className="mx-6 mt-2 -rotate-[0.6deg] px-4.5 pt-5.5 pb-6.5 shadow-[0_30px_60px_rgba(0,0,0,0.6)]">
       <div className="flex justify-between text-[10px] tracking-[0.1em] uppercase">
         <span>Выпуск № {formatIssueNumber(issue.number)}</span>
         <time dateTime={issue.publishedAt}>{formatIssueDateShort(issue.publishedAt)}</time>
       </div>
       {/* 46px из макета, но не шире листа: на узких телефонах название остаётся в одну строку */}
-      <h1 className="m-0 mt-2 text-center font-paper-display text-[min(46px,calc((100vw-60px)/7.6))] leading-none font-normal whitespace-nowrap">
+      <h1 className="m-0 mt-2 text-center font-paper-display text-[min(46px,calc((100vw-88px)/7.6))] leading-none font-normal whitespace-nowrap">
         Винный Вѣстникъ
       </h1>
       <p className="m-0 mt-1.5 text-center text-[10px] tracking-[0.24em] uppercase">Еженедельная газета бутика</p>

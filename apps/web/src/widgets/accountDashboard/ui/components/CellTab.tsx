@@ -61,7 +61,7 @@ const CellTab: FC<IProps> = ({ cell }) => {
       : "Отметьте бутылки, которые хотите забрать или открыть";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:gap-10">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:gap-10">
       <div className={cn(PANEL, "flex flex-col gap-4 self-start")}>
         <div className="flex items-baseline justify-between gap-3">
           <span className="rounded-md bg-linear-to-b from-amber-200 to-amber-500 px-3.5 py-1.5 font-system font-semibold tracking-[0.08em] text-note-ink">ЯЧЕЙКА № {cell.number}</span>

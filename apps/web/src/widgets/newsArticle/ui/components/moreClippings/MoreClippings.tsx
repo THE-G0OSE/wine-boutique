@@ -23,7 +23,7 @@ const MoreClippings: FC<IProps> = ({ clippings, variant }) => {
         <h2 id="more-clippings" className="m-0 px-5 font-hand text-[28px] font-normal text-paper">
           Ещё вырезки:
         </h2>
-        <div className="mt-2.5 flex gap-3.5 overflow-x-auto px-5 pt-1.5 pb-4 [scrollbar-width:none]">
+        <div className="mt-2.5 flex gap-3.5 overflow-x-auto overflow-y-hidden px-5 pt-1.5 pb-4 [scrollbar-width:none]">
           {clippings.map((clipping) => (
             <Link
               key={clipping.slug}

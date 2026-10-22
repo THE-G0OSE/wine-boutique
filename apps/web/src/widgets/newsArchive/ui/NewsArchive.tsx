@@ -17,8 +17,7 @@ const NewsArchive = () => {
   const panelId = useId();
   const titleId = useId();
   const filters = useArchiveFilters();
-  // На мобильных фильтра рубрик нет (макет MArchive): ссылка с ?rubric= покажет весь месяц
-  const rubric = isDesktop ? filters.rubric : undefined;
+  const rubric = filters.rubric;
   const { data: archive, isLoading, isFetching, isError } = useGetNewsArchiveQuery({ month: filters.month, rubric });
 
   // Вкладка переключается сразу, выпуски месяца подтягиваются следом
@@ -46,7 +45,7 @@ const NewsArchive = () => {
     );
   } else {
     issues = (
-      <div className={cn("grid", isDesktop ? "mt-7.5 grid-cols-4 gap-9" : "mt-2.5 grid-cols-2 gap-4 px-5")}>
+      <div className={cn("grid", isDesktop ? "mt-7.5 grid-cols-4 gap-9" : "mt-4 grid-cols-2 gap-x-5 gap-y-6 px-6")}>
         {archive.issues.map((issue, index) => (
           <IssueCard key={issue.id} issue={issue} index={index} variant={isDesktop ? "desktop" : "mobile"} />
         ))}
@@ -70,11 +69,9 @@ const NewsArchive = () => {
           >
             Подшивка
           </Text>
-          {isDesktop && (
-            <Text COLOR="MUTED" className="max-w-190 text-[21px] leading-[1.55]">
-              Все выпуски нашей газеты, сложенные по месяцам. Выберите стопку — и листайте первые полосы.
-            </Text>
-          )}
+          <Text COLOR="MUTED" className={isDesktop ? "max-w-190 text-[21px] leading-[1.55]" : "text-sm leading-[1.55]"}>
+            Все выпуски нашей газеты, сложенные по месяцам. Выберите стопку — и листайте первые полосы.
+          </Text>
         </div>
         {isDesktop && <RubricChips rubric={rubric} onChange={filters.setRubric} />}
       </header>
@@ -83,7 +80,12 @@ const NewsArchive = () => {
         (isDesktop ? (
           <MonthStacks months={archive.months} selected={selectedMonth} panelId={panelId} onSelect={filters.setMonth} />
         ) : (
-          <MonthStrip months={archive.months} selected={selectedMonth} panelId={panelId} onSelect={filters.setMonth} />
+          <>
+            <MonthStrip months={archive.months} selected={selectedMonth} panelId={panelId} onSelect={filters.setMonth} />
+            <div className="mt-3">
+              <RubricChips rubric={rubric} onChange={filters.setRubric} compact />
+            </div>
+          </>
         ))}
 
       <section
@@ -93,7 +95,7 @@ const NewsArchive = () => {
         aria-busy={isFetching}
         className={cn(
           "transition-opacity duration-200",
-          { "mt-16": isDesktop, "opacity-60": isFetching && !isLoading }
+          { "mt-16": isDesktop, "mt-7": !isDesktop, "opacity-60": isFetching && !isLoading }
         )}
       >
         {shownMonth && (
@@ -101,10 +103,9 @@ const NewsArchive = () => {
             as="h2"
             id={titleId}
             FONT="FIRM"
-            SIZE="DISPLAY_SM"
+            SIZE={isDesktop ? "DISPLAY_SM" : undefined}
             COLOR="WHITE"
-            // В MArchive заголовка месяца нет — на мобильных он только для скринридеров
-            className={isDesktop ? undefined : "sr-only"}
+            className={isDesktop ? undefined : "px-6 text-[32px] leading-11"}
           >
             {shownMonth.name} {shownMonth.year}
           </Text>

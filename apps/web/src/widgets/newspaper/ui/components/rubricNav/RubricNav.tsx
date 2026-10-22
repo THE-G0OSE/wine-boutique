@@ -30,7 +30,7 @@ const RubricNav: FC<IProps> = ({ rubric, onChange, variant }) => {
         "flex",
         isDesktop
           ? "flex-wrap justify-center gap-2 border-b border-ink py-1.5"
-          : "mt-3 gap-1.5 overflow-x-auto border-t-4 border-b border-double border-ink py-1.5 [scrollbar-width:none]"
+          : "mt-3 gap-1.5 overflow-x-auto overflow-y-hidden border-t-4 border-b border-double border-ink py-1.5 [scrollbar-width:none]"
       )}
     >
       {OPTIONS.map(({ id, label }) => {

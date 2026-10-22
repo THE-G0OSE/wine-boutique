@@ -36,7 +36,7 @@ const Header = () => {
 
       {/* Мобильная шапка */}
       <div className="relative flex h-full items-center justify-between pr-4 pl-5 lg:hidden">
-        <Link to={ROUTES.home} aria-label="Premium Wine Boutique — на главную" className="font-firm text-[17px] leading-6.5 text-white no-underline">
+        <Link to={ROUTES.home} aria-label="Premium Wine Boutique — на главную" className="font-firm text-[clamp(14px,4.5vw,17px)] leading-6.5 whitespace-nowrap text-white no-underline">
           Premium Wine Boutique
         </Link>
         <div className="flex items-center gap-2">

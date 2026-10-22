@@ -12,18 +12,34 @@ export const HERO_LAYOUT = {
   counter: { left: 1812, bottom: 106 },
 } as const;
 
+/**
+ * Телефон (портрет): та же сцена — фон на весь экран и ряд карточек, но карточки — внизу в живых пикселях,
+ * без масштаба 1920 (иначе на 390 px они были бы спичечными коробками). Остальные карточки уходят за правый край
+ */
+export const HERO_LAYOUT_COMPACT = {
+  card: { left: 20, step: 146, width: 134, height: 180, bottom: 104, radius: 10 },
+  /** масштаб подписей карточки (шрифты и отступы — от размеров макета) */
+  captionScale: 0.62,
+} as const;
+
 export interface HeroGeometry {
   width: number;
   height: number;
   /** ширина секции / 1920, не больше 1 */
   scale: number;
+  /** узкий экран (телефон): карточки — по HERO_LAYOUT_COMPACT */
+  compact: boolean;
 }
 
-export const getHeroGeometry = (width: number, height: number): HeroGeometry => ({
+export const getHeroGeometry = (width: number, height: number, compact = false): HeroGeometry => ({
   width,
   height,
   scale: Math.min(width, DESIGN_WIDTH) / DESIGN_WIDTH,
+  compact,
 });
+
+/** Масштаб подписей карточек */
+export const captionScale = ({ scale, compact }: HeroGeometry) => (compact ? HERO_LAYOUT_COMPACT.captionScale : scale);
 
 const backgroundBox = ({ width, height }: HeroGeometry): SlideBox => ({
   left: 0,
@@ -35,8 +51,9 @@ const backgroundBox = ({ width, height }: HeroGeometry): SlideBox => ({
   opacity: 1,
 });
 
-const cardBox = (index: number, { height, scale }: HeroGeometry): SlideBox => {
-  const { card } = HERO_LAYOUT;
+const cardBox = (index: number, { height, scale: stageScale, compact }: HeroGeometry): SlideBox => {
+  const card = compact ? HERO_LAYOUT_COMPACT.card : HERO_LAYOUT.card;
+  const scale = compact ? 1 : stageScale;
   return {
     left: (card.left + (index - 1) * card.step) * scale,
     top: height - (card.bottom + card.height) * scale,

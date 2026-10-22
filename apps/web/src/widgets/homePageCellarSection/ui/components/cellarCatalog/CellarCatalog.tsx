@@ -81,7 +81,7 @@ const CellarCatalog: FC<IProps> = ({ variant }) => {
     >
       <div className="flex flex-col gap-1">
         <Text as="h3" id={titleId} FONT="FIRM" className={isDesktop ? "text-title" : "mx-1 text-[28px] leading-10"}>
-          {isDesktop ? "Каталог погреба" : "Вино, которое умеет ждать"}
+          Каталог погреба
         </Text>
         <Text COLOR="MUTED" className={isDesktop ? "text-sm" : "mx-1 text-micro"}>
           Бутылки, которые уже готовы к открытию
@@ -91,7 +91,7 @@ const CellarCatalog: FC<IProps> = ({ variant }) => {
       <div
         role="tablist"
         aria-label="Тип вина"
-        className={cn("flex gap-2", isDesktop ? "flex-wrap" : "mt-4 overflow-x-auto [scrollbar-width:none]")}
+        className={cn("flex gap-2", isDesktop ? "flex-wrap" : "mt-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none]")}
       >
         {CELLAR_TABS.map(({ id, label }) => (
           <Chip

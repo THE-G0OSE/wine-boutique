@@ -24,7 +24,7 @@ const BonusTab: FC<IProps> = ({ loyalty, certificates }) => {
   const valid = /^WB-\d{4}-\d{6}$/.test(normalized);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,480px)] lg:gap-10">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,480px)] lg:gap-10">
       <div className="flex flex-col gap-5">
         <Text as="h2" FONT="FIRM" className="text-xl leading-10.5 lg:text-2xl lg:leading-13">
           Уровни клуба

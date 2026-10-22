@@ -127,7 +127,7 @@ const HallPlan: FC = () => {
       <ul
         className={cn("m-0 list-none p-0", {
           "mt-7 grid grid-cols-4 gap-6": isDesktop,
-          "mt-3 flex gap-3 overflow-x-auto px-5 [scrollbar-width:none]": !isDesktop,
+          "mt-3 flex gap-3 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none]": !isDesktop,
         })}
       >
         {HALL_OCCASIONS.map((occasion) => (

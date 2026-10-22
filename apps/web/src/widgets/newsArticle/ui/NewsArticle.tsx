@@ -13,7 +13,7 @@ const link = "text-amber-200 no-underline hover:text-paper";
 
 /** Пустая вырезка: пока статья грузится, или если такой нет */
 const BlankClipping: FC<{ title: string; text?: string; busy: boolean }> = ({ title, text, busy }) => (
-  <Clipping rotate={-0.8} paddingClassName="px-8 py-12 lg:px-16" className="mx-3 mt-6 max-w-250 lg:mx-auto lg:mt-10">
+  <Clipping rotate={-0.8} paddingClassName="px-8 py-12 lg:px-16" className="mx-6 mt-6 max-w-250 lg:mx-auto lg:mt-10">
     <div aria-busy={busy} role={busy ? "status" : undefined} className="flex flex-col items-center gap-3 text-center">
       <span className="font-paper-display text-[clamp(32px,4vw,56px)] leading-[1.05]">{title}</span>
       {text && <span className="text-caption italic">{text}</span>}

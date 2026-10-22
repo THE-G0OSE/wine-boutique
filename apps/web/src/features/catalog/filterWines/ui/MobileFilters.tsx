@@ -33,7 +33,7 @@ const MobileFilters: FC<IProps> = ({ shelf, className }) => {
 
   return (
     <>
-      <div className={cn("flex gap-2 overflow-x-auto px-5 [scrollbar-width:none]", className)}>
+      <div className={cn("flex gap-2 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none]", className)}>
         <button
           type="button"
           onClick={openSheet}

@@ -9,7 +9,7 @@ import PaperSheet from "./components/paperSheet/PaperSheet";
 const BlankSheet = ({ isDesktop, message, busy }: { isDesktop: boolean; message: string; busy: boolean }) => (
   <PaperSheet
     className={cn(
-      isDesktop ? "mx-auto w-full max-w-350 px-15 py-20" : "mx-2.5 px-4.5 py-12",
+      isDesktop ? "mx-auto w-full max-w-350 px-15 py-20" : "mx-6 px-4.5 py-12",
       "shadow-[0_30px_60px_rgba(0,0,0,0.6)]"
     )}
   >

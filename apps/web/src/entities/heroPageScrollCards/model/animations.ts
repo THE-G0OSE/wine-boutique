@@ -24,9 +24,3 @@ export const textBodyVariants: Variants = {
   hide: { y: 100, opacity: 0, transition: { type: "spring", stiffness: 100, damping: 18 } },
   show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 18, delay: 0.8 } },
 };
-
-/** Мобильная история: всплывает, когда попадает в экран */
-export const storyInViewVariants: Variants = {
-  hide: { opacity: 0, y: 40 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.2, 0.7, 0.2, 1] } },
-};

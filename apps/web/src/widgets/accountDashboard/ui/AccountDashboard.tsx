@@ -104,7 +104,7 @@ const AccountDashboard: FC = () => {
     <>
       <AccountHero profile={profile} loyalty={loyalty} stats={stats} onOpen={open} />
       <div className="mx-auto mt-8 flex max-w-480 items-center gap-3 px-4 lg:mt-10 lg:px-10 2xl:px-30">
-        <nav role="tablist" aria-label="Разделы кабинета" className="-mx-4 flex flex-1 gap-1 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
+        <nav role="tablist" aria-label="Разделы кабинета" className="-mx-4 flex flex-1 gap-1 overflow-x-auto overflow-y-hidden px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
           {ACCOUNT_TABS.map((item) => {
             const selected = item.id === tab;
             const badge = item.id === "orders" && active.length ? active.length : null;

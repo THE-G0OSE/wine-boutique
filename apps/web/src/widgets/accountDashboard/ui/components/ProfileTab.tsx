@@ -59,7 +59,7 @@ const ProfileTab: FC<IProps> = ({ profile }) => {
   const field = "h-13 w-full min-w-0 rounded-[14px] border border-cellar-700 bg-cellar-950 px-4 font-system text-[17px] text-white outline-none transition-colors focus:border-amber-350";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:gap-10">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:gap-10">
       <form
         noValidate
         onSubmit={(event) => {

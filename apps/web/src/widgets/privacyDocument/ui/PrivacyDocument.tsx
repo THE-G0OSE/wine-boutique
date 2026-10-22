@@ -49,7 +49,7 @@ const PrivacyDocument: FC = () => {
         {paper}
         <div className="relative">
           <div className="text-center text-[10px] tracking-[0.24em] uppercase">{PRIVACY_REVISION.mobile}</div>
-          <Text as="h1" FONT="PAPER_DISPLAY" className="mt-2.5 text-center text-[clamp(30px,10.4vw,40px)] leading-[1.05]">
+          <Text as="h1" FONT="PAPER_DISPLAY" className="mt-2.5 text-center text-[clamp(26px,8.6vw,40px)] leading-[1.05] break-words hyphens-auto">
             Политика конфиденциальности
           </Text>
           <p className="mt-2.5 mb-3.5 text-center italic">Коротко, по пунктам и без мелкого шрифта.</p>

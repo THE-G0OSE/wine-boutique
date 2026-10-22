@@ -1,11 +1,14 @@
-import { cardsMock, ScrollCardElement, StoryCard } from "@/entities/heroPageScrollCards";
+import { cardsMock, ScrollCardElement } from "@/entities/heroPageScrollCards";
 import { MEDIA, useMediaQuery } from "@/shared/lib/hooks/useMediaQuery";
 import { ScrollHeroSectionProgressBar } from "./components/progressBar";
 import { useScrollHeroSection } from "../model";
 import { asset } from "@/shared/lib/asset";
 
-/** Десктоп: экран прилипает, и пять историй сменяют друг друга по мере прокрутки */
-const PinnedStories = () => {
+/**
+ * Экран прилипает, и пять историй сменяют друг друга по мере прокрутки: бумага с бутылкой въезжает сбоку,
+ * текст всплывает. На телефоне — та же сцена в портретной раскладке
+ */
+const PinnedStories = ({ compact }: { compact: boolean }) => {
   const { ref, activeIndex, isPinned, floatY, progress } = useScrollHeroSection(cardsMock.length, 40);
 
   return (
@@ -19,7 +22,7 @@ const PinnedStories = () => {
         <div className="@container relative mx-auto h-full max-w-[1920px]">
           <ScrollHeroSectionProgressBar count={cardsMock.length} progress={progress} isOpen={isPinned} y={floatY} />
           {cardsMock.map((card, index) => (
-            <ScrollCardElement key={card.image} card={card} isActive={index === activeIndex} floatY={floatY} />
+            <ScrollCardElement key={card.image} card={card} isActive={index === activeIndex} floatY={floatY} compact={compact} />
           ))}
         </div>
       </div>
@@ -27,20 +30,9 @@ const PinnedStories = () => {
   );
 };
 
-/** Мобильные: истории лентой, каждая всплывает при появлении на экране */
-const StoriesFeed = () => (
-  <section aria-label="Истории" className="relative overflow-hidden bg-cellar-800 pt-10 pb-5">
-    <img src={asset("/images/textures/wood.webp")} alt="" className="absolute inset-0 size-full object-cover" />
-    <div aria-hidden="true" className="absolute inset-0 bg-cellar-950/25" />
-    {cardsMock.map((card) => (
-      <StoryCard key={card.image} card={card} />
-    ))}
-  </section>
-);
-
 const HomePageScrollHeroSection = () => {
   const isDesktop = useMediaQuery(MEDIA.desktop);
-  return isDesktop ? <PinnedStories /> : <StoriesFeed />;
+  return <PinnedStories compact={!isDesktop} />;
 };
 
 export default HomePageScrollHeroSection;

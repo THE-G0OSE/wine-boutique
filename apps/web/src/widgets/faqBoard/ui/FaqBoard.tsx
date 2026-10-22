@@ -40,7 +40,7 @@ const FaqBoard: FC = () => {
     <div
       role="group"
       aria-label="Темы"
-      className={cn("flex", { "shrink-0 gap-2.5": isDesktop, "mt-3.5 gap-2 overflow-x-auto px-5 [scrollbar-width:none]": !isDesktop })}
+      className={cn("flex", { "shrink-0 gap-2.5": isDesktop, "mt-3.5 gap-2 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none]": !isDesktop })}
     >
       {FAQ_TOPICS.map((item) => {
         const on = item.id === topic;

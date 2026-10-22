@@ -18,15 +18,26 @@ interface IProps {
   progress: MotionValue<number>;
   activeIndex: number;
   count: number;
+  /** Телефон: всё в один ряд внизу — стрелки слева, прогресс, номер справа */
+  compact?: boolean;
 }
 
 const arrowButton =
   "absolute flex cursor-pointer items-center justify-center rounded-full border-2 border-white bg-transparent p-0 text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-200";
 
-/** Управление hero на десктопе: стрелки, прогресс и номер слайда — по координатам макета */
-const CarouselControls: FC<IProps> = ({ prevHandler, nextHandler, progress, activeIndex, count }) => {
+/** Раскладка телефона, px: та же композиция, что в макете 1920, сжатая в одну строку внизу экрана */
+const COMPACT = {
+  arrow: { size: 48, left: 20, gap: 10, bottom: 34 },
+  bar: { left: 138, right: 78, bottom: 56 },
+  counter: { right: 20, bottom: 36, fontSize: 40 },
+};
+
+/** Управление hero: стрелки, прогресс и номер слайда — по координатам макета (на телефоне — COMPACT) */
+const CarouselControls: FC<IProps> = ({ prevHandler, nextHandler, progress, activeIndex, count, compact = false }) => {
   const { arrows, progress: bar, counter } = HERO_LAYOUT;
-  const arrowSize = `clamp(64px, ${stage(arrows.size)}, ${arrows.size}px)`;
+  const arrowSize = compact ? `${COMPACT.arrow.size}px` : `clamp(64px, ${stage(arrows.size)}, ${arrows.size}px)`;
+  const arrowBottom = compact ? COMPACT.arrow.bottom : stage(arrows.bottom);
+  const iconSize = compact ? 22 : 34;
 
   return (
     <>
@@ -40,10 +51,10 @@ const CarouselControls: FC<IProps> = ({ prevHandler, nextHandler, progress, acti
         whileHover="hover"
         whileTap="tap"
         className={arrowButton}
-        style={{ left: stage(arrows.left), bottom: stage(arrows.bottom), width: arrowSize, height: arrowSize }}
+        style={{ left: compact ? COMPACT.arrow.left : stage(arrows.left), bottom: arrowBottom, width: arrowSize, height: arrowSize }}
       >
         <motion.span variants={leftButtonInnerVariants} className="flex">
-          <LuChevronLeft size={34} strokeWidth={1.6} aria-hidden="true" />
+          <LuChevronLeft size={iconSize} strokeWidth={1.6} aria-hidden="true" />
         </motion.span>
       </motion.button>
       <motion.button
@@ -57,14 +68,14 @@ const CarouselControls: FC<IProps> = ({ prevHandler, nextHandler, progress, acti
         whileTap="tap"
         className={arrowButton}
         style={{
-          left: stage(arrows.left + arrows.size + arrows.gap),
-          bottom: stage(arrows.bottom),
+          left: compact ? COMPACT.arrow.left + COMPACT.arrow.size + COMPACT.arrow.gap : stage(arrows.left + arrows.size + arrows.gap),
+          bottom: arrowBottom,
           width: arrowSize,
           height: arrowSize,
         }}
       >
         <motion.span variants={rightButtonInnerVariants} className="flex">
-          <LuChevronRight size={34} strokeWidth={1.6} aria-hidden="true" />
+          <LuChevronRight size={iconSize} strokeWidth={1.6} aria-hidden="true" />
         </motion.span>
       </motion.button>
 
@@ -73,14 +84,14 @@ const CarouselControls: FC<IProps> = ({ prevHandler, nextHandler, progress, acti
         count={count}
         progress={progress}
         className="absolute"
-        style={{ left: stage(bar.left), width: stage(bar.width), bottom: stage(bar.bottom) }}
+        style={compact ? COMPACT.bar : { left: stage(bar.left), width: stage(bar.width), bottom: stage(bar.bottom) }}
       />
 
       <SlideCounter
         activeIndex={activeIndex}
         count={count}
         className="absolute"
-        style={{ left: stage(counter.left), bottom: stage(counter.bottom), fontSize: stageFont(96, 56) }}
+        style={compact ? COMPACT.counter : { left: stage(counter.left), bottom: stage(counter.bottom), fontSize: stageFont(96, 56) }}
       />
     </>
   );

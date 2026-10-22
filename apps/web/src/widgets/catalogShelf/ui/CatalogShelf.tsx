@@ -60,7 +60,7 @@ const CatalogShelf: FC<IProps> = ({ shelf }) => {
   };
 
   const tabs = (
-    <nav aria-label="Другие полки" className={cn("flex gap-2.5", { "mx-auto max-w-480 px-10 pt-7 2xl:px-30": isDesktop, "mt-3.5 gap-2 overflow-x-auto px-5 [scrollbar-width:none]": !isDesktop })}>
+    <nav aria-label="Другие полки" className={cn("flex gap-2.5", { "mx-auto max-w-480 px-10 pt-7 2xl:px-30": isDesktop, "mt-3.5 gap-2 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none]": !isDesktop })}>
       {WINE_SHELVES.map((id) => {
         const current = id === shelf;
         const label = isDesktop ? (shelves?.find((item) => item.id === id)?.title ?? SHELF_SHORT_LABELS[id]) : SHELF_SHORT_LABELS[id];

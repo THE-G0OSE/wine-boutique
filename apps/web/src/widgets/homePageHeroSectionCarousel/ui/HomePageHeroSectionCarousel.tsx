@@ -5,8 +5,7 @@ import { MEDIA, useMediaQuery } from "@/shared/lib/hooks/useMediaQuery";
 import { useReducedMotion } from "motion/react";
 import { useEffect, type FocusEvent, type PointerEvent } from "react";
 import { useCarousel } from "../model/lib/hooks/useCarousel";
-import HeroDesktop from "./components/heroDesktop/HeroDesktop";
-import HeroMobile from "./components/heroMobile/HeroMobile";
+import HeroStage from "./components/heroStage/HeroStage";
 
 const HomePageHeroSectionCarousel = () => {
   const dispatch = useAppDispatch();
@@ -36,9 +35,9 @@ const HomePageHeroSectionCarousel = () => {
       onPointerLeave={pauseOnMouse(false)}
       onFocus={() => setIsPaused(true)}
       onBlur={resumeOnBlur}
-      className="relative h-200 w-full overflow-hidden bg-cellar-950 lg:h-svh lg:min-h-160"
+      className="relative h-svh min-h-160 w-full overflow-hidden bg-cellar-950"
     >
-      {isDesktop ? <HeroDesktop carousel={carousel} /> : <HeroMobile carousel={carousel} items={imageMock} />}
+      <HeroStage carousel={carousel} compact={!isDesktop} />
     </section>
   );
 };

@@ -253,7 +253,7 @@ const ReservationForm: FC<IProps> = ({ variant, initialBoutiqueId, className }) 
       <div
         role="radiogroup"
         aria-label="День самовывоза"
-        className={cn({ "mt-2.5 grid grid-cols-7 gap-3": isDesktop, "flex gap-2 overflow-x-auto [scrollbar-width:none]": !isDesktop })}
+        className={cn({ "mt-2.5 grid grid-cols-7 gap-3": isDesktop, "flex gap-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none]": !isDesktop })}
       >
         {days?.map((item, index) => {
           const checked = item.date === date;

@@ -9,7 +9,7 @@ import StickyNote from "../stickyNote/StickyNote";
 /** Мобильные (MArticle): вырезка, фото на скотче, два стикера и лента «Ещё вырезки» */
 const ArticleMobile: FC<{ article: NewsArticle }> = ({ article }) => (
   <>
-    <div className="relative mx-3 mt-5.5">
+    <div className="relative mx-6 mt-5.5">
       <Clipping rotate={-0.6} paddingClassName="px-5 py-7" className="[filter:drop-shadow(0_20px_26px_rgba(0,0,0,0.55))]">
         <ArticleText article={article} variant="mobile" />
       </Clipping>

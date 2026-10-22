@@ -11,16 +11,16 @@ interface IProps {
   y: MotionValue<number>;
 }
 
-/** Полоса из сегментов по числу историй; выезжает сверху, пока экран прилип. Ниже шапки (80px) */
+/** Полоса из сегментов по числу историй; выезжает сверху, пока экран прилип. Ниже шапки (64 / 80px) */
 const ScrollHeroSectionProgressBar: FC<IProps> = ({ count, progress, isOpen, y }) => {
   return (
-    <div aria-hidden="true" className="absolute top-28 z-10 flex w-full justify-center">
+    <div aria-hidden="true" className="absolute top-20 z-10 flex w-full justify-center px-5 lg:top-28 lg:px-0">
       <motion.div
         variants={progressBarVar}
         initial="hide"
         style={{ x: y }}
         animate={isOpen ? "show" : "hide"}
-        className="relative flex h-4 w-140 overflow-hidden rounded-full bg-neutral-500 shadow-xl"
+        className="relative flex h-2.5 w-full max-w-140 overflow-hidden rounded-full bg-neutral-500 shadow-xl lg:h-4"
       >
         {Array.from({ length: count }, (_, index) => (
           <ProgressBarItem

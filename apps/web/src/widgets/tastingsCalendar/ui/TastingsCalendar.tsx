@@ -146,7 +146,7 @@ const TastingsCalendar: FC = () => {
         onToggle={toggleKind}
         className={cn({
           "max-w-155 flex-wrap justify-end": isDesktop,
-          "-mx-5 mt-2 overflow-x-auto px-5 [scrollbar-width:none]": !isDesktop,
+          "-mx-5 mt-2 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none]": !isDesktop,
         })}
       />
     </section>

@@ -4,9 +4,10 @@ import { stage, stageFont } from "@/shared/lib/stage";
 import { useScroll } from "motion/react";
 import { useId, useMemo, useRef, type FC } from "react";
 import { Eyebrow, Text } from "uikit;/";
-import { CELLAR_STATS, CELLAR_YEARS } from "../model/content";
-import { CELLAR_SHADE_MOBILE, CELLAR_SHADES, createDust, LAMP_GLOW } from "../model/decor";
+import { CELLAR_STATS } from "../model/content";
+import { CELLAR_SHADES, createDust, LAMP_GLOW } from "../model/decor";
 import CellarCatalog from "./components/cellarCatalog/CellarCatalog";
+import CellarDescentCompact from "./components/cellarDescentCompact/CellarDescentCompact";
 import CellarTimeline from "./components/cellarTimeline/CellarTimeline";
 import DepthGauge from "./components/depthGauge/DepthGauge";
 import { asset } from "@/shared/lib/asset";
@@ -112,53 +113,13 @@ const CellarDescent: FC<{ titleId: string }> = ({ titleId }) => {
   );
 };
 
-/** Мобильные: заголовок, слои-годы списком и каталог */
-const CellarStack: FC<{ titleId: string }> = ({ titleId }) => (
-  <div className="relative">
-    <img
-      src={asset("/images/backgrounds/cellar.webp")}
-      alt=""
-      loading="lazy"
-      className="absolute inset-0 size-full object-cover object-[50%_70%] opacity-85"
-    />
-    <div aria-hidden="true" className="absolute inset-0 animate-flicker [animation-duration:6s]" style={{ backgroundImage: CELLAR_SHADE_MOBILE }} />
-
-    <div className="relative flex flex-col gap-2.5 px-5 pt-12">
-      <Eyebrow size="sm">Погреб · Cellar</Eyebrow>
-      <Text as="h2" id={titleId} FONT="FIRM" COLOR="WHITE" className="text-title leading-15 text-shadow-[8px_10px_4px_rgba(0,0,0,0.4)]">
-        Чем глубже — тем старше
-      </Text>
-      <Text COLOR="MUTED" className="text-sm leading-[1.55]">
-        Каждый слой земли — год, который вино провело в темноте.
-      </Text>
-    </div>
-
-    <ol aria-label="Слои погреба" className="relative mx-5 mt-6.5 flex list-none flex-col gap-5.5 border-l-2 border-amber-200/40 p-0 pl-5.5">
-      {CELLAR_YEARS.map(({ year, caption }) => (
-        <li key={year} className="relative flex flex-col">
-          <span
-            aria-hidden="true"
-            className="absolute top-2 -left-7.75 size-4 rounded-full bg-amber-350 shadow-[0_0_12px_rgba(232,184,120,0.7)]"
-          />
-          <span className="font-system text-lg font-semibold text-amber-200">{year}</span>
-          <span className="text-[15px] text-neutral-350">{caption}</span>
-        </li>
-      ))}
-    </ol>
-
-    <div className="relative">
-      <CellarCatalog variant="mobile" />
-    </div>
-  </div>
-);
-
 const HomePageCellarSection = () => {
   const isDesktop = useMediaQuery(MEDIA.desktop);
   const titleId = useId();
 
   return (
     <section id={HOME_ANCHORS.cellar} aria-labelledby={titleId} className="relative scroll-mt-20 overflow-hidden bg-cellar-950">
-      {isDesktop ? <CellarDescent titleId={titleId} /> : <CellarStack titleId={titleId} />}
+      {isDesktop ? <CellarDescent titleId={titleId} /> : <CellarDescentCompact titleId={titleId} />}
     </section>
   );
 };

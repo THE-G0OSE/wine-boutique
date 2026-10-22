@@ -29,14 +29,26 @@ export const LAMP_GLOW: CSSProperties = {
   backgroundImage: "radial-gradient(ellipse 560px 440px at 50% 62%, rgba(255,178,80,0.42) 0%, rgba(255,178,80,0) 70%)",
 };
 
+/** Лампа над каталогом на телефоне: тот же тёплый круг, по центру верха области каталога */
+export const LAMP_GLOW_COMPACT: CSSProperties = {
+  backgroundImage: "radial-gradient(ellipse 300px 260px at 50% 30%, rgba(255,178,80,0.4) 0%, rgba(255,178,80,0) 70%)",
+};
+
 export const CELLAR_SHADE_MOBILE =
   "linear-gradient(180deg, rgba(17,12,10,0.9) 0%, rgba(17,12,10,0.45) 25%, rgba(17,12,10,0.55) 60%, #110C0A 100%)";
 
 /**
  * Пылинки в луче лампы: 26 частиц в области x 740–1180, y 1960–2480 макета.
  * Генератор с фиксированным зерном — картинка одинаковая при каждом рендере (как в дизайне).
+ * `position` — где частица: по умолчанию координаты макета 1920, на телефоне — доли своей области (0…1)
  */
-export const createDust = (count = 26) => {
+export const createDust = (
+  count = 26,
+  position: (x: number, y: number) => Pick<CSSProperties, "left" | "top"> = (x, y) => ({
+    left: stage(Math.round(740 + x * 440)),
+    top: stage(Math.round(1960 + y * 520)),
+  })
+) => {
   let seed = 11;
   const random = () => {
     seed = (seed * 9301 + 49297) % 233280;
@@ -48,8 +60,7 @@ export const createDust = (count = 26) => {
     return {
       id: index,
       style: {
-        left: stage(Math.round(740 + random() * 440)),
-        top: stage(Math.round(1960 + random() * 520)),
+        ...position(random(), random()),
         width: size,
         height: size,
         animationDuration: `${(7 + random() * 7).toFixed(1)}s`,

@@ -74,9 +74,9 @@ const ShelfRow: FC<IProps> = ({ shelf, variant, filterSearch }) => {
     return (
       <section aria-labelledby={titleId} className="mt-7.5">
         {header}
-        <div className="relative mt-3 h-95">
+        <div className="relative mt-3 h-104">
           <ShelfBoard className="inset-x-0 top-59 h-7.5 rounded-none" />
-          <div className="absolute inset-0 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto px-5 [scrollbar-width:none]">{cards}</div>
+          <div className="absolute inset-0 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none]">{cards}</div>
         </div>
       </section>
     );

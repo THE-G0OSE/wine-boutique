@@ -21,9 +21,9 @@ const RelatedWines: FC<IProps> = ({ wine, variant }) => {
         <Text as="h2" id="wine-related" FONT="FIRM" SIZE="H4" className="px-5">
           С этим вином берут
         </Text>
-        <div className="relative mt-3 h-95">
+        <div className="relative mt-3 h-104">
           <ShelfBoard className="inset-x-0 top-59 h-7.5 rounded-none" />
-          <div className="absolute inset-0 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto px-5 [scrollbar-width:none]">
+          <div className="absolute inset-0 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto overflow-y-hidden px-5 [scrollbar-width:none]">
             {wine.related.map((related) => (
               <BottleCard
                 key={related.id}
@@ -51,7 +51,7 @@ const RelatedWines: FC<IProps> = ({ wine, variant }) => {
       </div>
       <div className="relative mt-5 h-117.5">
         <ShelfBoard className="-inset-x-5 top-84 h-11" />
-        <ul role="list" className="absolute inset-0 m-0 flex list-none gap-10 overflow-x-auto px-15 [scrollbar-width:none] 2xl:justify-between">
+        <ul role="list" className="absolute inset-0 m-0 flex list-none gap-10 overflow-x-auto overflow-y-hidden px-15 [scrollbar-width:none] 2xl:justify-between">
           {wine.related.map((related) => (
             <li key={related.id} className="shrink-0">
               <Link to={ROUTES.wine(related.slug)} className="group relative block h-117.5 w-47.5 text-white no-underline">

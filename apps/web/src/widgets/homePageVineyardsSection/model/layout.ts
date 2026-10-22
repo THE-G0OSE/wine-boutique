@@ -19,6 +19,21 @@ export const GRAPE_PLACES: Record<string, GrapePlace> = {
   riesling: { x: 1645, y: 640, height: 300, rotate: 4 },
 };
 
+/**
+ * Телефон (портрет): та же лоза, грозди в два ряда по три. Координаты — в px сцены 390×840
+ * (масштабируются по ширине экрана); сверху — заголовок до четырёх строк
+ */
+export const COMPACT_SCENE = { width: 390, height: 840 } as const;
+
+export const GRAPE_PLACES_COMPACT: Record<string, GrapePlace> = {
+  "cabernet-sauvignon": { x: 16, y: 384, height: 176, rotate: -6 },
+  chardonnay: { x: 138, y: 428, height: 160, rotate: 5 },
+  merlot: { x: 254, y: 380, height: 172, rotate: -3 },
+  "sauvignon-blanc": { x: 24, y: 608, height: 160, rotate: 6 },
+  "pinot-noir": { x: 140, y: 644, height: 166, rotate: -5 },
+  riesling: { x: 258, y: 610, height: 160, rotate: 4 },
+};
+
 /** Пропорции изображений гроздей */
 export const GRAPE_ASPECT = 0.677;
 
