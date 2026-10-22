@@ -197,7 +197,7 @@ const PhoneAuthCard: FC<IProps> = ({ variant }) => {
         ) : null}
         {env.apiMocks ? (
           <span className={cn("text-cellar-400", { "text-[13px]": isDesktop, "text-xs": !isDesktop })}>
-            Для превью: код 1988 — новый гость, 2015 — уже зарегистрирован.
+            Демо без сервера, SMS не приходит. Введите 1988 — зарегистрируетесь как новый гость, 2015 — войдёте в готовый кабинет гостя Анны.
           </span>
         ) : null}
       </div>

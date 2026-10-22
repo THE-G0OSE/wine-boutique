@@ -131,6 +131,8 @@ services:
       SERVICE_NAME: identity
       OTEL_SERVICE_NAME: identity
       DATABASE_URL: postgresql://identity:${DEV_DB_PASSWORD:-dev}@postgres:5432/identity
+      # SMS-провайдера нет — код входа и на экране (фронт с VITE_API_MOCKS=false), и в логе (для e2e)
+      DEMO_CODES: ${DEMO_CODES:-true}
     depends_on:
       postgres: { condition: service_healthy }
       nats: { condition: service_healthy }
