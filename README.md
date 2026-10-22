@@ -89,7 +89,7 @@ docker compose exec identity node dist/cli.js session:issue --name "Анна К�
 
 Весь сайт на одном адресе: Traefik с TLS от Let's Encrypt отдаёт `/api` сервисам, остальное — фронту (nginx со сборкой Vite, [apps/web/Dockerfile](apps/web/Dockerfile)). Cookie сессии — свои, CORS не нужен. Конфигурация — [compose.yaml](deploy/compose/compose.yaml) + [compose.prod.yaml](deploy/compose/compose.prod.yaml).
 
-Сейчас: **https://thegoosedev.ru** — VPS 2 vCPU / 2 ГБ RAM + 2 ГБ swap / 20 ГБ, Ubuntu 26.04, без Grafana. DNS — у Beget: A-записи `thegoosedev.ru` и `www` на IP VPS. Домен задают `API_DOMAIN` / `FRONT_ORIGIN` в `.env`; любой другой адрес (www, IP, старый `194-226-99-185.sslip.io`) — 301 на основной. Сменили домен — пересобрать фронт (`docker compose … build web`: адрес сайта вшит в превью ссылок) и `up -d`.
+Сейчас: **https://thegoosedev.ru** — VPS 2 vCPU / 4 ГБ RAM + 1 ГБ swap / 20 ГБ, Ubuntu 26.04, с Grafana-стеком (`COMPOSE_PROFILES=observability` в `.env`): `ssh -L 3001:127.0.0.1:3001 <ssh-хост>` → http://localhost:3001 — метрики всех сервисов и трейсы от Traefik. DNS — у Beget: A-записи `thegoosedev.ru` и `www` на IP VPS. Домен задают `API_DOMAIN` / `FRONT_ORIGIN` в `.env`; любой другой адрес (www, IP, старый `194-226-99-185.sslip.io`) — 301 на основной. Сменили домен — пересобрать фронт (`docker compose … build web`: адрес сайта вшит в превью ссылок) и `up -d`.
 
 Один раз на VPS:
 
@@ -106,7 +106,7 @@ deploy/vps/deploy.sh <ssh-хост> <тег-или-хеш>   # откат: об�
 deploy/vps/deploy.sh <ssh-хост> origin/main --observability   # + Grafana: ssh -L 3001:127.0.0.1:3001 <ssh-хост>
 ```
 
-Образы собираются на VPS с тегом коммита, миграции выполняются одноразовыми контейнерами перед стартом сервисов. Бэкапы базы (WAL-G в S3 провайдера) — следующий шаг, когда будет хранилище.
+Образы собираются на VPS с тегом коммита — только те, чей код изменился с работающей версии (сервис, общие пакеты, lockfile), остальные получают новый тег без сборки;, миграции выполняются одноразовыми контейнерами перед стартом сервисов. Бэкапы базы (WAL-G в S3 провайдера) — следующий шаг, когда будет хранилище.
 
 ## CI
 

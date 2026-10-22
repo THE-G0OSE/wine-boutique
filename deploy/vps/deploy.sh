@@ -28,16 +28,39 @@ git checkout --quiet --detach "$ref"
 export TAG="$(git rev-parse --short=12 HEAD)"
 compose="docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.prod.yaml --env-file ${home}/.env ${profiles}"
 
-# По одному сервису: параллельная сборка всех упирается в память небольшой ВМ.
-# После каждого (пара «миграции + сервис» — у них общий этап build) кэш сборки чистится: этап build — гигабайты
-# на сервис, на диске 20 ГБ все сразу не помещаются. Хранилище pnpm (cache mount) остаётся — пакеты не качаются заново
-if ! docker image inspect "wine-boutique/web:${TAG}" > /dev/null 2>&1; then
-  for service in identity catalog news reviews newsletter reservations tastings cellar requests loyalty; do
-    ${compose} build "${service}-migrate" "${service}"
-    docker builder prune --force --filter type!=exec.cachemount > /dev/null
+# Собираются только изменившиеся с работающей версии образы, остальные получают новый тег (диск 20 ГБ: полный
+# комплект новых образов рядом со старыми не помещается). Общее для всех (пакеты, lockfile, Dockerfile) — пересборка всех.
+# По одному сервису: параллельная сборка упирается в память ВМ. После каждого (пара «миграции + сервис» — общий этап build)
+# кэш сборки чистится; хранилище pnpm (cache mount) остаётся — пакеты не качаются заново
+running="$(docker inspect wine-boutique-web-1 --format '{{.Config.Image}}' 2> /dev/null | cut -d: -f2 || true)"
+changed() {
+  [[ -z "${running}" ]] && return 0
+  git cat-file -e "${running}^{commit}" 2> /dev/null || return 0
+  ! git diff --quiet "${running}" HEAD -- "$@"
+}
+reuse() {
+  for image in "$@"; do
+    docker image inspect "wine-boutique/${image}:${running}" > /dev/null 2>&1 || return 1
   done
-  ${compose} build web
+  for image in "$@"; do docker tag "wine-boutique/${image}:${running}" "wine-boutique/${image}:${TAG}"; done
+}
+shared=(packages pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json tsconfig.service.json eslint.service.js)
+for service in identity catalog news reviews newsletter reservations tastings cellar requests loyalty; do
+  docker image inspect "wine-boutique/${service}:${TAG}" > /dev/null 2>&1 && continue
+  if ! changed "services/${service}" services/Dockerfile "${shared[@]}" && reuse "${service}-migrate" "${service}"; then
+    echo "${service}: без изменений — тег ${TAG}"
+    continue
+  fi
+  ${compose} build "${service}-migrate" "${service}"
   docker builder prune --force --filter type!=exec.cachemount > /dev/null
+done
+if ! docker image inspect "wine-boutique/web:${TAG}" > /dev/null 2>&1; then
+  if ! changed apps/web "${shared[@]}" && reuse web; then
+    echo "web: без изменений — тег ${TAG}"
+  else
+    ${compose} build web
+    docker builder prune --force --filter type!=exec.cachemount > /dev/null
+  fi
 fi
 
 ${compose} up -d --remove-orphans --wait --wait-timeout 300
